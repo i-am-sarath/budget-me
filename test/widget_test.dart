@@ -7,6 +7,7 @@ void main() {
     await tester.pumpWidget(
       const ProviderScope(child: BudgetTrackerApp()),
     );
+    await tester.pumpAndSettle(const Duration(milliseconds: 600));
     // App starts, just verify it doesn't crash
     expect(find.byType(ProviderScope), findsWidgets);
   });
