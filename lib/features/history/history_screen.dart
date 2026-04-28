@@ -19,6 +19,13 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   String _query = '';
   TransactionType? _filter; // null = all
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+
+  void _changeMonth(int offset) {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + offset);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +43,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           child: Text('Error: $e'),
         ),
         data: (allTx) {
+          // Filter by month
+          var filtered = allTx.where((t) =>
+            t.date.year == _selectedMonth.year &&
+            t.date.month == _selectedMonth.month
+          ).toList();
+
           // Filter by type
-          var filtered = _filter == null
-              ? allTx
-              : allTx.where((t) => t.type == _filter).toList();
+          filtered = _filter == null
+              ? filtered
+              : filtered.where((t) => t.type == _filter).toList();
 
           // Filter by search query
           if (_query.isNotEmpty) {
@@ -66,13 +79,44 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 snap: true,
                 elevation: 0,
                 titleSpacing: 20,
-                title: Text('History',
-                    style: GoogleFonts.inter(
-                      color: tc.onSurface,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22,
-                      letterSpacing: -0.5,
-                    )),
+                title: Row(
+                  children: [
+                    Text('History',
+                        style: GoogleFonts.inter(
+                          color: tc.onSurface,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                          letterSpacing: -0.5,
+                        )),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.chevron_left_rounded, color: tc.onSurfaceVariant),
+                          onPressed: () => _changeMonth(-1),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('MMM yyyy').format(_selectedMonth),
+                          style: GoogleFonts.inter(
+                            color: tc.onSurface,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant),
+                          onPressed: () => _changeMonth(1),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 bottom: PreferredSize(
                   preferredSize: const Size.fromHeight(110),
                   child: Padding(
