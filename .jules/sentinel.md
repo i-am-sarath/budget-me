@@ -1,0 +1,1 @@
+- Found and removed hardcoded OpenAI API key in lib/core/config/api_config.dart. API keys should be provided via --dart-define instead of being hardcoded into the application code.
