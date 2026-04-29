@@ -17,20 +17,26 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
-    final income = thisMonth
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final expense = thisMonth
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final invested = thisMonth
-        .where((t) => t.type == TransactionType.investment)
-        .fold(0.0, (s, t) => s + t.amount);
-    final lend = thisMonth
-        .where((t) => t.type == TransactionType.lend)
-        .fold(0.0, (s, t) => s + t.amount);
+    double income = 0;
+    double expense = 0;
+    double invested = 0;
+    double lend = 0;
+
+    // ⚡ Bolt: Single pass aggregation instead of multiple lazy where().fold() chains
+    // Reduces object allocations and iteration overhead by computing totals in O(N)
+    for (final t in transactions) {
+      if (t.date.month == now.month && t.date.year == now.year) {
+        if (t.type == TransactionType.income) {
+          income += t.amount;
+        } else if (t.type == TransactionType.expense) {
+          expense += t.amount;
+        } else if (t.type == TransactionType.investment) {
+          invested += t.amount;
+        } else if (t.type == TransactionType.lend) {
+          lend += t.amount;
+        }
+      }
+    }
 
     return Row(
       children: [
@@ -130,7 +136,9 @@ class _BentoItem extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            compact ? _compactFormat(amount, currency) : currency.format(amount),
+            compact
+                ? _compactFormat(amount, currency)
+                : currency.format(amount),
             style: GoogleFonts.inter(
               color: tc.onSurface,
               fontSize: compact ? 13 : 14,

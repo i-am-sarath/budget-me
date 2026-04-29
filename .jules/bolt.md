@@ -1,0 +1,1 @@
+- Replaced multiple chained `Iterable.where().fold()` operations with a single-pass loop when calculating totals in `SummaryCard` and `_BalanceHero`. This reduces O(N * number of filters) to O(N) and limits unnecessary object allocations.
