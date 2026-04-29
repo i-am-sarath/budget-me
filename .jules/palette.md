@@ -1,0 +1,1 @@
+- Always add `Semantics` and `tooltip` to `IconButton`s used for navigation, as it significantly improves accessibility for screen readers.
