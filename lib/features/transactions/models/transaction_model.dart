@@ -6,7 +6,7 @@ enum TransactionType {
   investment,
   lend,
   borrow,
-  lendReturn,   // someone returned money they owed → user receives money back
+  lendReturn, // someone returned money they owed → user receives money back
   borrowReturn; // user returns money they borrowed → user pays out
 
   static TransactionType fromString(String value) {
@@ -18,13 +18,20 @@ enum TransactionType {
 
   String get label {
     switch (this) {
-      case TransactionType.expense:      return 'Expense';
-      case TransactionType.income:       return 'Income';
-      case TransactionType.investment:   return 'Investment';
-      case TransactionType.lend:         return 'Lent';
-      case TransactionType.borrow:       return 'Borrowed';
-      case TransactionType.lendReturn:   return 'Lent - Returned';
-      case TransactionType.borrowReturn: return 'Borrow - Repaid';
+      case TransactionType.expense:
+        return 'Expense';
+      case TransactionType.income:
+        return 'Income';
+      case TransactionType.investment:
+        return 'Investment';
+      case TransactionType.lend:
+        return 'Lent';
+      case TransactionType.borrow:
+        return 'Borrowed';
+      case TransactionType.lendReturn:
+        return 'Lent - Returned';
+      case TransactionType.borrowReturn:
+        return 'Borrow - Repaid';
     }
   }
 }
@@ -54,15 +61,15 @@ class TransactionModel {
     required this.date,
     DateTime? createdAt,
     this.isSynced = false,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   // ── Balance effect ──────────────────────────────────────
   double get balanceDelta {
     switch (type) {
       case TransactionType.income:
       case TransactionType.borrow:
-      case TransactionType.lendReturn:   // money returned TO user → positive
+      case TransactionType.lendReturn: // money returned TO user → positive
         return amount;
       case TransactionType.expense:
       case TransactionType.lend:
@@ -73,20 +80,21 @@ class TransactionModel {
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'amount': amount,
-        'type': type.name,
-        'category': category,
-        'note': note,
-        'payee': payee ?? '',
-        'account_id': accountId ?? '',
-        'account_name': accountName ?? '',
-        'date': date.toIso8601String(),
-        'created_at': createdAt.toIso8601String(),
-        'is_synced': isSynced ? 1 : 0,
-      };
+    'id': id,
+    'amount': amount,
+    'type': type.name,
+    'category': category,
+    'note': note,
+    'payee': payee ?? '',
+    'account_id': accountId ?? '',
+    'account_name': accountName ?? '',
+    'date': date.toIso8601String(),
+    'created_at': createdAt.toIso8601String(),
+    'is_synced': isSynced ? 1 : 0,
+  };
 
-  factory TransactionModel.fromMap(Map<String, dynamic> map) => TransactionModel(
+  factory TransactionModel.fromMap(Map<String, dynamic> map) =>
+      TransactionModel(
         id: map['id'] as String,
         amount: (map['amount'] as num).toDouble(),
         type: TransactionType.fromString(map['type'] as String),
@@ -116,18 +124,17 @@ class TransactionModel {
     String? accountName,
     DateTime? date,
     bool? isSynced,
-  }) =>
-      TransactionModel(
-        id: id,
-        amount: amount ?? this.amount,
-        type: type ?? this.type,
-        category: category ?? this.category,
-        note: note ?? this.note,
-        payee: payee ?? this.payee,
-        accountId: accountId ?? this.accountId,
-        accountName: accountName ?? this.accountName,
-        date: date ?? this.date,
-        createdAt: createdAt,
-        isSynced: isSynced ?? this.isSynced,
-      );
+  }) => TransactionModel(
+    id: id,
+    amount: amount ?? this.amount,
+    type: type ?? this.type,
+    category: category ?? this.category,
+    note: note ?? this.note,
+    payee: payee ?? this.payee,
+    accountId: accountId ?? this.accountId,
+    accountName: accountName ?? this.accountName,
+    date: date ?? this.date,
+    createdAt: createdAt,
+    isSynced: isSynced ?? this.isSynced,
+  );
 }
