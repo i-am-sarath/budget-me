@@ -1,0 +1,1 @@
+- Replaced multiple `list.where().fold()` chained passes with a single O(N) `for` loop pass for performance optimization in Dashboard SummaryCard and _BalanceHero.
