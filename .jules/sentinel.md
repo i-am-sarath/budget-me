@@ -1,0 +1,1 @@
+## Security Learnings\n\n- Removed hardcoded OpenAI API key and leaked RevenueCat secret from `lib/core/config/api_config.dart`. Replaced with environment variables using `String.fromEnvironment` to prevent secret leakage in source control.

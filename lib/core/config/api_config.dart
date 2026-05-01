@@ -7,23 +7,26 @@ class ApiConfig {
   // ─── OpenAI ───────────────────────────────────────────
   static const String openAiKey = String.fromEnvironment(
     'OPENAI_API_KEY',
-    defaultValue:
-        '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',
+    // SECURE FIX: Removed hardcoded API key to prevent secret leakage.
+    // Use --dart-define=OPENAI_API_KEY="..." for builds.
+    defaultValue: '',
   );
 
   // ─── RevenueCat PUBLIC Keys ───────────────────────────
-  // Note: sk_whcyqZUXynYpTIXMnPSupfyzmtiPv is your SECRET key for the
-  // RevenueCat dashboard API — it must NEVER be embedded in the app.
+  // Note: Your SECRET key for the
+  // RevenueCat dashboard API must NEVER be embedded in the app.
   // You need your PUBLIC Google/Apple keys from:
   //   RevenueCat Dashboard → Project Settings → API Keys → Public
   static const String revenueCatAndroidKey = String.fromEnvironment(
     'RC_ANDROID_KEY',
-    defaultValue: 'goog_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your Android public key
+    defaultValue:
+        'goog_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your Android public key
   );
 
   static const String revenueCatIosKey = String.fromEnvironment(
     'RC_IOS_KEY',
-    defaultValue: 'appl_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your iOS public key
+    defaultValue:
+        'appl_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your iOS public key
   );
 
   // ─── RevenueCat Entitlement & Product IDs ─────────────
@@ -32,5 +35,5 @@ class ApiConfig {
 
   // ─── Product IDs (must match Play Console & App Store Connect) ─
   static const String productMonthly = 'voicelog_pro_monthly';
-  static const String productYearly  = 'voicelog_pro_yearly';
+  static const String productYearly = 'voicelog_pro_yearly';
 }
