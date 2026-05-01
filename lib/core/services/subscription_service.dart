@@ -125,7 +125,8 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     int count = 0;
     if (lastDate != null) {
       final now = DateTime.now();
-      final isSameDay = lastDate.year == now.year &&
+      final isSameDay =
+          lastDate.year == now.year &&
           lastDate.month == now.month &&
           lastDate.day == now.day;
       if (isSameDay) count = prefs.getInt(_voiceCountKey) ?? 0;
@@ -149,7 +150,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   }
 
   void _applyCustomerInfo(CustomerInfo info) {
-    final isPro = info.entitlements.active.containsKey(ApiConfig.entitlementPro);
+    final isPro = info.entitlements.active.containsKey(
+      ApiConfig.entitlementPro,
+    );
     state = state.copyWith(
       tier: isPro ? SubscriptionTier.pro : SubscriptionTier.free,
       customerInfo: info,
@@ -174,10 +177,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         if (pkg.packageType == PackageType.annual) annual = pkg;
       }
 
-      state = state.copyWith(
-        monthlyPackage: monthly,
-        annualPackage: annual,
-      );
+      state = state.copyWith(monthlyPackage: monthly, annualPackage: annual);
     } catch (_) {
       // Offerings not critical — paywall will show "Contact support"
     }
@@ -209,7 +209,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       return null; // success
     } on PurchasesErrorCode catch (e) {
       state = state.copyWith(isLoading: false);
-      if (e == PurchasesErrorCode.purchaseCancelledError) return null; // user cancelled
+      if (e == PurchasesErrorCode.purchaseCancelledError) {
+        return null; // user cancelled
+      }
       return e.name;
     } catch (e) {
       state = state.copyWith(isLoading: false);
@@ -223,7 +225,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       final info = await Purchases.restorePurchases();
       _applyCustomerInfo(info);
       state = state.copyWith(isLoading: false);
-      final isPro = info.entitlements.active.containsKey(ApiConfig.entitlementPro);
+      final isPro = info.entitlements.active.containsKey(
+        ApiConfig.entitlementPro,
+      );
       return isPro ? null : 'No active subscription found';
     } catch (e) {
       state = state.copyWith(isLoading: false);
@@ -243,7 +247,8 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     final lastDate = state.lastVoiceLogDate;
     int newCount = 1;
     if (lastDate != null) {
-      final isSameDay = lastDate.year == now.year &&
+      final isSameDay =
+          lastDate.year == now.year &&
           lastDate.month == now.month &&
           lastDate.day == now.day;
       newCount = isSameDay ? state.voiceLogsUsedToday + 1 : 1;
@@ -252,10 +257,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     await prefs.setInt(_voiceCountKey, newCount);
     await prefs.setInt(_voiceDateKey, now.millisecondsSinceEpoch);
 
-    state = state.copyWith(
-      voiceLogsUsedToday: newCount,
-      lastVoiceLogDate: now,
-    );
+    state = state.copyWith(voiceLogsUsedToday: newCount, lastVoiceLogDate: now);
   }
 
   @override
@@ -271,5 +273,5 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
 final subscriptionProvider =
     StateNotifierProvider<SubscriptionNotifier, SubscriptionState>(
-  (ref) => SubscriptionNotifier(),
-);
+      (ref) => SubscriptionNotifier(),
+    );

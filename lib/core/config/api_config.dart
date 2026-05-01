@@ -18,12 +18,14 @@ class ApiConfig {
   //   RevenueCat Dashboard → Project Settings → API Keys → Public
   static const String revenueCatAndroidKey = String.fromEnvironment(
     'RC_ANDROID_KEY',
-    defaultValue: 'goog_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your Android public key
+    defaultValue:
+        'goog_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your Android public key
   );
 
   static const String revenueCatIosKey = String.fromEnvironment(
     'RC_IOS_KEY',
-    defaultValue: 'appl_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your iOS public key
+    defaultValue:
+        'appl_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your iOS public key
   );
 
   // ─── RevenueCat Entitlement & Product IDs ─────────────
@@ -32,5 +34,5 @@ class ApiConfig {
 
   // ─── Product IDs (must match Play Console & App Store Connect) ─
   static const String productMonthly = 'voicelog_pro_monthly';
-  static const String productYearly  = 'voicelog_pro_yearly';
+  static const String productYearly = 'voicelog_pro_yearly';
 }
