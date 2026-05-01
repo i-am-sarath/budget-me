@@ -1,0 +1,1 @@
+- Remembered to wrap top-level IconButtons in the dashboard with Semantics to improve screen reader accessibility.
