@@ -1,0 +1,1 @@
+Optimized repeated `list.where().fold()` chains by computing multiple aggregates in a single pass over the list. This avoids multiple O(N) traversals, reducing memory allocations and improving runtime performance.
