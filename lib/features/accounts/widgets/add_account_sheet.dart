@@ -77,7 +77,11 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-          top: 24, left: 24, right: 24, bottom: bottomPad + 32),
+        top: 24,
+        left: 24,
+        right: 24,
+        bottom: bottomPad + 32,
+      ),
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -119,7 +123,9 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                     ? 'Update your account details below'
                     : 'Choose a type that fits your account',
                 style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant, fontSize: 12),
+                  color: tc.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 20),
 
@@ -151,12 +157,11 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                   hintText: _type == AccountType.bank
                       ? 'e.g. Chase Checking'
                       : _type == AccountType.cash
-                          ? 'e.g. Wallet cash'
-                          : _type == AccountType.loan
-                              ? 'e.g. Car loan'
-                              : 'Account name',
-                  prefixIcon:
-                      Icon(_type.icon, color: _type.color, size: 20),
+                      ? 'e.g. Wallet cash'
+                      : _type == AccountType.loan
+                      ? 'e.g. Car loan'
+                      : 'Account name',
+                  prefixIcon: Icon(_type.icon, color: _type.color, size: 20),
                 ),
                 validator: (v) =>
                     (v == null || v.isEmpty) ? 'Enter a name' : null,
@@ -166,16 +171,20 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
               // Balance
               TextFormField(
                 controller: _balanceCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: _isEditing
                       ? 'Current balance'
                       : 'Opening balance (optional)',
                   hintText: '0.00',
-                  prefixIcon: Icon(Icons.account_balance_rounded,
-                      color: tc.onSurfaceVariant, size: 20),
+                  prefixIcon: Icon(
+                    Icons.account_balance_rounded,
+                    color: tc.onSurfaceVariant,
+                    size: 20,
+                  ),
                 ),
               ),
 
@@ -187,21 +196,23 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: _bankCtrl,
-                  style:
-                      GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+                  style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
                   decoration: InputDecoration(
                     labelText: _type == AccountType.bank
                         ? 'Bank name (optional)'
                         : _type == AccountType.creditCard
-                            ? 'Issuer name (optional)'
-                            : 'Provider name (optional)',
+                        ? 'Issuer name (optional)'
+                        : 'Provider name (optional)',
                     hintText: _type == AccountType.mobilePay
                         ? 'e.g. PayPal, GCash, Pix'
                         : _type == AccountType.wallet
-                            ? 'e.g. Apple Pay, Google Pay'
-                            : '',
-                    prefixIcon: Icon(Icons.account_balance_rounded,
-                        color: tc.onSurfaceVariant, size: 20),
+                        ? 'e.g. Apple Pay, Google Pay'
+                        : '',
+                    prefixIcon: Icon(
+                      Icons.account_balance_rounded,
+                      color: tc.onSurfaceVariant,
+                      size: 20,
+                    ),
                   ),
                 ),
               ],
@@ -214,13 +225,15 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                   controller: _lastFourCtrl,
                   keyboardType: TextInputType.number,
                   maxLength: 4,
-                  style:
-                      GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+                  style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
                   decoration: InputDecoration(
                     labelText: 'Last 4 digits (optional)',
                     counterText: '',
-                    prefixIcon: Icon(Icons.credit_card_rounded,
-                        color: tc.onSurfaceVariant, size: 20),
+                    prefixIcon: Icon(
+                      Icons.credit_card_rounded,
+                      color: tc.onSurfaceVariant,
+                      size: 20,
+                    ),
                   ),
                 ),
               ],
@@ -234,20 +247,26 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                     color: tc.expense.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: tc.expense.withOpacity(0.2), width: 0.5),
+                      color: tc.expense.withOpacity(0.2),
+                      width: 0.5,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline_rounded,
-                          color: tc.expense, size: 16),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: tc.expense,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Enter the outstanding amount you owe. This will appear as debt in your net worth.',
                           style: GoogleFonts.inter(
-                              color: tc.expense,
-                              fontSize: 11,
-                              height: 1.4),
+                            color: tc.expense,
+                            fontSize: 11,
+                            height: 1.4,
+                          ),
                         ),
                       ),
                     ],
@@ -265,7 +284,9 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                   child: Text(
                     _isEditing ? 'Save Changes' : 'Create Account',
                     style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w700, fontSize: 15),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -292,8 +313,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
           }),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
               color: isSelected
                   ? t.color.withOpacity(0.15)
@@ -307,16 +327,20 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(t.icon,
-                    color: isSelected ? t.color : tc.onSurfaceVariant,
-                    size: 15),
+                Icon(
+                  t.icon,
+                  color: isSelected ? t.color : tc.onSurfaceVariant,
+                  size: 15,
+                ),
                 const SizedBox(width: 6),
-                Text(t.label,
-                    style: GoogleFonts.inter(
-                      color: isSelected ? t.color : tc.onSurfaceVariant,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    )),
+                Text(
+                  t.label,
+                  style: GoogleFonts.inter(
+                    color: isSelected ? t.color : tc.onSurfaceVariant,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),

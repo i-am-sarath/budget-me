@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class BudgetState {
   final double monthlyBudget;
-  final String countryCode;   // e.g. "IN"
-  final String countryName;   // e.g. "India"
+  final String countryCode; // e.g. "IN"
+  final String countryName; // e.g. "India"
   final bool onboardingDone;
 
   const BudgetState({
@@ -31,13 +31,12 @@ class BudgetState {
     String? countryCode,
     String? countryName,
     bool? onboardingDone,
-  }) =>
-      BudgetState(
-        monthlyBudget: monthlyBudget ?? this.monthlyBudget,
-        countryCode: countryCode ?? this.countryCode,
-        countryName: countryName ?? this.countryName,
-        onboardingDone: onboardingDone ?? this.onboardingDone,
-      );
+  }) => BudgetState(
+    monthlyBudget: monthlyBudget ?? this.monthlyBudget,
+    countryCode: countryCode ?? this.countryCode,
+    countryName: countryName ?? this.countryName,
+    onboardingDone: onboardingDone ?? this.onboardingDone,
+  );
 }
 
 // ─────────────────────────────────────────────

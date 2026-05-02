@@ -156,7 +156,9 @@ class TransactionTile extends ConsumerWidget {
   }
 
   (Color, String, IconData) _typeStyle(
-      TransactionType type, AppThemeColors tc) {
+    TransactionType type,
+    AppThemeColors tc,
+  ) {
     switch (type) {
       case TransactionType.expense:
         return (tc.expense, '−', Icons.arrow_upward_rounded);
