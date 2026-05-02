@@ -18,7 +18,8 @@ class SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
+      (t) => t.date.month == now.month && t.date.year == now.year,
+    );
     final income = thisMonth
         .where((t) => t.type == TransactionType.income)
         .fold(0.0, (s, t) => s + t.amount);
@@ -130,7 +131,9 @@ class _BentoItem extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            compact ? _compactFormat(amount, currency) : currency.format(amount),
+            compact
+                ? _compactFormat(amount, currency)
+                : currency.format(amount),
             style: GoogleFonts.inter(
               color: tc.onSurface,
               fontSize: compact ? 13 : 14,
