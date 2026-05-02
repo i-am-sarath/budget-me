@@ -1,0 +1,1 @@
+- Ensure IconButton widgets include a tooltip property for proper accessibility semantics.
