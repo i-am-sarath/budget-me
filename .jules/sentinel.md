@@ -1,0 +1,1 @@
+- Found and removed hardcoded OpenAI API key in lib/core/config/api_config.dart. API keys should never be committed into the repository or hardcoded into source code. Always use 'String.fromEnvironment' to securely inject secrets during the build process, preventing leaks in version control or decompiled builds.
