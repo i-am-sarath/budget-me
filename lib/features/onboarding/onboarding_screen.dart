@@ -23,8 +23,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // Country + currency selection
   String _countryCode = 'IN';
   String _countryName = 'India';
-  CurrencyInfo _currency =
-      const CurrencyInfo(code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳');
+  CurrencyInfo _currency = const CurrencyInfo(
+    code: 'INR',
+    symbol: '₹',
+    name: 'Indian Rupee',
+    flag: '🇮🇳',
+  );
 
   static const _countries = [
     ('IN', 'India', 'INR'),
@@ -53,8 +57,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_page < 2) {
       HapticFeedback.lightImpact();
       _pageController.nextPage(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutCubic);
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+      );
     } else {
       _finish();
     }
@@ -64,7 +69,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     HapticFeedback.mediumImpact();
     final budget = double.tryParse(_budgetCtrl.text) ?? 0;
 
-    await ref.read(budgetProvider.notifier).completeOnboarding(
+    await ref
+        .read(budgetProvider.notifier)
+        .completeOnboarding(
           budget: budget,
           countryCode: _countryCode,
           countryName: _countryName,
@@ -152,7 +159,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   child: Text(
                     _page == 2 ? "Let's go!" : 'Continue',
                     style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w700, fontSize: 16),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -184,8 +193,11 @@ class _WelcomePage extends StatelessWidget {
               color: tc.onSurface,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Icon(Icons.account_balance_wallet_rounded,
-                color: tc.surface, size: 44),
+            child: Icon(
+              Icons.account_balance_wallet_rounded,
+              color: tc.surface,
+              size: 44,
+            ),
           ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
 
           const SizedBox(height: 32),
@@ -242,16 +254,21 @@ class _FeatureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: tc.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(color: tc.outlineVariant, width: 0.5),
-        ),
-        child: Text(label,
-            style: GoogleFonts.inter(
-                color: tc.onSurface, fontSize: 12, fontWeight: FontWeight.w600)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    decoration: BoxDecoration(
+      color: tc.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(100),
+      border: Border.all(color: tc.outlineVariant, width: 0.5),
+    ),
+    child: Text(
+      label,
+      style: GoogleFonts.inter(
+        color: tc.onSurface,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 }
 
 // ─── Page 2: Country & Currency ──────────────────────────
@@ -278,16 +295,23 @@ class _CountryPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Where are you based?',
-                  style: GoogleFonts.inter(
-                      color: tc.onSurface,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5)),
+              Text(
+                'Where are you based?',
+                style: GoogleFonts.inter(
+                  color: tc.onSurface,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text("We'll set your currency automatically.",
-                  style: GoogleFonts.inter(
-                      color: tc.onSurfaceVariant, fontSize: 14)),
+              Text(
+                "We'll set your currency automatically.",
+                style: GoogleFonts.inter(
+                  color: tc.onSurfaceVariant,
+                  fontSize: 14,
+                ),
+              ),
             ],
           ),
         ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1),
@@ -308,25 +332,31 @@ class _CountryPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 14),
+                    horizontal: 8,
+                    vertical: 14,
+                  ),
                   child: Row(
                     children: [
-                      Text(currency.flag,
-                          style: const TextStyle(fontSize: 24)),
+                      Text(currency.flag, style: const TextStyle(fontSize: 24)),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(name,
-                                style: GoogleFonts.inter(
-                                    color: tc.onSurface,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14)),
+                            Text(
+                              name,
+                              style: GoogleFonts.inter(
+                                color: tc.onSurface,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
                             Text(
                               '${currency.code} · ${currency.symbol} · ${currency.name}',
                               style: GoogleFonts.inter(
-                                  color: tc.onSurfaceVariant, fontSize: 11),
+                                color: tc.onSurfaceVariant,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
@@ -339,13 +369,18 @@ class _CountryPage extends StatelessWidget {
                           color: isSelected ? tc.onSurface : Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? tc.onSurface : tc.outlineVariant,
+                            color: isSelected
+                                ? tc.onSurface
+                                : tc.outlineVariant,
                             width: 1.5,
                           ),
                         ),
                         child: isSelected
-                            ? Icon(Icons.check_rounded,
-                                color: tc.surface, size: 14)
+                            ? Icon(
+                                Icons.check_rounded,
+                                color: tc.surface,
+                                size: 14,
+                              )
                             : null,
                       ),
                     ],
@@ -395,7 +430,10 @@ class _BudgetPage extends StatelessWidget {
           Text(
             'How much do you plan to spend each month? You can always change this in Settings.',
             style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant, fontSize: 14, height: 1.5),
+              color: tc.onSurfaceVariant,
+              fontSize: 14,
+              height: 1.5,
+            ),
           ).animate().fadeIn(delay: 80.ms),
 
           const SizedBox(height: 36),
@@ -411,27 +449,34 @@ class _BudgetPage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(currency.symbol,
-                    style: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700)),
+                Text(
+                  currency.symbol,
+                  style: GoogleFonts.inter(
+                    color: tc.onSurfaceVariant,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     controller: controller,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     autofocus: false,
                     style: GoogleFonts.inter(
-                        color: tc.onSurface,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800),
+                      color: tc.onSurface,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                    ),
                     decoration: InputDecoration(
                       hintText: '0',
                       hintStyle: GoogleFonts.inter(
-                          color: tc.onSurfaceVariant,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800),
+                        color: tc.onSurfaceVariant,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                      ),
                       border: InputBorder.none,
                       filled: false,
                       contentPadding: EdgeInsets.zero,
@@ -445,12 +490,15 @@ class _BudgetPage extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Quick-set suggestions
-          Text('QUICK SET',
-              style: GoogleFonts.inter(
-                  color: tc.onSurfaceVariant,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5)),
+          Text(
+            'QUICK SET',
+            style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+            ),
+          ),
           const SizedBox(height: 12),
 
           Wrap(
@@ -464,17 +512,22 @@ class _BudgetPage extends StatelessWidget {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 9),
+                    horizontal: 16,
+                    vertical: 9,
+                  ),
                   decoration: BoxDecoration(
                     color: tc.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(100),
                     border: Border.all(color: tc.outlineVariant, width: 0.5),
                   ),
-                  child: Text('${currency.symbol}$s',
-                      style: GoogleFonts.inter(
-                          color: tc.onSurface,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    '${currency.symbol}$s',
+                    style: GoogleFonts.inter(
+                      color: tc.onSurface,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -491,14 +544,20 @@ class _BudgetPage extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    color: tc.onSurfaceVariant, size: 18),
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: tc.onSurfaceVariant,
+                  size: 18,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'You can skip this for now. Budget tracking is optional — the app works great without it.',
                     style: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant, fontSize: 12, height: 1.5),
+                      color: tc.onSurfaceVariant,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],

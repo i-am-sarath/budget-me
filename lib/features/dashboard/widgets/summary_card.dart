@@ -17,20 +17,35 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
-    final income = thisMonth
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final expense = thisMonth
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final invested = thisMonth
-        .where((t) => t.type == TransactionType.investment)
-        .fold(0.0, (s, t) => s + t.amount);
-    final lend = thisMonth
-        .where((t) => t.type == TransactionType.lend)
-        .fold(0.0, (s, t) => s + t.amount);
+
+    // ⚡ Bolt Performance Optimization:
+    // Replaced multiple Iterable.where().fold() chains with a single-pass loop
+    // to prevent O(N*4) iteration complexity over a lazy iterable.
+    double income = 0.0;
+    double expense = 0.0;
+    double invested = 0.0;
+    double lend = 0.0;
+
+    for (final t in transactions) {
+      if (t.date.month == now.month && t.date.year == now.year) {
+        switch (t.type) {
+          case TransactionType.income:
+            income += t.amount;
+            break;
+          case TransactionType.expense:
+            expense += t.amount;
+            break;
+          case TransactionType.investment:
+            invested += t.amount;
+            break;
+          case TransactionType.lend:
+            lend += t.amount;
+            break;
+          default:
+            break;
+        }
+      }
+    }
 
     return Row(
       children: [
@@ -130,7 +145,9 @@ class _BentoItem extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            compact ? _compactFormat(amount, currency) : currency.format(amount),
+            compact
+                ? _compactFormat(amount, currency)
+                : currency.format(amount),
             style: GoogleFonts.inter(
               color: tc.onSurface,
               fontSize: compact ? 13 : 14,
