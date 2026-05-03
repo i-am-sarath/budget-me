@@ -1,0 +1,1 @@
+- Added tooltips to `IconButton` widgets in Dashboard and History screens to improve accessibility for screen readers and users who rely on hints.

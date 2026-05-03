@@ -10,10 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ─────────────────────────────────────────────
 
 class CurrencyInfo {
-  final String code;       // e.g. "INR"
-  final String symbol;     // e.g. "₹"
-  final String name;       // e.g. "Indian Rupee"
-  final String flag;       // e.g. "🇮🇳"
+  final String code; // e.g. "INR"
+  final String symbol; // e.g. "₹"
+  final String name; // e.g. "Indian Rupee"
+  final String flag; // e.g. "🇮🇳"
 
   const CurrencyInfo({
     required this.code,
@@ -34,13 +34,33 @@ class SupportedCurrencies {
     CurrencyInfo(code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺'),
     CurrencyInfo(code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧'),
     CurrencyInfo(code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', flag: '🇦🇪'),
-    CurrencyInfo(code: 'SGD', symbol: 'S\$', name: 'Singapore Dollar', flag: '🇸🇬'),
-    CurrencyInfo(code: 'AUD', symbol: 'A\$', name: 'Australian Dollar', flag: '🇦🇺'),
-    CurrencyInfo(code: 'CAD', symbol: 'C\$', name: 'Canadian Dollar', flag: '🇨🇦'),
+    CurrencyInfo(
+      code: 'SGD',
+      symbol: 'S\$',
+      name: 'Singapore Dollar',
+      flag: '🇸🇬',
+    ),
+    CurrencyInfo(
+      code: 'AUD',
+      symbol: 'A\$',
+      name: 'Australian Dollar',
+      flag: '🇦🇺',
+    ),
+    CurrencyInfo(
+      code: 'CAD',
+      symbol: 'C\$',
+      name: 'Canadian Dollar',
+      flag: '🇨🇦',
+    ),
     CurrencyInfo(code: 'JPY', symbol: '¥', name: 'Japanese Yen', flag: '🇯🇵'),
     CurrencyInfo(code: 'CNY', symbol: '¥', name: 'Chinese Yuan', flag: '🇨🇳'),
     CurrencyInfo(code: 'CHF', symbol: 'Fr', name: 'Swiss Franc', flag: '🇨🇭'),
-    CurrencyInfo(code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit', flag: '🇲🇾'),
+    CurrencyInfo(
+      code: 'MYR',
+      symbol: 'RM',
+      name: 'Malaysian Ringgit',
+      flag: '🇲🇾',
+    ),
   ];
 
   static CurrencyInfo byCode(String code) =>
@@ -123,14 +143,16 @@ class CurrencyNotifier extends StateNotifier<CurrencyState> {
   static const _ratesTimestampKey = 'exchange_rates_timestamp';
 
   CurrencyNotifier()
-      : super(const CurrencyState(
+    : super(
+        const CurrencyState(
           currency: CurrencyInfo(
             code: 'INR',
             symbol: '₹',
             name: 'Indian Rupee',
             flag: '🇮🇳',
           ),
-        )) {
+        ),
+      ) {
     _initialize();
   }
 
@@ -161,7 +183,8 @@ class CurrencyNotifier extends StateNotifier<CurrencyState> {
     );
 
     // 3. Refresh rates if stale (older than 24h) or not cached
-    final isStale = cachedTimestamp == null ||
+    final isStale =
+        cachedTimestamp == null ||
         DateTime.now().millisecondsSinceEpoch - cachedTimestamp >
             const Duration(hours: 24).inMilliseconds;
 
@@ -193,13 +216,17 @@ class CurrencyNotifier extends StateNotifier<CurrencyState> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final rawRates = data['rates'] as Map<String, dynamic>;
-        final rates = rawRates.map((k, v) => MapEntry(k, (v as num).toDouble()));
+        final rates = rawRates.map(
+          (k, v) => MapEntry(k, (v as num).toDouble()),
+        );
 
         // Cache to prefs
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_ratesKey, jsonEncode(rates));
         await prefs.setInt(
-            _ratesTimestampKey, DateTime.now().millisecondsSinceEpoch);
+          _ratesTimestampKey,
+          DateTime.now().millisecondsSinceEpoch,
+        );
 
         state = state.copyWith(
           rates: rates,
@@ -243,8 +270,7 @@ class CurrencyNotifier extends StateNotifier<CurrencyState> {
 // Providers
 // ─────────────────────────────────────────────
 
-final currencyProvider =
-    StateNotifierProvider<CurrencyNotifier, CurrencyState>(
+final currencyProvider = StateNotifierProvider<CurrencyNotifier, CurrencyState>(
   (ref) => CurrencyNotifier(),
 );
 
