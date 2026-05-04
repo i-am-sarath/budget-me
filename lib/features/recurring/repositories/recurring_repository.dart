@@ -4,16 +4,15 @@ import 'package:agent_money/features/recurring/models/recurring_model.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 
-final recurringRepositoryProvider =
-    Provider((ref) => RecurringRepository());
+final recurringRepositoryProvider = Provider((ref) => RecurringRepository());
 
-final recurringListProvider = StateNotifierProvider<RecurringListNotifier,
-    AsyncValue<List<RecurringModel>>>((ref) {
-  return RecurringListNotifier(
-    ref.read(recurringRepositoryProvider),
-    ref,
-  );
-});
+final recurringListProvider =
+    StateNotifierProvider<
+      RecurringListNotifier,
+      AsyncValue<List<RecurringModel>>
+    >((ref) {
+      return RecurringListNotifier(ref.read(recurringRepositoryProvider), ref);
+    });
 
 class RecurringListNotifier
     extends StateNotifier<AsyncValue<List<RecurringModel>>> {
@@ -21,7 +20,7 @@ class RecurringListNotifier
   final Ref _ref;
 
   RecurringListNotifier(this._repo, this._ref)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     refresh();
   }
 
@@ -80,8 +79,10 @@ class RecurringRepository {
   final DatabaseHelper _db = DatabaseHelper();
 
   Future<List<RecurringModel>> getAll() async {
-    final maps = await _db.queryAll('recurring_transactions',
-        orderBy: 'next_run_date ASC');
+    final maps = await _db.queryAll(
+      'recurring_transactions',
+      orderBy: 'next_run_date ASC',
+    );
     return maps.map(RecurringModel.fromMap).toList();
   }
 
