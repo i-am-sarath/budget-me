@@ -92,6 +92,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     Row(
                       children: [
                         IconButton(
+                          tooltip: 'Previous month',
                           icon: Icon(Icons.chevron_left_rounded, color: tc.onSurfaceVariant),
                           onPressed: () => _changeMonth(-1),
                           padding: EdgeInsets.zero,
@@ -108,6 +109,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
+                          tooltip: 'Next month',
                           icon: Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant),
                           onPressed: () => _changeMonth(1),
                           padding: EdgeInsets.zero,
