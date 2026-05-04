@@ -64,26 +64,41 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: tc.surfaceContainerLow,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete "${account.name}"?',
-            style: GoogleFonts.inter(
-                color: tc.onSurface, fontWeight: FontWeight.w700)),
+        title: Text(
+          'Delete "${account.name}"?',
+          style: GoogleFonts.inter(
+            color: tc.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         content: Text(
-            'This will remove the account. Your transaction history will remain.',
-            style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant, fontSize: 13, height: 1.5)),
+          'This will remove the account. Your transaction history will remain.',
+          style: GoogleFonts.inter(
+            color: tc.onSurfaceVariant,
+            fontSize: 13,
+            height: 1.5,
+          ),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel',
-                  style: GoogleFonts.inter(color: tc.onSurfaceVariant))),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: tc.onSurfaceVariant),
+            ),
+          ),
           TextButton(
             onPressed: () {
               ref.read(accountProvider.notifier).deleteAccount(account.id);
               Navigator.pop(ctx);
             },
-            child: Text('Delete',
-                style: GoogleFonts.inter(
-                    color: tc.expense, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: tc.expense,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -108,13 +123,15 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
             snap: true,
             elevation: 0,
             titleSpacing: 20,
-            title: Text('Accounts',
-                style: GoogleFonts.inter(
-                  color: tc.onSurface,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                  letterSpacing: -0.5,
-                )),
+            title: Text(
+              'Accounts',
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                letterSpacing: -0.5,
+              ),
+            ),
             actions: [
               // Transfer button
               GestureDetector(
@@ -122,7 +139,9 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 6),
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: tc.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(100),
@@ -131,14 +150,20 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.swap_horiz_rounded,
-                          color: tc.onSurface, size: 15),
+                      Icon(
+                        Icons.swap_horiz_rounded,
+                        color: tc.onSurface,
+                        size: 15,
+                      ),
                       const SizedBox(width: 4),
-                      Text('Transfer',
-                          style: GoogleFonts.inter(
-                              color: tc.onSurface,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700)),
+                      Text(
+                        'Transfer',
+                        style: GoogleFonts.inter(
+                          color: tc.onSurface,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -149,7 +174,9 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                 child: Container(
                   margin: const EdgeInsets.only(right: 16),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 6),
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: tc.onSurface,
                     borderRadius: BorderRadius.circular(100),
@@ -159,11 +186,14 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                     children: [
                       Icon(Icons.add_rounded, color: tc.surface, size: 15),
                       const SizedBox(width: 4),
-                      Text('Add',
-                          style: GoogleFonts.inter(
-                              color: tc.surface,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700)),
+                      Text(
+                        'Add',
+                        style: GoogleFonts.inter(
+                          color: tc.surface,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -174,12 +204,10 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
           // ── Content ────────────────────────────────────
           accountsAsync.when(
             loading: () => const SliverFillRemaining(
-              child: Center(
-                  child: CircularProgressIndicator(strokeWidth: 2)),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (e, _) => SliverFillRemaining(
-              child: Center(child: Text('Error: $e')),
-            ),
+            error: (e, _) =>
+                SliverFillRemaining(child: Center(child: Text('Error: $e'))),
             data: (accounts) {
               if (accounts.isEmpty) {
                 return SliverFillRemaining(
@@ -188,17 +216,19 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
               }
 
               // Separate assets from liabilities
-              final assets = accounts.where((a) =>
-                  a.type != AccountType.loan &&
-                  a.type != AccountType.creditCard);
-              final liabilities = accounts.where((a) =>
-                  a.type == AccountType.loan ||
-                  a.type == AccountType.creditCard);
+              final assets = accounts.where(
+                (a) =>
+                    a.type != AccountType.loan &&
+                    a.type != AccountType.creditCard,
+              );
+              final liabilities = accounts.where(
+                (a) =>
+                    a.type == AccountType.loan ||
+                    a.type == AccountType.creditCard,
+              );
 
-              final totalAssets =
-                  assets.fold(0.0, (s, a) => s + a.balance);
-              final totalDebt =
-                  liabilities.fold(0.0, (s, a) => s + a.balance);
+              final totalAssets = assets.fold(0.0, (s, a) => s + a.balance);
+              final totalDebt = liabilities.fold(0.0, (s, a) => s + a.balance);
 
               return SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
@@ -206,68 +236,65 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                   delegate: SliverChildListDelegate([
                     // Net Worth Card
                     _NetWorthCard(
-                            assets: totalAssets,
-                            debt: totalDebt,
-                            currency: currency,
-                            total: accounts.length)
-                        .animate()
-                        .fadeIn(duration: 350.ms)
-                        .slideY(begin: 0.08),
+                      assets: totalAssets,
+                      debt: totalDebt,
+                      currency: currency,
+                      total: accounts.length,
+                    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.08),
 
                     const SizedBox(height: 24),
 
                     // Assets section
                     if (assets.isNotEmpty) ...[
-                      _SectionHeader(
-                          label: 'ACCOUNTS',
-                          count: assets.length),
+                      _SectionHeader(label: 'ACCOUNTS', count: assets.length),
                       const SizedBox(height: 10),
                       ...assets.toList().asMap().entries.map(
-                            (e) => _AccountCard(
-                              account: e.value,
-                              currency: currency,
-                              onEdit: () => _showAddSheet(e.value),
-                              onDelete: () => _confirmDelete(e.value),
-                              onTransfer: () =>
-                                  _showTransferSheet(e.value),
-                            )
+                        (e) =>
+                            _AccountCard(
+                                  account: e.value,
+                                  currency: currency,
+                                  onEdit: () => _showAddSheet(e.value),
+                                  onDelete: () => _confirmDelete(e.value),
+                                  onTransfer: () => _showTransferSheet(e.value),
+                                )
                                 .animate()
                                 .fadeIn(delay: (e.key * 50).ms)
                                 .slideX(begin: 0.05),
-                          ),
+                      ),
                     ],
 
                     // Liabilities section
                     if (liabilities.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       _SectionHeader(
-                          label: 'LOANS & CREDIT',
-                          count: liabilities.length),
+                        label: 'LOANS & CREDIT',
+                        count: liabilities.length,
+                      ),
                       const SizedBox(height: 10),
                       ...liabilities.toList().asMap().entries.map(
-                            (e) => _AccountCard(
-                              account: e.value,
-                              currency: currency,
-                              onEdit: () => _showAddSheet(e.value),
-                              onDelete: () => _confirmDelete(e.value),
-                              onTransfer: () =>
-                                  _showTransferSheet(e.value),
-                              isLiability: true,
-                            )
+                        (e) =>
+                            _AccountCard(
+                                  account: e.value,
+                                  currency: currency,
+                                  onEdit: () => _showAddSheet(e.value),
+                                  onDelete: () => _confirmDelete(e.value),
+                                  onTransfer: () => _showTransferSheet(e.value),
+                                  isLiability: true,
+                                )
                                 .animate()
                                 .fadeIn(
-                                    delay: ((assets.length + e.key) * 50)
-                                        .ms)
+                                  delay: ((assets.length + e.key) * 50).ms,
+                                )
                                 .slideX(begin: 0.05),
-                          ),
+                      ),
                     ],
 
                     const SizedBox(height: 24),
 
                     // Quick Transfer CTA
-                    _TransferCta(onTap: () => _showTransferSheet())
-                        .animate()
-                        .fadeIn(delay: 300.ms),
+                    _TransferCta(
+                      onTap: () => _showTransferSheet(),
+                    ).animate().fadeIn(delay: 300.ms),
                   ]),
                 ),
               );
@@ -290,12 +317,15 @@ class _SectionHeader extends StatelessWidget {
     final tc = AppThemeColors.of(context);
     return Row(
       children: [
-        Text(label,
-            style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5)),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            color: tc.onSurfaceVariant,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.5,
+          ),
+        ),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -303,11 +333,14 @@ class _SectionHeader extends StatelessWidget {
             color: tc.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(100),
           ),
-          child: Text('$count',
-              style: GoogleFonts.inter(
-                  color: tc.onSurfaceVariant,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700)),
+          child: Text(
+            '$count',
+            style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ],
     );
@@ -341,12 +374,15 @@ class _NetWorthCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('NET WORTH',
-              style: GoogleFonts.inter(
-                  color: tc.surface.withOpacity(0.5),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5)),
+          Text(
+            'NET WORTH',
+            style: GoogleFonts.inter(
+              color: tc.surface.withOpacity(0.5),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             currency.format(netWorth),
@@ -395,27 +431,36 @@ class _NetWorthCard extends StatelessWidget {
 class _MiniStat extends StatelessWidget {
   final String label, value;
   final Color color, labelColor;
-  const _MiniStat(
-      {required this.label,
-      required this.value,
-      required this.color,
-      required this.labelColor});
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.labelColor,
+  });
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: GoogleFonts.inter(
-                  color: labelColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          Text(value,
-              style: GoogleFonts.inter(
-                  color: color, fontSize: 14, fontWeight: FontWeight.w700)),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: GoogleFonts.inter(
+          color: labelColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        value,
+        style: GoogleFonts.inter(
+          color: color,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
 }
 
 // ─── Account Card ────────────────────────────────────────────
@@ -465,8 +510,11 @@ class _AccountCard extends StatelessWidget {
                 color: account.type.color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(account.type.icon,
-                  color: account.type.color, size: 22),
+              child: Icon(
+                account.type.icon,
+                color: account.type.color,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
 
@@ -475,18 +523,23 @@ class _AccountCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(account.name,
-                      style: GoogleFonts.inter(
-                          color: tc.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14)),
+                  Text(
+                    account.name,
+                    style: GoogleFonts.inter(
+                      color: tc.onSurface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     account.bankName.isNotEmpty
                         ? '${account.bankName}${account.accountNumber.isNotEmpty ? ' •••• ${account.accountNumber}' : ''}'
                         : account.type.label,
                     style: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant, fontSize: 11),
+                      color: tc.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -507,7 +560,9 @@ class _AccountCard extends StatelessWidget {
                 Text(
                   isLiability ? 'owed' : 'available',
                   style: GoogleFonts.inter(
-                      color: tc.onSurfaceVariant, fontSize: 10),
+                    color: tc.onSurfaceVariant,
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
@@ -518,8 +573,11 @@ class _AccountCard extends StatelessWidget {
               onTap: () => _showMenu(context, tc),
               child: Padding(
                 padding: const EdgeInsets.all(4.0),
-                child: Icon(Icons.more_vert_rounded,
-                    color: tc.onSurfaceVariant, size: 18),
+                child: Icon(
+                  Icons.more_vert_rounded,
+                  color: tc.onSurfaceVariant,
+                  size: 18,
+                ),
               ),
             ),
           ],
@@ -547,11 +605,13 @@ class _AccountCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 4),
               child: Container(
-                  width: 32,
-                  height: 3,
-                  decoration: BoxDecoration(
-                      color: tc.outlineVariant,
-                      borderRadius: BorderRadius.circular(100))),
+                width: 32,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: tc.outlineVariant,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
             ),
             // Account name header
             Padding(
@@ -565,21 +625,31 @@ class _AccountCard extends StatelessWidget {
                       color: account.type.color.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(account.type.icon,
-                        color: account.type.color, size: 18),
+                    child: Icon(
+                      account.type.icon,
+                      color: account.type.color,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(account.name,
-                          style: GoogleFonts.inter(
-                              color: tc.onSurface,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700)),
-                      Text(account.type.label,
-                          style: GoogleFonts.inter(
-                              color: tc.onSurfaceVariant, fontSize: 11)),
+                      Text(
+                        account.name,
+                        style: GoogleFonts.inter(
+                          color: tc.onSurface,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        account.type.label,
+                        style: GoogleFonts.inter(
+                          color: tc.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -643,22 +713,25 @@ class _MenuOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 14),
-              Text(label,
-                  style: GoogleFonts.inter(
-                      color: color,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600)),
-            ],
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 // ─── Transfer CTA ────────────────────────────────────────────
@@ -687,27 +760,40 @@ class _TransferCta extends StatelessWidget {
                 color: tc.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.swap_horiz_rounded,
-                  color: tc.onSurface, size: 20),
+              child: Icon(
+                Icons.swap_horiz_rounded,
+                color: tc.onSurface,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Transfer between accounts',
-                      style: GoogleFonts.inter(
-                          color: tc.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14)),
-                  Text('Move money from one account to another',
-                      style: GoogleFonts.inter(
-                          color: tc.onSurfaceVariant, fontSize: 11)),
+                  Text(
+                    'Transfer between accounts',
+                    style: GoogleFonts.inter(
+                      color: tc.onSurface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    'Move money from one account to another',
+                    style: GoogleFonts.inter(
+                      color: tc.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded,
-                color: tc.onSurfaceVariant, size: 18),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: tc.onSurfaceVariant,
+              size: 18,
+            ),
           ],
         ),
       ),
@@ -734,36 +820,48 @@ class _EmptyState extends StatelessWidget {
               color: tc.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(Icons.account_balance_wallet_rounded,
-                color: tc.onSurfaceVariant, size: 32),
+            child: Icon(
+              Icons.account_balance_wallet_rounded,
+              color: tc.onSurfaceVariant,
+              size: 32,
+            ),
           ),
           const SizedBox(height: 16),
-          Text('No accounts yet',
-              style: GoogleFonts.inter(
-                  color: tc.onSurface,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700)),
+          Text(
+            'No accounts yet',
+            style: GoogleFonts.inter(
+              color: tc.onSurface,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
-              'Add bank accounts, cash, loan accounts\nand track your net worth in one place.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                  color: tc.onSurfaceVariant, fontSize: 13, height: 1.5)),
+            'Add bank accounts, cash, loan accounts\nand track your net worth in one place.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
           const SizedBox(height: 24),
           GestureDetector(
             onTap: onAdd,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
                 color: tc.onSurface,
                 borderRadius: BorderRadius.circular(100),
               ),
-              child: Text('Add Account',
-                  style: GoogleFonts.inter(
-                      color: tc.surface,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                'Add Account',
+                style: GoogleFonts.inter(
+                  color: tc.surface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ],
