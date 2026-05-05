@@ -67,8 +67,10 @@ class _MagicFabState extends ConsumerState<MagicFab>
 
     HapticFeedback.heavyImpact();
     final dir = await getTemporaryDirectory();
-    _audioPath =
-        p.join(dir.path, 'tx_audio_${DateTime.now().millisecondsSinceEpoch}.m4a');
+    _audioPath = p.join(
+      dir.path,
+      'tx_audio_${DateTime.now().millisecondsSinceEpoch}.m4a',
+    );
 
     await _audioRecorder.start(
       const RecordConfig(encoder: AudioEncoder.aacLc),
@@ -121,21 +123,29 @@ class _MagicFabState extends ConsumerState<MagicFab>
         ),
         content: Text(
           'Free users can use voice input once per day.\n\nUpgrade to Pro for unlimited voice logging.',
-          style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+          style: GoogleFonts.inter(
+            color: tc.onSurfaceVariant,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Maybe later',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+            child: Text(
+              'Maybe later',
+              style: GoogleFonts.inter(color: tc.onSurfaceVariant),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               showPaywall(context);
             },
-            child: Text('Upgrade to Pro',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Upgrade to Pro',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -156,9 +166,7 @@ class _MagicFabState extends ConsumerState<MagicFab>
         mainAxisSize: MainAxisSize.min,
         children: [
           // Pulse rings when recording
-          if (_isRecording) ...[
-            _PulseRing(controller: _pulseController),
-          ],
+          if (_isRecording) ...[_PulseRing(controller: _pulseController)],
 
           // Main FAB row
           Row(
@@ -170,7 +178,96 @@ class _MagicFabState extends ConsumerState<MagicFab>
                 opacity: _isRecording ? 0 : 1,
                 child: GestureDetector(
                   onTap: _isRecording ? null : _showManualEntry,
-                  child: Builder(builder: (ctx) {
+                  child: Builder(
+                    builder: (ctx) {
+                      final tc = AppThemeColors.of(ctx);
+                      return Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: tc.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(color: tc.outlineVariant),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.edit_outlined,
+                              color: tc.onSurfaceVariant,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Manual',
+                              style: GoogleFonts.inter(
+                                color: tc.onSurfaceVariant,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Main voice/stop button
+              Builder(
+                builder: (ctx) {
+                  final tc = AppThemeColors.of(ctx);
+                  return GestureDetector(
+                    onTap: _handleTap,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.elasticOut,
+                      width: _isRecording ? 80 : 68,
+                      height: _isRecording ? 80 : 68,
+                      decoration: BoxDecoration(
+                        color: _isRecording ? tc.expense : tc.onSurface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_isRecording ? tc.expense : tc.onSurface)
+                                .withOpacity(0.25),
+                            blurRadius: 16,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: _isRecording
+                            ? Icon(
+                                Icons.stop_rounded,
+                                key: const ValueKey('stop'),
+                                color: tc.surface,
+                                size: 32,
+                              )
+                            : Icon(
+                                Icons.mic_rounded,
+                                key: const ValueKey('mic'),
+                                color: tc.surface,
+                                size: 30,
+                              ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(width: 16),
+
+              // Right side spacer (mirror of Manual button for symmetry)
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: _isRecording ? 0 : 1,
+                child: Builder(
+                  builder: (ctx) {
                     final tc = AppThemeColors.of(ctx);
                     return Container(
                       height: 44,
@@ -183,11 +280,14 @@ class _MagicFabState extends ConsumerState<MagicFab>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.edit_outlined,
-                              color: tc.onSurfaceVariant, size: 16),
+                          Icon(
+                            Icons.history_rounded,
+                            color: tc.onSurfaceVariant,
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
                           Text(
-                            'Manual',
+                            'History',
                             style: GoogleFonts.inter(
                               color: tc.onSurfaceVariant,
                               fontSize: 12,
@@ -197,84 +297,8 @@ class _MagicFabState extends ConsumerState<MagicFab>
                         ],
                       ),
                     );
-                  }),
+                  },
                 ),
-              ),
-              const SizedBox(width: 16),
-
-              // Main voice/stop button
-              Builder(builder: (ctx) {
-                final tc = AppThemeColors.of(ctx);
-                return GestureDetector(
-                  onTap: _handleTap,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.elasticOut,
-                    width: _isRecording ? 80 : 68,
-                    height: _isRecording ? 80 : 68,
-                    decoration: BoxDecoration(
-                      color: _isRecording ? tc.expense : tc.onSurface,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (_isRecording ? tc.expense : tc.onSurface)
-                              .withOpacity(0.25),
-                          blurRadius: 16,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: _isRecording
-                          ? Icon(Icons.stop_rounded,
-                              key: const ValueKey('stop'),
-                              color: tc.surface,
-                              size: 32)
-                          : Icon(Icons.mic_rounded,
-                              key: const ValueKey('mic'),
-                              color: tc.surface,
-                              size: 30),
-                    ),
-                  ),
-                );
-              }),
-
-              const SizedBox(width: 16),
-
-              // Right side spacer (mirror of Manual button for symmetry)
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: _isRecording ? 0 : 1,
-                child: Builder(builder: (ctx) {
-                  final tc = AppThemeColors.of(ctx);
-                  return Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: tc.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: tc.outlineVariant),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.history_rounded,
-                            color: tc.onSurfaceVariant, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          'History',
-                          style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
               ),
             ],
           ),
@@ -282,17 +306,19 @@ class _MagicFabState extends ConsumerState<MagicFab>
           // "Recording..." label
           if (_isRecording) ...[
             const SizedBox(height: 12),
-            Builder(builder: (ctx) {
-              final tc = AppThemeColors.of(ctx);
-              return Text(
-                'Tap to stop',
-                style: GoogleFonts.inter(
-                  color: tc.expense,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ).animate(onPlay: (c) => c.repeat()).fadeIn().then().fadeOut();
-            }),
+            Builder(
+              builder: (ctx) {
+                final tc = AppThemeColors.of(ctx);
+                return Text(
+                  'Tap to stop',
+                  style: GoogleFonts.inter(
+                    color: tc.expense,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ).animate(onPlay: (c) => c.repeat()).fadeIn().then().fadeOut();
+              },
+            ),
           ],
         ],
       ),
