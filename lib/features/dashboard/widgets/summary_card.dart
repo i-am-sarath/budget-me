@@ -19,60 +19,105 @@ class SummaryCard extends StatelessWidget {
     final now = DateTime.now();
     final thisMonth = transactions.where(
         (t) => t.date.month == now.month && t.date.year == now.year);
-    final income = thisMonth
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
     final expense = thisMonth
         .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (s, t) => s + t.amount);
+    final income = thisMonth
+        .where((t) => t.type == TransactionType.income)
         .fold(0.0, (s, t) => s + t.amount);
     final invested = thisMonth
         .where((t) => t.type == TransactionType.investment)
         .fold(0.0, (s, t) => s + t.amount);
-    final lend = thisMonth
+
+    // Outstanding lent/borrowed — all-time running totals
+    final totalLent = transactions
         .where((t) => t.type == TransactionType.lend)
         .fold(0.0, (s, t) => s + t.amount);
+    final totalLentReturned = transactions
+        .where((t) => t.type == TransactionType.lendReturn)
+        .fold(0.0, (s, t) => s + t.amount);
+    final outstandingLent =
+        (totalLent - totalLentReturned).clamp(0.0, double.infinity);
 
-    return Row(
+    final totalBorrowed = transactions
+        .where((t) => t.type == TransactionType.borrow)
+        .fold(0.0, (s, t) => s + t.amount);
+    final totalBorrowReturned = transactions
+        .where((t) => t.type == TransactionType.borrowReturn)
+        .fold(0.0, (s, t) => s + t.amount);
+    final outstandingBorrowed =
+        (totalBorrowed - totalBorrowReturned).clamp(0.0, double.infinity);
+
+    final showLendBorrow = outstandingLent > 0 || outstandingBorrowed > 0;
+    final tc = AppThemeColors.of(context);
+
+    return Column(
       children: [
-        Expanded(
-          flex: 3,
-          child: _BentoItem(
-            label: 'Spent',
-            amount: expense,
-            currency: currency,
-            accentColor: AppThemeColors.of(context).expense,
+        // Row 1 — always visible: Spent | Earned | Invested
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _BentoItem(
+                  label: 'Spent',
+                  amount: expense,
+                  currency: currency,
+                  accentColor: tc.expense,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _BentoItem(
+                  label: 'Earned',
+                  amount: income,
+                  currency: currency,
+                  accentColor: tc.income,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _BentoItem(
+                  label: 'Invested',
+                  amount: invested,
+                  currency: currency,
+                  accentColor: tc.investment,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          flex: 3,
-          child: _BentoItem(
-            label: 'Earned',
-            amount: income,
-            currency: currency,
-            accentColor: AppThemeColors.of(context).income,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          flex: 3,
-          child: _BentoItem(
-            label: 'Invested',
-            amount: invested,
-            currency: currency,
-            accentColor: AppThemeColors.of(context).investment,
-          ),
-        ),
-        if (lend > 0) ...[
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 2,
-            child: _BentoItem(
-              label: 'Lent',
-              amount: lend.abs(),
-              currency: currency,
-              accentColor: AppThemeColors.of(context).lend,
-              compact: true,
+
+        // Row 2 — Lent | Borrowed | (spacer for alignment)
+        if (showLendBorrow) ...[
+          const SizedBox(height: 10),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _BentoItem(
+                    label: 'Lent Out',
+                    amount: outstandingLent,
+                    currency: currency,
+                    accentColor: tc.lend,
+                    sublabel: 'outstanding',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _BentoItem(
+                    label: 'Borrowed',
+                    amount: outstandingBorrowed,
+                    currency: currency,
+                    accentColor: tc.borrow,
+                    sublabel: 'outstanding',
+                  ),
+                ),
+                // Third column spacer keeps same item width as row above
+                const SizedBox(width: 10),
+                Expanded(child: const SizedBox()),
+              ],
             ),
           ),
         ],
@@ -86,14 +131,14 @@ class _BentoItem extends StatelessWidget {
   final double amount;
   final CurrencyState currency;
   final Color accentColor;
-  final bool compact;
+  final String? sublabel;
 
   const _BentoItem({
     required this.label,
     required this.amount,
     required this.currency,
     required this.accentColor,
-    this.compact = false,
+    this.sublabel,
   });
 
   @override
@@ -108,8 +153,8 @@ class _BentoItem extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Accent dot
           Container(
             width: 6,
             height: 6,
@@ -130,16 +175,27 @@ class _BentoItem extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            compact ? _compactFormat(amount, currency) : currency.format(amount),
+            _compactFormat(amount, currency),
             style: GoogleFonts.inter(
               color: tc.onSurface,
-              fontSize: compact ? 13 : 14,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (sublabel != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              sublabel!,
+              style: GoogleFonts.inter(
+                color: tc.onSurfaceVariant.withOpacity(0.6),
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -148,7 +204,9 @@ class _BentoItem extends StatelessWidget {
   String _compactFormat(double value, CurrencyState c) {
     if (value >= 1000000) {
       return '${c.currency.symbol}${(value / 1000000).toStringAsFixed(1)}M';
-    } else if (value >= 1000) {
+    } else if (value >= 100000) {
+      return '${c.currency.symbol}${(value / 1000).toStringAsFixed(0)}K';
+    } else if (value >= 10000) {
       return '${c.currency.symbol}${(value / 1000).toStringAsFixed(1)}K';
     }
     return c.format(value);

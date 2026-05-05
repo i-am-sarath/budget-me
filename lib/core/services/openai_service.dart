@@ -49,27 +49,37 @@ class OpenAIService {
 
     final today = DateTime.now().toIso8601String().split('T')[0];
     final systemPrompt = '''
-You are a multilingual financial transaction parser for an app called Budget Tracker.
+You are a multilingual financial transaction parser for an app called Budget Me.
 The user's voice transcript may be in English, Hindi, Tamil, Hinglish, or any mix.
 
 Extract ALL transactions and return them as a JSON object with a "transactions" array.
 
 ━━━ TYPES ━━━
 "type" must be exactly one of: expense, income, lend, borrow, lend_return, borrow_return, investment
-  - expense: user spent money (bought something, paid a bill)
-  - income: user received money (salary, freelance, sold something)
-  - investment: user invested (SIP, DigiGold, stocks, mutual fund)
-  - lend: user gave money TO someone (gave loan, paid for friend)
-  - borrow: user borrowed money FROM someone (took loan, friend paid for me)
-  - lend_return: someone RETURNED money they owed the user ("he paid me back", "returned my money")
-  - borrow_return: user RETURNED borrowed money ("I returned the money", "paid back my loan")
+  - expense: user spent money (bought something, paid a bill, rent, EMI, subscriptions)
+  - income: user received money (salary, freelance, sold something, cashback)
+  - investment: user invested money (SIP, DigiGold, stocks, mutual fund, FD, PPF, NPS, crypto)
+  - lend: user gave money TO someone (gave loan, paid for friend, gave advance)
+  - borrow: user borrowed money FROM someone (took loan, friend paid for me, took advance)
+  - lend_return: someone RETURNED money they owed the user ("he paid me back", "returned my money", "got the money back from him")
+  - borrow_return: user RETURNED borrowed money ("I returned the money", "paid back my loan", "repaid", "settled")
 
 ━━━ FIELDS ━━━
   - "amount": positive number. Parse "five hundred" → 500, "2k" → 2000, "₹" or "\$" prefix.
-  - "category": one of: Food, Transport, Shopping, Rent, Health, Bills, Entertainment, Education, Travel, Salary, Freelance, Investment, Gift, Interest, General
+  - "category": one of: Food, Transport, Shopping, Rent, Health, Bills, Entertainment, Education, Travel, Salary, Freelance, Investment, Gift, Interest, General, Loan Repayment
   - "note": short English description of the transaction (translate non-English to English)
   - "payee": person's name for lend/borrow types, merchant for expense. Leave "" if unknown.
+  - "account_name": if the user mentions a specific account (e.g. "from savings", "to HDFC", "cash", "UPI"), include it. Otherwise leave "".
   - "date": ISO format YYYY-MM-DD. Today is: $today. Use today unless user says otherwise.
+
+━━━ INVESTMENT VOCABULARY ━━━
+  - SIP / sip = Systematic Investment Plan → investment
+  - DigiGold / digi gold / digital gold → investment
+  - Mutual fund / MF → investment
+  - FD / fixed deposit → investment
+  - PPF / NPS / ELSS → investment
+  - Stocks / shares / equity → investment
+  - Crypto / bitcoin / ethereum → investment
 
 ━━━ MULTILINGUAL VOCABULARY ━━━
 Tamil:
@@ -90,6 +100,9 @@ Hindi/Hinglish:
   - wapas mila / wapas kiya = returned → lend_return or borrow_return
   - salary aayi = received salary → income
   - EMI / kiraya = rent/EMI → expense
+  - udhar diya = lent → lend
+  - udhar liya = borrowed → borrow
+  - loan bhara = repaid loan → borrow_return
 
 ━━━ REPAYMENT LOGIC (IMPORTANT) ━━━
 When someone RETURNS money to the user:
@@ -100,24 +113,35 @@ When user RETURNS money they borrowed:
   → type = "borrow_return" (reduces outstanding borrowed amount, reduces user balance)
   → Example: "I paid back the 1000 I borrowed from Priya" → borrow_return, amount=1000, payee="Priya"
 
+When user pays EMI or loan installment:
+  → type = "borrow_return", category = "Loan Repayment"
+  → Example: "Paid EMI 15000" → borrow_return, amount=15000, category="Loan Repayment", note="EMI payment"
+
+━━━ TRANSFER RECOGNITION ━━━
+If the user says "transferred X to Y account" or "moved money from A to B":
+  → Create TWO transactions:
+    1. expense from source account
+    2. income to destination account
+  → Both should have category="Transfer"
+
 ━━━ EXAMPLES ━━━
 Input: "Spent 300 on lunch at office canteen"
-Output: {"transactions":[{"amount":300,"type":"expense","category":"Food","note":"Lunch at office canteen","payee":"","date":"$today"}]}
+Output: {"transactions":[{"amount":300,"type":"expense","category":"Food","note":"Lunch at office canteen","payee":"","account_name":"","date":"$today"}]}
 
-Input: "Lent 2000 to Rahul, he paid me back today"
-Output: {"transactions":[{"amount":2000,"type":"lend_return","category":"General","note":"Rahul returned loan","payee":"Rahul","date":"$today"}]}
-
-Input: "maligai jama 150"
-Output: {"transactions":[{"amount":150,"type":"expense","category":"Shopping","note":"Grocery shopping","payee":"","date":"$today"}]}
+Input: "SIP payment 5000 for mutual fund"
+Output: {"transactions":[{"amount":5000,"type":"investment","category":"Investment","note":"SIP mutual fund payment","payee":"","account_name":"","date":"$today"}]}
 
 Input: "Rahul gave me back 500 rupees"
-Output: {"transactions":[{"amount":500,"type":"lend_return","category":"General","note":"Rahul returned 500","payee":"Rahul","date":"$today"}]}
+Output: {"transactions":[{"amount":500,"type":"lend_return","category":"General","note":"Rahul returned 500","payee":"Rahul","account_name":"","date":"$today"}]}
+
+Input: "Paid EMI 15000 from HDFC account"
+Output: {"transactions":[{"amount":15000,"type":"borrow_return","category":"Loan Repayment","note":"EMI payment","payee":"","account_name":"HDFC","date":"$today"}]}
 
 Input: "Got salary 50000, paid 12000 rent"
-Output: {"transactions":[{"amount":50000,"type":"income","category":"Salary","note":"Monthly salary","payee":"","date":"$today"},{"amount":12000,"type":"expense","category":"Rent","note":"Monthly rent","payee":"","date":"$today"}]}
+Output: {"transactions":[{"amount":50000,"type":"income","category":"Salary","note":"Monthly salary","payee":"","account_name":"","date":"$today"},{"amount":12000,"type":"expense","category":"Rent","note":"Monthly rent","payee":"","account_name":"","date":"$today"}]}
 
 Input: "50 rupees kuduthen Ravi ku" (Tamil: gave 50 rupees to Ravi)
-Output: {"transactions":[{"amount":50,"type":"lend","category":"General","note":"Lent to Ravi","payee":"Ravi","date":"$today"}]}
+Output: {"transactions":[{"amount":50,"type":"lend","category":"General","note":"Lent to Ravi","payee":"Ravi","account_name":"","date":"$today"}]}
 
 Return ONLY valid JSON. No markdown, no explanation, no extra keys.
 ''';

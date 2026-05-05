@@ -11,11 +11,11 @@ import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
 import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
 import 'package:agent_money/features/dashboard/widgets/summary_card.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
-import 'package:agent_money/features/history/history_screen.dart';
 import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
 import 'package:agent_money/features/settings/settings_screen.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:agent_money/features/analytics/analytics_screen.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -153,11 +153,26 @@ class _NavItem extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Home Tab
+// Home Tab — stateful for month nav + filter
 // ─────────────────────────────────────────────
 
-class _HomeTab extends ConsumerWidget {
+class _HomeTab extends ConsumerStatefulWidget {
   const _HomeTab();
+
+  @override
+  ConsumerState<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends ConsumerState<_HomeTab> {
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  TransactionType? _filter;
+
+  void _changeMonth(int offset) {
+    setState(() {
+      _selectedMonth =
+          DateTime(_selectedMonth.year, _selectedMonth.month + offset);
+    });
+  }
 
   void _showMoreMenu(BuildContext context, AppThemeColors tc) {
     showModalBottomSheet(
@@ -184,21 +199,13 @@ class _HomeTab extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             _MoreMenuItem(
-              icon: Icons.history_rounded,
-              label: 'Transaction History',
-              tc: tc,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
-              },
-            ),
-            _MoreMenuItem(
               icon: Icons.repeat_rounded,
               label: 'Recurring Payments',
               tc: tc,
               onTap: () {
                 Navigator.pop(ctx);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const RecurringScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RecurringScreen()));
               },
             ),
             _MoreMenuItem(
@@ -207,7 +214,8 @@ class _HomeTab extends ConsumerWidget {
               tc: tc,
               onTap: () {
                 Navigator.pop(ctx);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
               },
             ),
             const SizedBox(height: 20),
@@ -218,7 +226,7 @@ class _HomeTab extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionListProvider);
     final currency = ref.watch(currencyProvider);
     final sub = ref.watch(subscriptionProvider);
@@ -234,7 +242,6 @@ class _HomeTab extends ConsumerWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // App Bar
         SliverAppBar(
           backgroundColor: tc.surface,
           floating: true,
@@ -251,7 +258,6 @@ class _HomeTab extends ConsumerWidget {
             ),
           ),
           actions: [
-            // Theme toggle
             IconButton(
               onPressed: () => ref.read(themeProvider.notifier).toggle(),
               icon: Icon(
@@ -260,7 +266,6 @@ class _HomeTab extends ConsumerWidget {
                 size: 20,
               ),
             ),
-            // More menu
             IconButton(
               onPressed: () => _showMoreMenu(context, tc),
               icon: Icon(Icons.more_horiz_rounded, color: tc.onSurface),
@@ -285,7 +290,7 @@ class _HomeTab extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // ─── Quick Stats (Summary) ─────────────────
+              // ─── Quick Stats ───────────────────────────
               transactionsAsync.when(
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
@@ -335,9 +340,12 @@ class _HomeTab extends ConsumerWidget {
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: accounts.length + 1,
-                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
                           itemBuilder: (ctx, i) {
-                            if (i == accounts.length) return _AddAccountMiniCard();
+                            if (i == accounts.length) {
+                              return _AddAccountMiniCard();
+                            }
                             return _AccountMiniCard(
                               account: accounts[i],
                               currency: currency,
@@ -351,28 +359,53 @@ class _HomeTab extends ConsumerWidget {
                 },
               ),
 
-              // ─── Recent Transactions ──────────────────
-              _SectionHeader(label: 'RECENT LOGS'),
+              // ─── Month Navigation ─────────────────────
+              _buildMonthNav(tc),
               const SizedBox(height: 12),
 
+              // ─── Filter Chips ──────────────────────────
+              _buildFilterChips(tc),
+              const SizedBox(height: 14),
+
+              // ─── Transactions for selected month ───────
               transactionsAsync.when(
                 loading: () => const _TransactionsSkeleton(),
                 error: (e, _) => Center(
                   child: Text('Error: $e',
-                      style: TextStyle(color: AppThemeColors.of(context).expense)),
+                      style: TextStyle(
+                          color: AppThemeColors.of(context).expense)),
                 ),
                 data: (txs) {
-                  final recent = txs.take(6).toList();
-                  if (recent.isEmpty) return _EmptyTransactions();
+                  var filtered = txs
+                      .where((t) =>
+                          t.date.year == _selectedMonth.year &&
+                          t.date.month == _selectedMonth.month)
+                      .toList();
+                  if (_filter != null) {
+                    filtered =
+                        filtered.where((t) => t.type == _filter).toList();
+                  }
+                  if (filtered.isEmpty) return _EmptyTransactions();
                   return Column(
-                    children: recent.asMap().entries.map((e) {
-                      return TransactionTile(
-                        transaction: e.value,
-                        currency: currency,
-                      )
-                          .animate()
-                          .fadeIn(duration: 300.ms, delay: (e.key * 50).ms)
-                          .slideY(begin: 0.1, end: 0);
+                    children: filtered.asMap().entries.map((e) {
+                      return GestureDetector(
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) =>
+                              ManualEntrySheet(prefill: e.value),
+                        ),
+                        child: TransactionTile(
+                          transaction: e.value,
+                          currency: currency,
+                        )
+                            .animate()
+                            .fadeIn(
+                                duration: 300.ms,
+                                delay: (e.key * 30).ms)
+                            .slideY(begin: 0.08, end: 0),
+                      );
                     }).toList(),
                   );
                 },
@@ -381,6 +414,102 @@ class _HomeTab extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMonthNav(AppThemeColors tc) {
+    final isCurrentMonth = _selectedMonth.year == DateTime.now().year &&
+        _selectedMonth.month == DateTime.now().month;
+    return Row(
+      children: [
+        _SectionHeader(label: 'LOGS'),
+        const Spacer(),
+        GestureDetector(
+          onTap: () => _changeMonth(-1),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.chevron_left_rounded,
+                color: tc.onSurfaceVariant, size: 18),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          DateFormat('MMM yyyy').format(_selectedMonth),
+          style: GoogleFonts.inter(
+            color: tc.onSurface,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: isCurrentMonth ? null : () => _changeMonth(1),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isCurrentMonth
+                  ? tc.surfaceContainerHigh.withOpacity(0.4)
+                  : tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.chevron_right_rounded,
+                color: isCurrentMonth
+                    ? tc.onSurfaceVariant.withOpacity(0.3)
+                    : tc.onSurfaceVariant,
+                size: 18),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChips(AppThemeColors tc) {
+    final filters = <(TransactionType?, String)>[
+      (null, 'All'),
+      (TransactionType.income, 'Income'),
+      (TransactionType.expense, 'Expense'),
+      (TransactionType.investment, 'Invest'),
+      (TransactionType.lend, 'Lent'),
+      (TransactionType.lendReturn, 'Got Back'),
+      (TransactionType.borrow, 'Borrowed'),
+      (TransactionType.borrowReturn, 'Repaid'),
+    ];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filters.map((f) {
+          final isActive = _filter == f.$1;
+          return GestureDetector(
+            onTap: () => setState(() => _filter = f.$1),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: const EdgeInsets.only(right: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: isActive ? tc.onSurface : tc.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(100),
+                border: Border.all(
+                  color: isActive ? Colors.transparent : tc.outlineVariant,
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                f.$2,
+                style: GoogleFonts.inter(
+                  color: isActive ? tc.surface : tc.onSurfaceVariant,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -417,7 +546,8 @@ class _MoreMenuItem extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
-      trailing: Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant, size: 20),
+      trailing:
+          Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant, size: 20),
       onTap: onTap,
     );
   }
@@ -449,10 +579,7 @@ class _BalanceHero extends StatelessWidget {
     final expense = thisMonth
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (s, t) => s + t.amount);
-    final invested = thisMonth
-        .where((t) => t.type == TransactionType.investment)
-        .fold(0.0, (s, t) => s + t.amount);
-    final balance = income - expense - invested;
+    final balance = thisMonth.fold(0.0, (s, t) => s + t.balanceDelta);
 
     final tc = AppThemeColors.of(context);
 
@@ -572,16 +699,28 @@ class _AccountMiniCard extends StatelessWidget {
 
   const _AccountMiniCard({required this.account, required this.currency});
 
+  bool get _isLiability =>
+      account.type == AccountType.loan ||
+      account.type == AccountType.creditCard;
+
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
+    final balanceColor = _isLiability ? tc.expense : tc.onSurface;
+    final displayBalance = account.balance.abs();
+
     return Container(
       width: 140,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: tc.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: tc.outlineVariant, width: 0.5),
+        border: Border.all(
+          color: _isLiability
+              ? tc.expense.withOpacity(0.3)
+              : tc.outlineVariant,
+          width: _isLiability ? 1 : 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,8 +728,7 @@ class _AccountMiniCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(account.displayIcon,
-                  color: account.type.color, size: 16),
+              Icon(account.displayIcon, color: account.type.color, size: 16),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -605,13 +743,29 @@ class _AccountMiniCard extends StatelessWidget {
               ),
             ],
           ),
-          Text(
-            currency.format(account.balance),
-            style: GoogleFonts.inter(
-              color: tc.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isLiability
+                    ? '−${currency.format(displayBalance)}'
+                    : currency.format(displayBalance),
+                style: GoogleFonts.inter(
+                  color: balanceColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (_isLiability)
+                Text(
+                  'owed',
+                  style: GoogleFonts.inter(
+                    color: tc.expense.withOpacity(0.7),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -782,8 +936,8 @@ class _BudgetCard extends StatelessWidget {
     final fraction = (spent / budget.monthlyBudget).clamp(0.0, 1.0);
     final isOver = spent > budget.monthlyBudget;
     final remaining = budget.monthlyBudget - spent;
-    final daysInMonth = DateUtils.getDaysInMonth(
-        DateTime.now().year, DateTime.now().month);
+    final daysInMonth =
+        DateUtils.getDaysInMonth(DateTime.now().year, DateTime.now().month);
     final dayOfMonth = DateTime.now().day;
     final expectedFraction = dayOfMonth / daysInMonth;
     final isOnTrack = fraction <= expectedFraction + 0.05;
@@ -794,9 +948,7 @@ class _BudgetCard extends StatelessWidget {
         color: tc.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isOver
-              ? tc.expense.withOpacity(0.3)
-              : tc.outlineVariant,
+          color: isOver ? tc.expense.withOpacity(0.3) : tc.outlineVariant,
           width: isOver ? 1.5 : 0.5,
         ),
       ),
@@ -826,7 +978,8 @@ class _BudgetCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: isOver
                       ? tc.expense.withOpacity(0.12)
@@ -855,8 +1008,6 @@ class _BudgetCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(100),
             child: LinearProgressIndicator(
@@ -868,14 +1019,15 @@ class _BudgetCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Spent: ${currency.format(spent)}',
                 style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600),
+                    color: tc.onSurfaceVariant,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600),
               ),
               Text(
                 isOver

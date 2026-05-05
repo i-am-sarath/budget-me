@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
+import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -100,6 +104,14 @@ class SettingsScreen extends ConsumerWidget {
                 _SubscriptionManagementCard(subscription: subscription)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 220.ms),
+                const SizedBox(height: 28),
+
+                // Danger zone
+                _SectionLabel('DANGER ZONE'),
+                const SizedBox(height: 10),
+                _ResetDataCard()
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 260.ms),
               ]),
             ),
           ),
@@ -187,7 +199,7 @@ class _SubscriptionCard extends ConsumerWidget {
                 Text(
                   isPro
                       ? 'Unlimited · Cloud sync active'
-                      : '1 voice log/day · Local only',
+                      : '${SubscriptionState.freeVoiceLogLimit} voice logs/month · Local only',
                   style: GoogleFonts.inter(
                     color: isPro
                         ? tc.surface.withOpacity(0.6)
@@ -421,9 +433,9 @@ class _VoiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPro = subscription.isPro;
-    final used = subscription.voiceLogsUsedToday;
+    final used = subscription.voiceLogsUsedThisMonth;
     final max = SubscriptionState.freeVoiceLogLimit;
-    final progress = isPro ? 1.0 : (used / max).clamp(0.0, 1.0);
+    final progress = isPro ? 1.0 : (max > 0 ? (used / max).clamp(0.0, 1.0) : 0.0);
     final tc = AppThemeColors.of(context);
 
     return Container(
@@ -443,7 +455,7 @@ class _VoiceCard extends StatelessWidget {
               Text(
                 isPro
                     ? 'Unlimited voice logs'
-                    : 'Today: $used / $max',
+                    : 'This month: $used / $max',
                 style: GoogleFonts.inter(
                   color: tc.onSurface,
                   fontWeight: FontWeight.w600,
@@ -468,8 +480,8 @@ class _VoiceCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               subscription.canUseVoice
-                  ? 'Voice input available today'
-                  : 'Limit reached. Resets tomorrow.',
+                  ? '${subscription.voiceLogsRemaining} voice logs remaining this month'
+                  : 'Limit reached. Resets next month.',
               style: GoogleFonts.inter(
                 color: subscription.canUseVoice
                     ? tc.onSurfaceVariant
@@ -825,4 +837,130 @@ class _SettingsTile extends StatelessWidget {
           ),
         ),
       );
+}
+
+// ─────────────────────────────────────────────
+// Reset All Data Card
+// ─────────────────────────────────────────────
+
+class _ResetDataCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.expense.withOpacity(0.3), width: 0.5),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _confirmReset(context, ref, tc),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: tc.expense.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.delete_forever_rounded,
+                    color: tc.expense, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Reset All Data',
+                        style: GoogleFonts.inter(
+                            color: tc.expense,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14)),
+                    Text('Delete all transactions, accounts & recurring rules',
+                        style: GoogleFonts.inter(
+                            color: tc.onSurfaceVariant, fontSize: 11)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: tc.expense.withOpacity(0.6), size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmReset(
+      BuildContext context, WidgetRef ref, AppThemeColors tc) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: tc.surfaceContainerHigh,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Reset all data?',
+          style: GoogleFonts.inter(
+              color: tc.onSurface, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'This will permanently delete all your transactions, accounts, and recurring rules. This cannot be undone.',
+          style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: tc.expense,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _doReset(context, ref);
+            },
+            child: Text('Reset Everything',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doReset(BuildContext context, WidgetRef ref) async {
+    try {
+      await DatabaseHelper().clearAllData();
+
+      // Clear voice log usage counter
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('voice_logs_month');
+      await prefs.remove('voice_logs_month_id');
+
+      // Refresh all providers so UI updates immediately
+      ref.invalidate(transactionListProvider);
+      ref.invalidate(accountProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All data has been reset.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reset failed: $e')),
+        );
+      }
+    }
+  }
 }

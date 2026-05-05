@@ -16,7 +16,7 @@ enum SubscriptionTier { free, pro }
 
 class SubscriptionState {
   final SubscriptionTier tier;
-  final int voiceLogsUsedToday;
+  final int voiceLogsUsedThisMonth;
   final DateTime? lastVoiceLogDate;
   final bool isLoading;
   final Package? monthlyPackage;
@@ -25,7 +25,7 @@ class SubscriptionState {
 
   const SubscriptionState({
     this.tier = SubscriptionTier.free,
-    this.voiceLogsUsedToday = 0,
+    this.voiceLogsUsedThisMonth = 0,
     this.lastVoiceLogDate,
     this.isLoading = false,
     this.monthlyPackage,
@@ -35,13 +35,12 @@ class SubscriptionState {
 
   bool get isPro => tier == SubscriptionTier.pro;
 
-  /// Voice logging is a Pro-only feature.
-  /// Free users see 0 voice logs — the mic button shows the paywall.
-  static const int freeVoiceLogLimit = 0;
+  /// Free users get 100 voice logs per month.
+  static const int freeVoiceLogLimit = 100;
 
-  bool get canUseVoice => isPro;
+  bool get canUseVoice => isPro || voiceLogsUsedThisMonth < freeVoiceLogLimit;
 
-  int get voiceLogsRemainingToday => isPro ? -1 : 0; // -1 = unlimited sentinel
+  int get voiceLogsRemaining => isPro ? -1 : (freeVoiceLogLimit - voiceLogsUsedThisMonth).clamp(0, freeVoiceLogLimit); // -1 = unlimited sentinel
 
   bool get hasCloudSync => isPro;
 
@@ -49,7 +48,7 @@ class SubscriptionState {
 
   SubscriptionState copyWith({
     SubscriptionTier? tier,
-    int? voiceLogsUsedToday,
+    int? voiceLogsUsedThisMonth,
     DateTime? lastVoiceLogDate,
     bool? isLoading,
     Package? monthlyPackage,
@@ -58,7 +57,7 @@ class SubscriptionState {
   }) {
     return SubscriptionState(
       tier: tier ?? this.tier,
-      voiceLogsUsedToday: voiceLogsUsedToday ?? this.voiceLogsUsedToday,
+      voiceLogsUsedThisMonth: voiceLogsUsedThisMonth ?? this.voiceLogsUsedThisMonth,
       lastVoiceLogDate: lastVoiceLogDate ?? this.lastVoiceLogDate,
       isLoading: isLoading ?? this.isLoading,
       monthlyPackage: monthlyPackage ?? this.monthlyPackage,
@@ -90,8 +89,8 @@ Future<void> initRevenueCat() async {
 // ─────────────────────────────────────────────
 
 class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
-  static const _voiceCountKey = 'voice_logs_today';
-  static const _voiceDateKey = 'voice_logs_date';
+  static const _voiceCountKey = 'voice_logs_month';
+  static const _voiceMonthKey = 'voice_logs_month_id';
 
   SubscriptionNotifier() : super(const SubscriptionState()) {
     _initialize();
@@ -117,23 +116,18 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
   Future<void> _loadVoiceUsage() async {
     final prefs = await SharedPreferences.getInstance();
-    final dateTimestamp = prefs.getInt(_voiceDateKey);
-    final lastDate = dateTimestamp != null
-        ? DateTime.fromMillisecondsSinceEpoch(dateTimestamp)
-        : null;
+    final now = DateTime.now();
+    final currentMonthId = '${now.year}-${now.month}';
+    final storedMonthId = prefs.getString(_voiceMonthKey);
 
     int count = 0;
-    if (lastDate != null) {
-      final now = DateTime.now();
-      final isSameDay = lastDate.year == now.year &&
-          lastDate.month == now.month &&
-          lastDate.day == now.day;
-      if (isSameDay) count = prefs.getInt(_voiceCountKey) ?? 0;
+    if (storedMonthId == currentMonthId) {
+      count = prefs.getInt(_voiceCountKey) ?? 0;
     }
 
     state = state.copyWith(
-      voiceLogsUsedToday: count,
-      lastVoiceLogDate: lastDate,
+      voiceLogsUsedThisMonth: count,
+      lastVoiceLogDate: DateTime.tryParse(storedMonthId ?? ''),
     );
   }
 
@@ -239,21 +233,21 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     if (state.isPro) return; // don't track for pro users
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
+    final currentMonthId = '${now.year}-${now.month}';
+    final storedMonthId = prefs.getString(_voiceMonthKey);
 
-    final lastDate = state.lastVoiceLogDate;
-    int newCount = 1;
-    if (lastDate != null) {
-      final isSameDay = lastDate.year == now.year &&
-          lastDate.month == now.month &&
-          lastDate.day == now.day;
-      newCount = isSameDay ? state.voiceLogsUsedToday + 1 : 1;
+    int newCount;
+    if (storedMonthId == currentMonthId) {
+      newCount = state.voiceLogsUsedThisMonth + 1;
+    } else {
+      newCount = 1; // new month, reset
     }
 
     await prefs.setInt(_voiceCountKey, newCount);
-    await prefs.setInt(_voiceDateKey, now.millisecondsSinceEpoch);
+    await prefs.setString(_voiceMonthKey, currentMonthId);
 
     state = state.copyWith(
-      voiceLogsUsedToday: newCount,
+      voiceLogsUsedThisMonth: newCount,
       lastVoiceLogDate: now,
     );
   }

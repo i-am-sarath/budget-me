@@ -67,8 +67,8 @@ class _MagicFabState extends ConsumerState<MagicFab>
 
     HapticFeedback.heavyImpact();
     final dir = await getTemporaryDirectory();
-    _audioPath =
-        p.join(dir.path, 'tx_audio_${DateTime.now().millisecondsSinceEpoch}.m4a');
+    _audioPath = p.join(
+        dir.path, 'tx_audio_${DateTime.now().millisecondsSinceEpoch}.m4a');
 
     await _audioRecorder.start(
       const RecordConfig(encoder: AudioEncoder.aacLc),
@@ -113,15 +113,16 @@ class _MagicFabState extends ConsumerState<MagicFab>
         backgroundColor: tc.surfaceContainerHigh,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'Daily limit reached',
+          'Monthly limit reached',
           style: GoogleFonts.inter(
             color: tc.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
         content: Text(
-          'Free users can use voice input once per day.\n\nUpgrade to Pro for unlimited voice logging.',
-          style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+          'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging, or wait until next month.',
+          style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -155,16 +156,13 @@ class _MagicFabState extends ConsumerState<MagicFab>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Pulse rings when recording
-          if (_isRecording) ...[
-            _PulseRing(controller: _pulseController),
-          ],
+          // Pulse ring while recording
+          if (_isRecording) _PulseRing(controller: _pulseController),
 
-          // Main FAB row
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Manual entry pill button (left side)
+              // Manual entry pill (left)
               AnimatedOpacity(
                 duration: const Duration(milliseconds: 200),
                 opacity: _isRecording ? 0 : 1,
@@ -174,7 +172,8 @@ class _MagicFabState extends ConsumerState<MagicFab>
                     final tc = AppThemeColors.of(ctx);
                     return Container(
                       height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
                         color: tc.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(100),
@@ -220,7 +219,6 @@ class _MagicFabState extends ConsumerState<MagicFab>
                           color: (_isRecording ? tc.expense : tc.onSurface)
                               .withOpacity(0.25),
                           blurRadius: 16,
-                          spreadRadius: 0,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -240,46 +238,10 @@ class _MagicFabState extends ConsumerState<MagicFab>
                   ),
                 );
               }),
-
-              const SizedBox(width: 16),
-
-              // Right side spacer (mirror of Manual button for symmetry)
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: _isRecording ? 0 : 1,
-                child: Builder(builder: (ctx) {
-                  final tc = AppThemeColors.of(ctx);
-                  return Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: tc.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: tc.outlineVariant),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.history_rounded,
-                            color: tc.onSurfaceVariant, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          'History',
-                          style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
             ],
           ),
 
-          // "Recording..." label
+          // "Tap to stop" label while recording
           if (_isRecording) ...[
             const SizedBox(height: 12),
             Builder(builder: (ctx) {

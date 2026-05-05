@@ -41,7 +41,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     super.dispose();
   }
 
-  void _submit(List<AccountModel> accounts) {
+  void _submit(List<AccountModel> accounts) async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_from == null || _to == null) {
@@ -63,11 +63,15 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     final note = _noteCtrl.text.trim();
     final displayNote = note.isNotEmpty ? note : 'Transfer';
 
-    // Debit from source
+    // Determine if destination is a liability (loan / credit card)
+    final isLoanRepayment =
+        _to!.type == AccountType.loan || _to!.type == AccountType.creditCard;
+
+    // Debit from source (always expense — reduces source balance)
     final debit = TransactionModel(
       amount: amount,
       type: TransactionType.expense,
-      category: 'Transfer',
+      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
       note: '$displayNote → ${_to!.name}',
       accountId: _from!.id,
       accountName: _from!.name,
@@ -75,10 +79,12 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     );
 
     // Credit to destination
+    // For loan/credit card: borrowReturn → balanceDelta is -amount (reduces debt)
+    // For normal accounts: income → balanceDelta is +amount (adds funds)
     final credit = TransactionModel(
       amount: amount,
-      type: TransactionType.income,
-      category: 'Transfer',
+      type: isLoanRepayment ? TransactionType.borrowReturn : TransactionType.income,
+      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
       note: '$displayNote ← ${_from!.name}',
       accountId: _to!.id,
       accountName: _to!.name,
@@ -86,19 +92,11 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     );
 
     final txNotifier = ref.read(transactionListProvider.notifier);
-    final accNotifier = ref.read(accountProvider.notifier);
 
-    // Atomic balance adjustment + record both legs
-    Future.wait([
-      txNotifier.addTransaction(debit),
-      // We manually update the credit account (addTransaction already handles debit account)
-    ]).then((_) async {
-      await accNotifier.adjustBalance(_to!.id, amount);
-      // Record credit transaction (without double-adjusting balance)
-      await TransactionRepository().addTransaction(credit);
-      await txNotifier.refresh();
-      if (mounted) Navigator.pop(context);
-    });
+    // Sequential: add both legs — addTransaction already adjusts linked account balances
+    await txNotifier.addTransaction(debit);
+    await txNotifier.addTransaction(credit);
+    if (mounted) Navigator.pop(context);
   }
 
   @override

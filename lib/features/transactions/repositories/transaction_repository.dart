@@ -77,6 +77,29 @@ class TransactionNotifier
       await addTransaction(t);
     }
   }
+
+  Future<void> updateTransaction(TransactionModel oldTx, TransactionModel newTx) async {
+    try {
+      // Reverse old balance effect
+      if (oldTx.accountId != null && oldTx.accountId!.isNotEmpty) {
+        await _ref
+            .read(accountProvider.notifier)
+            .adjustBalance(oldTx.accountId!, -oldTx.balanceDelta);
+      }
+
+      // Apply new balance effect
+      if (newTx.accountId != null && newTx.accountId!.isNotEmpty) {
+        await _ref
+            .read(accountProvider.notifier)
+            .adjustBalance(newTx.accountId!, newTx.balanceDelta);
+      }
+
+      await _repository.updateTransaction(newTx);
+      await refresh();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
 }
 
 class TransactionRepository {

@@ -29,7 +29,6 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   AccountModel? _selectedAccount;
   DateTime _date = DateTime.now();
 
-  // ── World-wide category definitions ──────────────────────
   static const _categories = {
     TransactionType.expense: [
       ('🍔', 'Food & Dining'),
@@ -78,7 +77,35 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       ('💼', 'Colleague'),
       ('⚙️', 'Other'),
     ],
+    TransactionType.lendReturn: [
+      ('👤', 'Friend'),
+      ('👨‍👩‍👧', 'Family'),
+      ('💼', 'Colleague'),
+      ('⚙️', 'Other'),
+    ],
+    TransactionType.borrowReturn: [
+      ('👤', 'Friend'),
+      ('👨‍👩‍👧', 'Family'),
+      ('🏦', 'Bank / Lender'),
+      ('💼', 'Colleague'),
+      ('💳', 'Loan Repayment'),
+      ('⚙️', 'Other'),
+    ],
   };
+
+  // Types shown in the entry sheet — two rows for clarity
+  static const _row1Types = [
+    (TransactionType.expense,    'Expense',    Icons.arrow_upward_rounded),
+    (TransactionType.income,     'Income',     Icons.arrow_downward_rounded),
+    (TransactionType.investment, 'Invest',     Icons.trending_up_rounded),
+  ];
+
+  static const _row2Types = [
+    (TransactionType.lend,         'Lend',       Icons.people_alt_rounded),
+    (TransactionType.lendReturn,   'Got Back',   Icons.undo_rounded),
+    (TransactionType.borrow,       'Borrow',     Icons.person_add_alt_1_rounded),
+    (TransactionType.borrowReturn, 'Repaid',     Icons.redo_rounded),
+  ];
 
   @override
   void initState() {
@@ -91,6 +118,18 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       _type = p.type;
       _category = p.category;
       _date = p.date;
+    }
+  }
+
+  bool _accountInitialized = false;
+
+  void _initAccountFromPrefill(List<AccountModel> accounts) {
+    if (_accountInitialized || widget.prefill == null) return;
+    _accountInitialized = true;
+    final prefillAccountId = widget.prefill!.accountId;
+    if (prefillAccountId != null && prefillAccountId.isNotEmpty) {
+      _selectedAccount =
+          accounts.where((a) => a.id == prefillAccountId).firstOrNull;
     }
   }
 
@@ -115,11 +154,33 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     });
   }
 
+  bool get _showPayeeField =>
+      _type == TransactionType.lend ||
+      _type == TransactionType.borrow ||
+      _type == TransactionType.lendReturn ||
+      _type == TransactionType.borrowReturn;
+
+  String get _payeeLabel {
+    switch (_type) {
+      case TransactionType.lend:
+        return 'Who did you lend to?';
+      case TransactionType.lendReturn:
+        return 'Who returned the money?';
+      case TransactionType.borrow:
+        return 'Who did you borrow from?';
+      case TransactionType.borrowReturn:
+        return 'Who did you repay?';
+      default:
+        return 'Person / organisation';
+    }
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.mediumImpact();
       final amount = double.tryParse(_amountController.text) ?? 0;
       final transaction = TransactionModel(
+        id: widget.prefill?.id,
         amount: amount,
         type: _type,
         category: _category,
@@ -129,7 +190,14 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         accountName: _selectedAccount?.name,
         date: _date,
       );
-      ref.read(transactionListProvider.notifier).addTransaction(transaction);
+
+      if (widget.prefill != null) {
+        ref
+            .read(transactionListProvider.notifier)
+            .updateTransaction(widget.prefill!, transaction);
+      } else {
+        ref.read(transactionListProvider.notifier).addTransaction(transaction);
+      }
       Navigator.pop(context);
     }
   }
@@ -157,7 +225,6 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
               Center(
                 child: Container(
                   width: 36,
@@ -168,9 +235,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Transaction type selector
+              // Type selector — two rows
               _buildTypeSelector(tc),
               const SizedBox(height: 16),
 
@@ -184,12 +251,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               _buildCategoryGrid(tc),
               const SizedBox(height: 14),
 
-              // Payee field for lend/borrow
-              if (_type == TransactionType.lend ||
-                  _type == TransactionType.borrow) ...[
+              // Payee field for lend/borrow/returns
+              if (_showPayeeField) ...[
                 _buildTextField(
                   controller: _payeeController,
-                  label: 'Person / organisation name',
+                  label: _payeeLabel,
                   icon: Icons.person_outline_rounded,
                   tc: tc,
                 ),
@@ -211,7 +277,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               accountsAsync.when(
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
-                data: (accounts) => _buildAccountSelector(accounts, tc),
+                data: (accounts) {
+                  _initAccountFromPrefill(accounts);
+                  return _buildAccountSelector(accounts, tc);
+                },
               ),
               const SizedBox(height: 14),
 
@@ -226,7 +295,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 child: ElevatedButton(
                   onPressed: _submit,
                   child: Text(
-                    'Save Transaction',
+                    widget.prefill != null ? 'Update Transaction' : 'Save Transaction',
                     style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700, fontSize: 15),
                   ),
@@ -239,15 +308,58 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     );
   }
 
-  // ── Type selector ─────────────────────────────────────────
   Widget _buildTypeSelector(AppThemeColors tc) {
-    final types = [
-      (TransactionType.expense,    'Expense',  Icons.arrow_upward_rounded,      tc.expense),
-      (TransactionType.income,     'Income',   Icons.arrow_downward_rounded,    tc.income),
-      (TransactionType.investment, 'Invest',   Icons.trending_up_rounded,       tc.investment),
-      (TransactionType.lend,       'Lend',     Icons.people_alt_rounded,        tc.lend),
-      (TransactionType.borrow,     'Borrow',   Icons.person_add_alt_1_rounded,  tc.borrow),
-    ];
+    Color typeAccent(TransactionType t) {
+      switch (t) {
+        case TransactionType.expense:      return tc.expense;
+        case TransactionType.income:       return tc.income;
+        case TransactionType.investment:   return tc.investment;
+        case TransactionType.lend:         return tc.lend;
+        case TransactionType.lendReturn:   return tc.income;
+        case TransactionType.borrow:       return tc.borrow;
+        case TransactionType.borrowReturn: return tc.expense;
+      }
+    }
+
+    Widget typeButton(
+        TransactionType type, String label, IconData icon) {
+      final isSelected = _type == type;
+      final accent = typeAccent(type);
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => _onTypeChanged(type),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: isSelected ? accent.withOpacity(0.15) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: isSelected
+                  ? Border.all(color: accent.withOpacity(0.4), width: 1)
+                  : null,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon,
+                    color: isSelected ? accent : tc.onSurfaceVariant,
+                    size: 16),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: isSelected ? accent : tc.onSurfaceVariant,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(4),
@@ -255,45 +367,24 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         color: tc.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: types.map((t) {
-          final isSelected = _type == t.$1;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => _onTypeChanged(t.$1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: isSelected ? tc.onSurface : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(t.$3,
-                        color: isSelected ? tc.surface : tc.onSurfaceVariant,
-                        size: 16),
-                    const SizedBox(height: 3),
-                    Text(
-                      t.$2,
-                      style: GoogleFonts.inter(
-                        color: isSelected ? tc.surface : tc.onSurfaceVariant,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+      child: Column(
+        children: [
+          Row(
+            children: _row1Types
+                .map((t) => typeButton(t.$1, t.$2, t.$3))
+                .toList(),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: _row2Types
+                .map((t) => typeButton(t.$1, t.$2, t.$3))
+                .toList(),
+          ),
+        ],
       ),
     );
   }
 
-  // ── Amount field ──────────────────────────────────────────
   Widget _buildAmountField(CurrencyState currency, AppThemeColors tc) {
     return Container(
       decoration: BoxDecoration(
@@ -317,8 +408,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           Expanded(
             child: TextFormField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               autofocus: widget.prefill == null,
               style: GoogleFonts.inter(
                 color: tc.onSurface,
@@ -353,7 +443,6 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         ),
       );
 
-  // ── Category chips ────────────────────────────────────────
   Widget _buildCategoryGrid(AppThemeColors tc) {
     return Wrap(
       spacing: 8,
@@ -364,8 +453,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           onTap: () => setState(() => _category = cat.$2),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: isSelected ? tc.onSurface : tc.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(100),
@@ -410,9 +498,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         ),
       );
 
-  // ── Account selector chips ────────────────────────────────
-  Widget _buildAccountSelector(
-      List<AccountModel> accounts, AppThemeColors tc) {
+  Widget _buildAccountSelector(List<AccountModel> accounts, AppThemeColors tc) {
     if (accounts.isEmpty) {
       return Text(
         'No accounts yet — add one in the Accounts tab',
@@ -470,7 +556,6 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     );
   }
 
-  // ── Date picker ───────────────────────────────────────────
   Widget _buildDatePicker(AppThemeColors tc) {
     return GestureDetector(
       onTap: () async {

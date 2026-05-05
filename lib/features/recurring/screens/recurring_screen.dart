@@ -87,6 +87,7 @@ class RecurringScreen extends ConsumerWidget {
                             onDelete: () => ref
                                 .read(recurringListProvider.notifier)
                                 .delete(e.value.id),
+                            onEdit: () => _showAddSheet(context, ref, existing: e.value),
                           )
                               .animate()
                               .fadeIn(delay: (e.key * 60).ms)
@@ -112,6 +113,7 @@ class RecurringScreen extends ConsumerWidget {
                             onDelete: () => ref
                                 .read(recurringListProvider.notifier)
                                 .delete(e.value.id),
+                            onEdit: () => _showAddSheet(context, ref, existing: e.value),
                           )
                               .animate()
                               .fadeIn(delay: (e.key * 50).ms)),
@@ -136,6 +138,7 @@ class RecurringScreen extends ConsumerWidget {
                             onDelete: () => ref
                                 .read(recurringListProvider.notifier)
                                 .delete(e.value.id),
+                            onEdit: () => _showAddSheet(context, ref, existing: e.value),
                           )),
                     ],
                   ]),
@@ -166,14 +169,14 @@ class RecurringScreen extends ConsumerWidget {
     }
   }
 
-  void _showAddSheet(BuildContext context, WidgetRef ref) {
+  void _showAddSheet(BuildContext context, WidgetRef ref, {RecurringModel? existing}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => ProviderScope(
         parent: ProviderScope.containerOf(context),
-        child: const _AddRecurringSheet(),
+        child: _AddRecurringSheet(existing: existing),
       ),
     );
   }
@@ -190,6 +193,7 @@ class _RecurringTile extends StatelessWidget {
   final VoidCallback onRunNow;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   const _RecurringTile({
     required this.rule,
@@ -198,6 +202,7 @@ class _RecurringTile extends StatelessWidget {
     required this.onRunNow,
     required this.onToggle,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -314,6 +319,15 @@ class _RecurringTile extends StatelessWidget {
                           ),
                         ),
                       ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: onEdit,
+                      child: Icon(
+                        Icons.edit_outlined,
+                        color: tc.onSurfaceVariant,
+                        size: 18,
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     GestureDetector(
                       onTap: onToggle,
@@ -454,7 +468,8 @@ class _EmptyState extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _AddRecurringSheet extends ConsumerStatefulWidget {
-  const _AddRecurringSheet();
+  final RecurringModel? existing;
+  const _AddRecurringSheet({this.existing});
 
   @override
   ConsumerState<_AddRecurringSheet> createState() =>
@@ -469,6 +484,8 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
   RecurringFrequency _frequency = RecurringFrequency.monthly;
   DateTime _startDate = DateTime.now();
 
+  bool get _isEditing => widget.existing != null;
+
   static const _presets = [
     ('DigiGold', TransactionType.investment, 'Investment', RecurringFrequency.daily, 100.0),
     ('SIP', TransactionType.investment, 'Investment', RecurringFrequency.monthly, 5000.0),
@@ -476,6 +493,20 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
     ('Rent', TransactionType.expense, 'Rent', RecurringFrequency.monthly, 0.0),
     ('Grocery', TransactionType.expense, 'Food', RecurringFrequency.weekly, 0.0),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e != null) {
+      _titleCtrl.text = e.title;
+      _amountCtrl.text = e.amount.toString();
+      _type = e.type;
+      _category = e.category;
+      _frequency = e.frequency;
+      _startDate = e.startDate;
+    }
+  }
 
   @override
   void dispose() {
@@ -489,16 +520,29 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
       return;
     }
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
-    final rule = RecurringModel(
-      title: _titleCtrl.text.trim(),
-      amount: amount,
-      type: _type,
-      category: _category,
-      frequency: _frequency,
-      startDate: _startDate,
-      nextRunDate: _startDate,
-    );
-    ref.read(recurringListProvider.notifier).add(rule);
+
+    if (_isEditing) {
+      final updated = widget.existing!.copyWith(
+        title: _titleCtrl.text.trim(),
+        amount: amount,
+        type: _type,
+        category: _category,
+        frequency: _frequency,
+        startDate: _startDate,
+      );
+      ref.read(recurringListProvider.notifier).update(updated);
+    } else {
+      final rule = RecurringModel(
+        title: _titleCtrl.text.trim(),
+        amount: amount,
+        type: _type,
+        category: _category,
+        frequency: _frequency,
+        startDate: _startDate,
+        nextRunDate: _startDate,
+      );
+      ref.read(recurringListProvider.notifier).add(rule);
+    }
     Navigator.pop(context);
   }
 
@@ -532,7 +576,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Add Recurring Rule',
+              _isEditing ? 'Edit Recurring Rule' : 'Add Recurring Rule',
               style: GoogleFonts.inter(
                 color: tc.onSurface,
                 fontSize: 20,
@@ -604,7 +648,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
               style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Amount',
-                prefixIcon: Icon(Icons.currency_rupee,
+                prefixIcon: Icon(Icons.attach_money_rounded,
                     color: tc.onSurfaceVariant, size: 20),
               ),
             ),
@@ -732,7 +776,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
               height: 52,
               child: ElevatedButton(
                 onPressed: _submit,
-                child: Text('Save Rule',
+                child: Text(_isEditing ? 'Update Rule' : 'Save Rule',
                     style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700, fontSize: 15)),
               ),

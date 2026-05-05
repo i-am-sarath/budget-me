@@ -235,4 +235,16 @@ class DatabaseHelper {
       [delta, accountId],
     );
   }
+
+  // ─────────────────────────────────────────────
+  // Reset: wipe all user data from every table
+  // ─────────────────────────────────────────────
+
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('transactions');
+    await db.delete('accounts');
+    await db.delete('recurring_transactions');
+    await db.delete('subscriptions');
+  }
 }

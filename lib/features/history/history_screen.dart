@@ -6,6 +6,7 @@ import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
+import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -233,13 +234,23 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                               ),
                             ),
                             ...items.asMap().entries.map((e) {
-                              return TransactionTile(
-                                transaction: e.value,
-                                currency: currency,
-                              ).animate().fadeIn(
-                                    duration: 300.ms,
-                                    delay: (e.key * 40).ms,
+                              return GestureDetector(
+                                onTap: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => ManualEntrySheet(prefill: e.value),
                                   );
+                                },
+                                child: TransactionTile(
+                                  transaction: e.value,
+                                  currency: currency,
+                                ).animate().fadeIn(
+                                      duration: 300.ms,
+                                      delay: (e.key * 40).ms,
+                                    ),
+                              );
                             }),
                           ],
                         );
