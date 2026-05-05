@@ -1,0 +1,1 @@
+- **CRITICAL SECURITY FIX:** Removed hardcoded OpenAI API key from `lib/core/config/api_config.dart`. Replaced with an empty string and enforced injection at build time via `--dart-define=OPENAI_API_KEY=...` to prevent leaking sensitive credentials.
