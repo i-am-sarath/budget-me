@@ -17,20 +17,28 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
-    final income = thisMonth
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final expense = thisMonth
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final invested = thisMonth
-        .where((t) => t.type == TransactionType.investment)
-        .fold(0.0, (s, t) => s + t.amount);
-    final lend = thisMonth
-        .where((t) => t.type == TransactionType.lend)
-        .fold(0.0, (s, t) => s + t.amount);
+
+    // Performance Optimization: Replaced repeated where().fold() chains
+    // with a single-pass loop over the list to calculate all category totals simultaneously.
+    // This reduces O(N * C) iterations to O(N) and prevents intermediate list allocations.
+    double income = 0.0;
+    double expense = 0.0;
+    double invested = 0.0;
+    double lend = 0.0;
+
+    for (final t in transactions) {
+      if (t.date.month == now.month && t.date.year == now.year) {
+        if (t.type == TransactionType.income) {
+          income += t.amount;
+        } else if (t.type == TransactionType.expense) {
+          expense += t.amount;
+        } else if (t.type == TransactionType.investment) {
+          invested += t.amount;
+        } else if (t.type == TransactionType.lend) {
+          lend += t.amount;
+        }
+      }
+    }
 
     return Row(
       children: [
@@ -130,7 +138,9 @@ class _BentoItem extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            compact ? _compactFormat(amount, currency) : currency.format(amount),
+            compact
+                ? _compactFormat(amount, currency)
+                : currency.format(amount),
             style: GoogleFonts.inter(
               color: tc.onSurface,
               fontSize: compact ? 13 : 14,

@@ -143,7 +143,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        top: 20, left: 24, right: 24, bottom: bottomPad + 32,
+        top: 20,
+        left: 24,
+        right: 24,
+        bottom: bottomPad + 32,
       ),
       decoration: BoxDecoration(
         color: tc.surface,
@@ -228,7 +231,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                   child: Text(
                     'Save Transaction',
                     style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w700, fontSize: 15),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -242,11 +247,31 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   // ── Type selector ─────────────────────────────────────────
   Widget _buildTypeSelector(AppThemeColors tc) {
     final types = [
-      (TransactionType.expense,    'Expense',  Icons.arrow_upward_rounded,      tc.expense),
-      (TransactionType.income,     'Income',   Icons.arrow_downward_rounded,    tc.income),
-      (TransactionType.investment, 'Invest',   Icons.trending_up_rounded,       tc.investment),
-      (TransactionType.lend,       'Lend',     Icons.people_alt_rounded,        tc.lend),
-      (TransactionType.borrow,     'Borrow',   Icons.person_add_alt_1_rounded,  tc.borrow),
+      (
+        TransactionType.expense,
+        'Expense',
+        Icons.arrow_upward_rounded,
+        tc.expense,
+      ),
+      (
+        TransactionType.income,
+        'Income',
+        Icons.arrow_downward_rounded,
+        tc.income,
+      ),
+      (
+        TransactionType.investment,
+        'Invest',
+        Icons.trending_up_rounded,
+        tc.investment,
+      ),
+      (TransactionType.lend, 'Lend', Icons.people_alt_rounded, tc.lend),
+      (
+        TransactionType.borrow,
+        'Borrow',
+        Icons.person_add_alt_1_rounded,
+        tc.borrow,
+      ),
     ];
 
     return Container(
@@ -271,9 +296,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(t.$3,
-                        color: isSelected ? tc.surface : tc.onSurfaceVariant,
-                        size: 16),
+                    Icon(
+                      t.$3,
+                      color: isSelected ? tc.surface : tc.onSurfaceVariant,
+                      size: 16,
+                    ),
                     const SizedBox(height: 3),
                     Text(
                       t.$2,
@@ -317,8 +344,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           Expanded(
             child: TextFormField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               autofocus: widget.prefill == null,
               style: GoogleFonts.inter(
                 color: tc.onSurface,
@@ -344,14 +372,14 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   }
 
   Widget _buildLabel(String label, AppThemeColors tc) => Text(
-        label,
-        style: GoogleFonts.inter(
-          color: tc.onSurfaceVariant,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
-        ),
-      );
+    label,
+    style: GoogleFonts.inter(
+      color: tc.onSurfaceVariant,
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+    ),
+  );
 
   // ── Category chips ────────────────────────────────────────
   Widget _buildCategoryGrid(AppThemeColors tc) {
@@ -364,8 +392,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           onTap: () => setState(() => _category = cat.$2),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: isSelected ? tc.onSurface : tc.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(100),
@@ -400,19 +427,17 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     required String label,
     required IconData icon,
     required AppThemeColors tc,
-  }) =>
-      TextFormField(
-        controller: controller,
-        style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: tc.onSurfaceVariant, size: 20),
-        ),
-      );
+  }) => TextFormField(
+    controller: controller,
+    style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: tc.onSurfaceVariant, size: 20),
+    ),
+  );
 
   // ── Account selector chips ────────────────────────────────
-  Widget _buildAccountSelector(
-      List<AccountModel> accounts, AppThemeColors tc) {
+  Widget _buildAccountSelector(List<AccountModel> accounts, AppThemeColors tc) {
     if (accounts.isEmpty) {
       return Text(
         'No accounts yet — add one in the Accounts tab',
@@ -451,9 +476,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (acc != null) ...[
-              Icon(acc.type.icon,
-                  size: 12,
-                  color: isSelected ? tc.surface : acc.type.color),
+              Icon(
+                acc.type.icon,
+                size: 12,
+                color: isSelected ? tc.surface : acc.type.color,
+              ),
               const SizedBox(width: 5),
             ],
             Text(
@@ -491,8 +518,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_month_outlined,
-                color: tc.onSurfaceVariant, size: 18),
+            Icon(
+              Icons.calendar_month_outlined,
+              color: tc.onSurfaceVariant,
+              size: 18,
+            ),
             const SizedBox(width: 12),
             Text(
               DateFormat('EEEE, MMM d, yyyy').format(_date),

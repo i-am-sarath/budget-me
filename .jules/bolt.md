@@ -1,0 +1,1 @@
+- Optimized multiple pass '.where().fold()' list operations into a single-pass loop in SummaryCard.
