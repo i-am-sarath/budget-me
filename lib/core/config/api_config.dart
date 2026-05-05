@@ -5,11 +5,7 @@
 /// The public API keys below are safe to ship.
 class ApiConfig {
   // ─── OpenAI ───────────────────────────────────────────
-  static const String openAiKey = String.fromEnvironment(
-    'OPENAI_API_KEY',
-    defaultValue:
-        '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',
-  );
+  static const String openAiKey = String.fromEnvironment('OPENAI_API_KEY');
 
   // ─── RevenueCat PUBLIC Keys ───────────────────────────
   // Note: sk_whcyqZUXynYpTIXMnPSupfyzmtiPv is your SECRET key for the

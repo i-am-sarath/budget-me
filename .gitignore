@@ -46,3 +46,7 @@ app.*.map.json
 
 # Claude Code internal files
 .claude/
+
+# Local build secrets — never commit
+dart_defines.env
+*.env
