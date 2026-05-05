@@ -1,0 +1,1 @@
+- Added tooltip property to IconButton widgets to improve accessibility for screen readers and users needing context hints.
