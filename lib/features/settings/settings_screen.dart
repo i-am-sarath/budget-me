@@ -61,57 +61,56 @@ class SettingsScreen extends ConsumerWidget {
                 // Appearance
                 _SectionLabel('APPEARANCE'),
                 const SizedBox(height: 10),
-                _ThemeCard(themeMode: themeMode)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 50.ms),
+                _ThemeCard(
+                  themeMode: themeMode,
+                ).animate().fadeIn(duration: 350.ms, delay: 50.ms),
                 const SizedBox(height: 28),
 
                 // Budget
                 _SectionLabel('MONTHLY BUDGET'),
                 const SizedBox(height: 10),
-                _BudgetSettingsCard(budget: budget)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 80.ms),
+                _BudgetSettingsCard(
+                  budget: budget,
+                ).animate().fadeIn(duration: 350.ms, delay: 80.ms),
                 const SizedBox(height: 28),
 
                 // Currency
                 _SectionLabel('CURRENCY'),
                 const SizedBox(height: 10),
-                _CurrencySection(currency: currency)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 100.ms),
+                _CurrencySection(
+                  currency: currency,
+                ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
                 const SizedBox(height: 28),
 
                 // Voice usage
                 _SectionLabel('VOICE'),
                 const SizedBox(height: 10),
-                _VoiceCard(subscription: subscription)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 150.ms),
+                _VoiceCard(
+                  subscription: subscription,
+                ).animate().fadeIn(duration: 350.ms, delay: 150.ms),
                 const SizedBox(height: 28),
 
                 // About
                 _SectionLabel('ABOUT'),
                 const SizedBox(height: 10),
-                _AboutCard()
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 200.ms),
+                _AboutCard().animate().fadeIn(duration: 350.ms, delay: 200.ms),
                 const SizedBox(height: 28),
 
                 // Subscription management
                 _SectionLabel('SUBSCRIPTION'),
                 const SizedBox(height: 10),
-                _SubscriptionManagementCard(subscription: subscription)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 220.ms),
+                _SubscriptionManagementCard(
+                  subscription: subscription,
+                ).animate().fadeIn(duration: 350.ms, delay: 220.ms),
                 const SizedBox(height: 28),
 
                 // Danger zone
                 _SectionLabel('DANGER ZONE'),
                 const SizedBox(height: 10),
-                _ResetDataCard()
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 260.ms),
+                _ResetDataCard().animate().fadeIn(
+                  duration: 350.ms,
+                  delay: 260.ms,
+                ),
               ]),
             ),
           ),
@@ -131,14 +130,14 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        label,
-        style: GoogleFonts.inter(
-          color: AppThemeColors.of(context).onSurfaceVariant,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.5,
-        ),
-      );
+    label,
+    style: GoogleFonts.inter(
+      color: AppThemeColors.of(context).onSurfaceVariant,
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1.5,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -176,9 +175,7 @@ class _SubscriptionCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              isPro
-                  ? Icons.verified_rounded
-                  : Icons.workspace_premium_outlined,
+              isPro ? Icons.verified_rounded : Icons.workspace_premium_outlined,
               color: isPro ? tc.surface : tc.onSurfaceVariant,
               size: 22,
             ),
@@ -215,7 +212,9 @@ class _SubscriptionCard extends ConsumerWidget {
               onTap: () => showPaywall(context),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: tc.onSurface,
                   borderRadius: BorderRadius.circular(100),
@@ -325,24 +324,30 @@ class _CurrencySection extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Text(currency.currency.flag,
-                  style: const TextStyle(fontSize: 22)),
+              Text(
+                currency.currency.flag,
+                style: const TextStyle(fontSize: 22),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(currency.currency.name,
-                        style: GoogleFonts.inter(
-                          color: tc.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        )),
-                    Text(currency.currency.code,
-                        style: GoogleFonts.inter(
-                          color: tc.onSurfaceVariant,
-                          fontSize: 11,
-                        )),
+                    Text(
+                      currency.currency.name,
+                      style: GoogleFonts.inter(
+                        color: tc.onSurface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      currency.currency.code,
+                      style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -372,7 +377,9 @@ class _CurrencySection extends ConsumerWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 7),
+                  horizontal: 12,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? tc.onSurface : tc.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(100),
@@ -404,10 +411,7 @@ class _CurrencySection extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Rates updated ${_fmtDate(currency.lastUpdated!)}',
-            style: GoogleFonts.inter(
-              color: tc.onSurfaceVariant,
-              fontSize: 10,
-            ),
+            style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 10),
           ),
         ],
       ],
@@ -435,7 +439,9 @@ class _VoiceCard extends StatelessWidget {
     final isPro = subscription.isPro;
     final used = subscription.voiceLogsUsedThisMonth;
     final max = SubscriptionState.freeVoiceLogLimit;
-    final progress = isPro ? 1.0 : (max > 0 ? (used / max).clamp(0.0, 1.0) : 0.0);
+    final progress = isPro
+        ? 1.0
+        : (max > 0 ? (used / max).clamp(0.0, 1.0) : 0.0);
     final tc = AppThemeColors.of(context);
 
     return Container(
@@ -453,9 +459,7 @@ class _VoiceCard extends StatelessWidget {
               Icon(Icons.mic_rounded, color: tc.onSurface, size: 18),
               const SizedBox(width: 8),
               Text(
-                isPro
-                    ? 'Unlimited voice logs'
-                    : 'This month: $used / $max',
+                isPro ? 'Unlimited voice logs' : 'This month: $used / $max',
                 style: GoogleFonts.inter(
                   color: tc.onSurface,
                   fontWeight: FontWeight.w600,
@@ -528,11 +532,7 @@ class _AboutRow extends StatelessWidget {
   final String? value;
   final bool hasArrow;
 
-  const _AboutRow({
-    required this.label,
-    this.value,
-    this.hasArrow = false,
-  });
+  const _AboutRow({required this.label, this.value, this.hasArrow = false});
 
   @override
   Widget build(BuildContext context) {
@@ -559,8 +559,11 @@ class _AboutRow extends StatelessWidget {
               ),
             )
           else if (hasArrow)
-            Icon(Icons.chevron_right_rounded,
-                color: tc.onSurfaceVariant, size: 18),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: tc.onSurfaceVariant,
+              size: 18,
+            ),
         ],
       ),
     );
@@ -619,9 +622,10 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                 ? 'Current limit: ${currency.format(widget.budget.monthlyBudget)}'
                 : 'No budget set yet',
             style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant,
-                fontSize: 12,
-                fontWeight: FontWeight.w500),
+              color: tc.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -634,26 +638,34 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(currency.currency.symbol,
-                      style: GoogleFonts.inter(
-                          color: tc.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700)),
+                  child: Text(
+                    currency.currency.symbol,
+                    style: GoogleFonts.inter(
+                      color: tc.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _ctrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   style: GoogleFonts.inter(
-                      color: tc.onSurface,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700),
+                    color: tc.onSurface,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Enter monthly budget',
                     hintStyle: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant, fontSize: 14),
+                      color: tc.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
                     border: InputBorder.none,
                     filled: false,
                     contentPadding: EdgeInsets.zero,
@@ -667,9 +679,11 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(val > 0
-                            ? 'Budget set to ${currency.format(val)}'
-                            : 'Budget cleared'),
+                        content: Text(
+                          val > 0
+                              ? 'Budget set to ${currency.format(val)}'
+                              : 'Budget cleared',
+                        ),
                         duration: const Duration(seconds: 2),
                       ),
                     );
@@ -677,16 +691,21 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: tc.onSurface,
                     borderRadius: BorderRadius.circular(100),
                   ),
-                  child: Text('Save',
-                      style: GoogleFonts.inter(
-                          color: tc.surface,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700)),
+                  child: Text(
+                    'Save',
+                    style: GoogleFonts.inter(
+                      color: tc.surface,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -726,15 +745,20 @@ class _SubscriptionManagementCard extends ConsumerWidget {
             onTap: () async {
               try {
                 final info = await Purchases.restorePurchases();
-                final isPro = info.entitlements.active
-                    .containsKey(ApiConfig.entitlementPro);
+                final isPro = info.entitlements.active.containsKey(
+                  ApiConfig.entitlementPro,
+                );
                 ref.invalidate(subscriptionProvider);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(isPro
-                        ? '✓ Pro restored! Welcome back.'
-                        : 'No active subscription found.'),
-                  ));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isPro
+                            ? '✓ Pro restored! Welcome back.'
+                            : 'No active subscription found.',
+                      ),
+                    ),
+                  );
                 }
               } catch (_) {
                 if (context.mounted) {
@@ -800,43 +824,53 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: tc.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: tc.onSurface, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label,
-                        style: GoogleFonts.inter(
-                            color: tc.onSurface,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                    Text(sub,
-                        style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant, fontSize: 11)),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded,
-                  color: tc.onSurfaceVariant, size: 18),
-            ],
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(18),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: tc.onSurface, size: 20),
           ),
-        ),
-      );
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: tc.onSurface,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  sub,
+                  style: GoogleFonts.inter(
+                    color: tc.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: tc.onSurfaceVariant,
+            size: 18,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -868,27 +902,40 @@ class _ResetDataCard extends ConsumerWidget {
                   color: tc.expense.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.delete_forever_rounded,
-                    color: tc.expense, size: 20),
+                child: Icon(
+                  Icons.delete_forever_rounded,
+                  color: tc.expense,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Reset All Data',
-                        style: GoogleFonts.inter(
-                            color: tc.expense,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                    Text('Delete all transactions, accounts & recurring rules',
-                        style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant, fontSize: 11)),
+                    Text(
+                      'Reset All Data',
+                      style: GoogleFonts.inter(
+                        color: tc.expense,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      'Delete all transactions, accounts & recurring rules',
+                      style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: tc.expense.withOpacity(0.6), size: 18),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: tc.expense.withOpacity(0.6),
+                size: 18,
+              ),
             ],
           ),
         ),
@@ -896,29 +943,34 @@ class _ResetDataCard extends ConsumerWidget {
     );
   }
 
-  void _confirmReset(
-      BuildContext context, WidgetRef ref, AppThemeColors tc) {
+  void _confirmReset(BuildContext context, WidgetRef ref, AppThemeColors tc) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: tc.surfaceContainerHigh,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Reset all data?',
           style: GoogleFonts.inter(
-              color: tc.onSurface, fontWeight: FontWeight.w700),
+            color: tc.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           'This will permanently delete all your transactions, accounts, and recurring rules. This cannot be undone.',
           style: GoogleFonts.inter(
-              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+            color: tc.onSurfaceVariant,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: tc.onSurfaceVariant),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -929,8 +981,10 @@ class _ResetDataCard extends ConsumerWidget {
               Navigator.pop(ctx);
               await _doReset(context, ref);
             },
-            child: Text('Reset Everything',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Reset Everything',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -957,9 +1011,9 @@ class _ResetDataCard extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reset failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Reset failed: $e')));
       }
     }
   }
