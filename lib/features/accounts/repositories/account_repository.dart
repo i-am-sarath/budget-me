@@ -12,10 +12,8 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   Future<void> loadAccounts() async {
     try {
       state = const AsyncValue.loading();
-      final rows = await _db.queryAll('accounts',
-          orderBy: 'created_at DESC');
-      state = AsyncValue.data(
-          rows.map(AccountModel.fromMap).toList());
+      final rows = await _db.queryAll('accounts', orderBy: 'created_at DESC');
+      state = AsyncValue.data(rows.map(AccountModel.fromMap).toList());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -43,11 +41,10 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
     await loadAccounts();
   }
 
-  List<AccountModel> get accounts =>
-      state.valueOrNull ?? [];
+  List<AccountModel> get accounts => state.valueOrNull ?? [];
 }
 
 final accountProvider =
     StateNotifierProvider<AccountNotifier, AsyncValue<List<AccountModel>>>(
-  (ref) => AccountNotifier(),
-);
+      (ref) => AccountNotifier(),
+    );
