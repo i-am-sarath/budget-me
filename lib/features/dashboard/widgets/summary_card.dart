@@ -18,7 +18,8 @@ class SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
+      (t) => t.date.month == now.month && t.date.year == now.year,
+    );
     final expense = thisMonth
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (s, t) => s + t.amount);
@@ -36,8 +37,10 @@ class SummaryCard extends StatelessWidget {
     final totalLentReturned = transactions
         .where((t) => t.type == TransactionType.lendReturn)
         .fold(0.0, (s, t) => s + t.amount);
-    final outstandingLent =
-        (totalLent - totalLentReturned).clamp(0.0, double.infinity);
+    final outstandingLent = (totalLent - totalLentReturned).clamp(
+      0.0,
+      double.infinity,
+    );
 
     final totalBorrowed = transactions
         .where((t) => t.type == TransactionType.borrow)
@@ -45,8 +48,10 @@ class SummaryCard extends StatelessWidget {
     final totalBorrowReturned = transactions
         .where((t) => t.type == TransactionType.borrowReturn)
         .fold(0.0, (s, t) => s + t.amount);
-    final outstandingBorrowed =
-        (totalBorrowed - totalBorrowReturned).clamp(0.0, double.infinity);
+    final outstandingBorrowed = (totalBorrowed - totalBorrowReturned).clamp(
+      0.0,
+      double.infinity,
+    );
 
     final showLendBorrow = outstandingLent > 0 || outstandingBorrowed > 0;
     final tc = AppThemeColors.of(context);
