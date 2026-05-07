@@ -7,78 +7,78 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // ── Dark Mode (true black base) ──────────────────────────
-  static const Color surface          = Color(0xFF0A0A0A); // near-black
+  static const Color surface = Color(0xFF0A0A0A); // near-black
   static const Color surfaceContainer = Color(0xFF111111);
-  static const Color surfaceContainerLow    = Color(0xFF161616);
-  static const Color surfaceContainerHigh   = Color(0xFF1E1E1E);
+  static const Color surfaceContainerLow = Color(0xFF161616);
+  static const Color surfaceContainerHigh = Color(0xFF1E1E1E);
   static const Color surfaceContainerHighest = Color(0xFF2A2A2A);
-  static const Color surfaceBright    = Color(0xFF323232);
+  static const Color surfaceBright = Color(0xFF323232);
   static const Color surfaceContainerLowest = Color(0xFF080808);
 
-  static const Color onSurface        = Color(0xFFF5F5F5); // near-white
+  static const Color onSurface = Color(0xFFF5F5F5); // near-white
   static const Color onSurfaceVariant = Color(0xFF9A9A9A); // medium gray
 
-  static const Color outline          = Color(0xFF404040);
-  static const Color outlineVariant   = Color(0xFF282828);
+  static const Color outline = Color(0xFF404040);
+  static const Color outlineVariant = Color(0xFF282828);
 
   // Accent — a single refined ink-tone instead of teal
-  static const Color primary          = Color(0xFFE8E8E8); // light silver
+  static const Color primary = Color(0xFFE8E8E8); // light silver
   static const Color primaryContainer = Color(0xFF1A1A1A); // dark container
-  static const Color onPrimary        = Color(0xFF0A0A0A);
+  static const Color onPrimary = Color(0xFF0A0A0A);
   static const Color onPrimaryContainer = Color(0xFFE8E8E8);
 
-  static const Color secondary        = Color(0xFFB0B0B0);
+  static const Color secondary = Color(0xFFB0B0B0);
   static const Color secondaryContainer = Color(0xFF1E1E1E);
-  static const Color onSecondary      = Color(0xFF0A0A0A);
+  static const Color onSecondary = Color(0xFF0A0A0A);
 
-  static const Color tertiary         = Color(0xFF808080);
+  static const Color tertiary = Color(0xFF808080);
   static const Color tertiaryContainer = Color(0xFF1A1A1A);
-  static const Color onTertiary       = Color(0xFF0A0A0A);
+  static const Color onTertiary = Color(0xFF0A0A0A);
 
-  static const Color error            = Color(0xFFFF6B6B);
-  static const Color errorContainer   = Color(0xFF2D1515);
-  static const Color onError          = Color(0xFF0A0A0A);
+  static const Color error = Color(0xFFFF6B6B);
+  static const Color errorContainer = Color(0xFF2D1515);
+  static const Color onError = Color(0xFF0A0A0A);
 
   // Transaction type colors — sharp & minimal
-  static const Color expense  = Color(0xFFFF5C5C); // sharp red
-  static const Color income   = Color(0xFF4ADE80); // sharp green
+  static const Color expense = Color(0xFFFF5C5C); // sharp red
+  static const Color income = Color(0xFF4ADE80); // sharp green
   static const Color investment = Color(0xFF60A5FA); // blue
-  static const Color lend     = Color(0xFFFBBF24); // amber
-  static const Color borrow   = Color(0xFFE879F9); // violet
+  static const Color lend = Color(0xFFFBBF24); // amber
+  static const Color borrow = Color(0xFFE879F9); // violet
 
   // Inverse
-  static const Color inverseSurface    = Color(0xFFF5F5F5);
-  static const Color inverseOnSurface  = Color(0xFF111111);
-  static const Color inversePrimary    = Color(0xFF1A1A1A);
+  static const Color inverseSurface = Color(0xFFF5F5F5);
+  static const Color inverseOnSurface = Color(0xFF111111);
+  static const Color inversePrimary = Color(0xFF1A1A1A);
 }
 
 class AppColorsLight {
   // ── Light Mode (clean white base) ────────────────────────
-  static const Color surface          = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceContainer = Color(0xFFF8F8F8);
-  static const Color surfaceContainerLow    = Color(0xFFF3F3F3);
-  static const Color surfaceContainerHigh   = Color(0xFFEEEEEE);
+  static const Color surfaceContainerLow = Color(0xFFF3F3F3);
+  static const Color surfaceContainerHigh = Color(0xFFEEEEEE);
   static const Color surfaceContainerHighest = Color(0xFFE8E8E8);
 
-  static const Color onSurface        = Color(0xFF0A0A0A);
+  static const Color onSurface = Color(0xFF0A0A0A);
   static const Color onSurfaceVariant = Color(0xFF555555);
 
-  static const Color outline          = Color(0xFFCCCCCC);
-  static const Color outlineVariant   = Color(0xFFE8E8E8);
+  static const Color outline = Color(0xFFCCCCCC);
+  static const Color outlineVariant = Color(0xFFE8E8E8);
 
-  static const Color primary          = Color(0xFF0A0A0A);
+  static const Color primary = Color(0xFF0A0A0A);
   static const Color primaryContainer = Color(0xFFF0F0F0);
-  static const Color onPrimary        = Color(0xFFFFFFFF);
+  static const Color onPrimary = Color(0xFFFFFFFF);
   static const Color onPrimaryContainer = Color(0xFF0A0A0A);
 
-  static const Color error            = Color(0xFFDC2626);
-  static const Color errorContainer   = Color(0xFFFEE2E2);
+  static const Color error = Color(0xFFDC2626);
+  static const Color errorContainer = Color(0xFFFEE2E2);
 
-  static const Color expense  = Color(0xFFDC2626);
-  static const Color income   = Color(0xFF16A34A);
+  static const Color expense = Color(0xFFDC2626);
+  static const Color income = Color(0xFF16A34A);
   static const Color investment = Color(0xFF2563EB);
-  static const Color lend     = Color(0xFFD97706);
-  static const Color borrow   = Color(0xFF9333EA);
+  static const Color lend = Color(0xFFD97706);
+  static const Color borrow = Color(0xFF9333EA);
 }
 
 // ─────────────────────────────────────────────
@@ -189,12 +189,12 @@ class AppThemeColors {
 class AppTheme {
   // Legacy compat shims
   static const Color background = AppColors.surface;
-  static const Color surface    = AppColors.surfaceContainer;
-  static const Color accent     = AppColors.primary;
-  static const Color textPrimary   = AppColors.onSurface;
+  static const Color surface = AppColors.surfaceContainer;
+  static const Color accent = AppColors.primary;
+  static const Color textPrimary = AppColors.onSurface;
   static const Color textSecondary = AppColors.onSurfaceVariant;
-  static const Color expense    = AppColors.expense;
-  static const Color income     = AppColors.income;
+  static const Color expense = AppColors.expense;
+  static const Color income = AppColors.income;
 
   // ── Dark Theme ──────────────────────────────────────────
 
@@ -273,7 +273,10 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
+          borderSide: const BorderSide(
+            color: AppColors.outlineVariant,
+            width: 0.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -290,7 +293,9 @@ class AppTheme {
           backgroundColor: AppColors.onSurface,
           foregroundColor: AppColors.surface,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -306,7 +311,10 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceContainerHigh,
         selectedColor: AppColors.onSurface,
-        labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,
       ),
@@ -364,7 +372,10 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColorsLight.outlineVariant, width: 0.5),
+          side: const BorderSide(
+            color: AppColorsLight.outlineVariant,
+            width: 0.5,
+          ),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -383,11 +394,17 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColorsLight.outlineVariant, width: 0.5),
+          borderSide: const BorderSide(
+            color: AppColorsLight.outlineVariant,
+            width: 0.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColorsLight.onSurface, width: 1),
+          borderSide: const BorderSide(
+            color: AppColorsLight.onSurface,
+            width: 1,
+          ),
         ),
         labelStyle: const TextStyle(color: AppColorsLight.onSurfaceVariant),
         hintStyle: const TextStyle(color: AppColorsLight.onSurfaceVariant),
@@ -400,7 +417,9 @@ class AppTheme {
           backgroundColor: AppColorsLight.onSurface,
           foregroundColor: AppColorsLight.surface,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -416,7 +435,10 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColorsLight.surfaceContainerHigh,
         selectedColor: AppColorsLight.onSurface,
-        labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,
       ),
