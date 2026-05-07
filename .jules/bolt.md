@@ -1,0 +1,1 @@
+- Avoid repeated `Iterable.where()` or `.fold()` chains on the same list; optimize by using a single-pass loop.
