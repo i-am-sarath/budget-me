@@ -52,13 +52,14 @@ class SubscriptionsScreen extends ConsumerWidget {
               loading: () => const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => SliverFillRemaining(
-                child: Center(child: Text('Error: $e')),
-              ),
+              error: (e, _) =>
+                  SliverFillRemaining(child: Center(child: Text('Error: $e'))),
               data: (subs) {
                 if (subs.isEmpty) {
                   return SliverFillRemaining(
-                    child: _EmptyState(onAdd: () => _showAddSheet(context, ref)),
+                    child: _EmptyState(
+                      onAdd: () => _showAddSheet(context, ref),
+                    ),
                   );
                 }
 
@@ -84,40 +85,47 @@ class SubscriptionsScreen extends ConsumerWidget {
                           .toList()
                           .asMap()
                           .entries
-                          .map((e) => _SubTile(
-                                sub: e.value,
-                                currency: currency,
-                                onMarkPaid: () => ref
-                                    .read(subscriptionListProvider.notifier)
-                                    .markPaid(e.value),
-                                onDelete: () => ref
-                                    .read(subscriptionListProvider.notifier)
-                                    .delete(e.value.id),
-                              )
-                                  .animate()
-                                  .fadeIn(delay: (e.key * 60).ms)
-                                  .slideX(begin: -0.05)),
+                          .map(
+                            (e) =>
+                                _SubTile(
+                                      sub: e.value,
+                                      currency: currency,
+                                      onMarkPaid: () => ref
+                                          .read(
+                                            subscriptionListProvider.notifier,
+                                          )
+                                          .markPaid(e.value),
+                                      onDelete: () => ref
+                                          .read(
+                                            subscriptionListProvider.notifier,
+                                          )
+                                          .delete(e.value.id),
+                                    )
+                                    .animate()
+                                    .fadeIn(delay: (e.key * 60).ms)
+                                    .slideX(begin: -0.05),
+                          ),
                       const SizedBox(height: 20),
                     ],
 
                     // All subscriptions
-                    _SectionLabel(label: 'ALL SUBSCRIPTIONS', color: tc.onSurfaceVariant),
+                    _SectionLabel(
+                      label: 'ALL SUBSCRIPTIONS',
+                      color: tc.onSurfaceVariant,
+                    ),
                     const SizedBox(height: 10),
-                    ...active
-                        .asMap()
-                        .entries
-                        .map((e) => _SubTile(
-                              sub: e.value,
-                              currency: currency,
-                              onMarkPaid: () => ref
-                                  .read(subscriptionListProvider.notifier)
-                                  .markPaid(e.value),
-                              onDelete: () => ref
-                                  .read(subscriptionListProvider.notifier)
-                                  .delete(e.value.id),
-                            )
-                                .animate()
-                                .fadeIn(delay: (e.key * 50).ms)),
+                    ...active.asMap().entries.map(
+                      (e) => _SubTile(
+                        sub: e.value,
+                        currency: currency,
+                        onMarkPaid: () => ref
+                            .read(subscriptionListProvider.notifier)
+                            .markPaid(e.value),
+                        onDelete: () => ref
+                            .read(subscriptionListProvider.notifier)
+                            .delete(e.value.id),
+                      ).animate().fadeIn(delay: (e.key * 50).ms),
+                    ),
                   ]),
                 );
               },
@@ -251,10 +259,10 @@ class _SubTile extends StatelessWidget {
     final urgencyColor = sub.isOverdue
         ? tc.expense
         : sub.isDueToday
-            ? tc.lend
-            : sub.isDueSoon
-                ? tc.lend
-                : tc.onSurfaceVariant;
+        ? tc.lend
+        : sub.isDueSoon
+        ? tc.lend
+        : tc.onSurfaceVariant;
 
     return Dismissible(
       key: Key(sub.id),
@@ -335,7 +343,9 @@ class _SubTile extends StatelessWidget {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: urgencyColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(100),
@@ -344,8 +354,8 @@ class _SubTile extends StatelessWidget {
                       sub.isOverdue
                           ? 'Overdue'
                           : sub.isDueToday
-                              ? 'Pay today'
-                              : 'Due in ${daysLeft}d',
+                          ? 'Pay today'
+                          : 'Due in ${daysLeft}d',
                       style: GoogleFonts.inter(
                         color: urgencyColor,
                         fontSize: 10,
@@ -374,14 +384,14 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        label,
-        style: GoogleFonts.inter(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.5,
-        ),
-      );
+    label,
+    style: GoogleFonts.inter(
+      color: color,
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1.5,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -405,8 +415,11 @@ class _EmptyState extends StatelessWidget {
             color: tc.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Icon(Icons.subscriptions_outlined,
-              color: tc.onSurfaceVariant, size: 32),
+          child: Icon(
+            Icons.subscriptions_outlined,
+            color: tc.onSurfaceVariant,
+            size: 32,
+          ),
         ),
         const SizedBox(height: 20),
         Text(
@@ -463,8 +476,7 @@ class _AddSubscriptionSheet extends ConsumerStatefulWidget {
       _AddSubscriptionSheetState();
 }
 
-class _AddSubscriptionSheetState
-    extends ConsumerState<_AddSubscriptionSheet> {
+class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
   final _nameCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -515,7 +527,11 @@ class _AddSubscriptionSheetState
 
     return Container(
       padding: EdgeInsets.only(
-          top: 24, left: 24, right: 24, bottom: bottomPad + 32),
+        top: 24,
+        left: 24,
+        right: 24,
+        bottom: bottomPad + 32,
+      ),
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -550,12 +566,15 @@ class _AddSubscriptionSheetState
             const SizedBox(height: 20),
 
             // Quick presets
-            Text('Quick add',
-                style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5)),
+            Text(
+              'Quick add',
+              style: GoogleFonts.inter(
+                color: tc.onSurfaceVariant,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 10),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -572,12 +591,16 @@ class _AddSubscriptionSheetState
                     child: Container(
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: tc.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(100),
-                        border:
-                            Border.all(color: tc.outlineVariant, width: 0.5),
+                        border: Border.all(
+                          color: tc.outlineVariant,
+                          width: 0.5,
+                        ),
                       ),
                       child: Text(
                         p.$1,
@@ -600,8 +623,11 @@ class _AddSubscriptionSheetState
               style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Name',
-                prefixIcon:
-                    Icon(Icons.label_outline_rounded, color: tc.onSurfaceVariant, size: 20),
+                prefixIcon: Icon(
+                  Icons.label_outline_rounded,
+                  color: tc.onSurfaceVariant,
+                  size: 20,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -609,24 +635,31 @@ class _AddSubscriptionSheetState
             // Amount
             TextField(
               controller: _amountCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Amount',
-                prefixIcon:
-                    Icon(Icons.currency_rupee, color: tc.onSurfaceVariant, size: 20),
+                prefixIcon: Icon(
+                  Icons.currency_rupee,
+                  color: tc.onSurfaceVariant,
+                  size: 20,
+                ),
               ),
             ),
             const SizedBox(height: 16),
 
             // Category
-            Text('Category',
-                style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5)),
+            Text(
+              'Category',
+              style: GoogleFonts.inter(
+                color: tc.onSurfaceVariant,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -638,19 +671,21 @@ class _AddSubscriptionSheetState
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 7),
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
-                      color: selected
-                          ? tc.onSurface
-                          : tc.surfaceContainerHigh,
+                      color: selected ? tc.onSurface : tc.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(100),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(cat.icon,
-                            size: 13,
-                            color: selected ? tc.surface : tc.onSurfaceVariant),
+                        Icon(
+                          cat.icon,
+                          size: 13,
+                          color: selected ? tc.surface : tc.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 5),
                         Text(
                           cat.label,
@@ -669,12 +704,15 @@ class _AddSubscriptionSheetState
             const SizedBox(height: 16),
 
             // Billing cycle
-            Text('Billing cycle',
-                style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5)),
+            Text(
+              'Billing cycle',
+              style: GoogleFonts.inter(
+                color: tc.onSurfaceVariant,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               children: BillingCycle.values.map((c) {
@@ -696,8 +734,7 @@ class _AddSubscriptionSheetState
                         c.label,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
-                          color:
-                              selected ? tc.surface : tc.onSurfaceVariant,
+                          color: selected ? tc.surface : tc.onSurfaceVariant,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -722,7 +759,9 @@ class _AddSubscriptionSheetState
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: tc.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(14),
@@ -730,13 +769,18 @@ class _AddSubscriptionSheetState
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.calendar_month_outlined,
-                        color: tc.onSurfaceVariant, size: 18),
+                    Icon(
+                      Icons.calendar_month_outlined,
+                      color: tc.onSurfaceVariant,
+                      size: 18,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       'Next due: ${DateFormat('d MMM yyyy').format(_nextDue)}',
                       style: GoogleFonts.inter(
-                          color: tc.onSurface, fontSize: 13),
+                        color: tc.onSurface,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -753,7 +797,9 @@ class _AddSubscriptionSheetState
                 child: Text(
                   'Save Subscription',
                   style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w700, fontSize: 15),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),

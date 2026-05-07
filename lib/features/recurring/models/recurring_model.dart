@@ -10,11 +10,16 @@ enum RecurringFrequency {
 
   String get label {
     switch (this) {
-      case RecurringFrequency.daily:     return 'Daily';
-      case RecurringFrequency.weekly:    return 'Weekly';
-      case RecurringFrequency.biweekly:  return 'Bi-weekly';
-      case RecurringFrequency.monthly:   return 'Monthly';
-      case RecurringFrequency.yearly:    return 'Yearly';
+      case RecurringFrequency.daily:
+        return 'Daily';
+      case RecurringFrequency.weekly:
+        return 'Weekly';
+      case RecurringFrequency.biweekly:
+        return 'Bi-weekly';
+      case RecurringFrequency.monthly:
+        return 'Monthly';
+      case RecurringFrequency.yearly:
+        return 'Yearly';
     }
   }
 
@@ -56,8 +61,8 @@ class RecurringModel {
     this.isActive = true,
     this.note = '',
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   bool get isDueToday {
     final now = DateTime.now();
@@ -77,52 +82,62 @@ class RecurringModel {
       case RecurringFrequency.biweekly:
         next = nextRunDate.add(const Duration(days: 14));
       case RecurringFrequency.monthly:
-        next = DateTime(nextRunDate.year, nextRunDate.month + 1, nextRunDate.day);
+        next = DateTime(
+          nextRunDate.year,
+          nextRunDate.month + 1,
+          nextRunDate.day,
+        );
       case RecurringFrequency.yearly:
-        next = DateTime(nextRunDate.year + 1, nextRunDate.month, nextRunDate.day);
+        next = DateTime(
+          nextRunDate.year + 1,
+          nextRunDate.month,
+          nextRunDate.day,
+        );
     }
     return copyWith(nextRunDate: next, lastRunDate: DateTime.now());
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'title': title,
-        'amount': amount,
-        'type': type.name,
-        'category': category,
-        'account_id': accountId ?? '',
-        'account_name': accountName ?? '',
-        'frequency': frequency.name,
-        'start_date': startDate.toIso8601String(),
-        'next_run_date': nextRunDate.toIso8601String(),
-        'last_run_date': lastRunDate?.toIso8601String() ?? '',
-        'is_active': isActive ? 1 : 0,
-        'note': note,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'amount': amount,
+    'type': type.name,
+    'category': category,
+    'account_id': accountId ?? '',
+    'account_name': accountName ?? '',
+    'frequency': frequency.name,
+    'start_date': startDate.toIso8601String(),
+    'next_run_date': nextRunDate.toIso8601String(),
+    'last_run_date': lastRunDate?.toIso8601String() ?? '',
+    'is_active': isActive ? 1 : 0,
+    'note': note,
+    'created_at': createdAt.toIso8601String(),
+  };
 
   factory RecurringModel.fromMap(Map<String, dynamic> map) => RecurringModel(
-        id: map['id'] as String,
-        title: map['title'] as String,
-        amount: (map['amount'] as num).toDouble(),
-        type: TransactionType.fromString(map['type'] as String? ?? 'expense'),
-        category: map['category'] as String? ?? 'General',
-        accountId: (map['account_id'] as String?)?.isNotEmpty == true
-            ? map['account_id'] as String
-            : null,
-        accountName: (map['account_name'] as String?)?.isNotEmpty == true
-            ? map['account_name'] as String
-            : null,
-        frequency: RecurringFrequency.fromString(map['frequency'] as String? ?? 'monthly'),
-        startDate: DateTime.parse(map['start_date'] as String),
-        nextRunDate: DateTime.parse(map['next_run_date'] as String),
-        lastRunDate: (map['last_run_date'] as String?)?.isNotEmpty == true
-            ? DateTime.parse(map['last_run_date'] as String)
-            : null,
-        isActive: (map['is_active'] as int? ?? 1) == 1,
-        note: map['note'] as String? ?? '',
-        createdAt: DateTime.parse(map['created_at'] as String),
-      );
+    id: map['id'] as String,
+    title: map['title'] as String,
+    amount: (map['amount'] as num).toDouble(),
+    type: TransactionType.fromString(map['type'] as String? ?? 'expense'),
+    category: map['category'] as String? ?? 'General',
+    accountId: (map['account_id'] as String?)?.isNotEmpty == true
+        ? map['account_id'] as String
+        : null,
+    accountName: (map['account_name'] as String?)?.isNotEmpty == true
+        ? map['account_name'] as String
+        : null,
+    frequency: RecurringFrequency.fromString(
+      map['frequency'] as String? ?? 'monthly',
+    ),
+    startDate: DateTime.parse(map['start_date'] as String),
+    nextRunDate: DateTime.parse(map['next_run_date'] as String),
+    lastRunDate: (map['last_run_date'] as String?)?.isNotEmpty == true
+        ? DateTime.parse(map['last_run_date'] as String)
+        : null,
+    isActive: (map['is_active'] as int? ?? 1) == 1,
+    note: map['note'] as String? ?? '',
+    createdAt: DateTime.parse(map['created_at'] as String),
+  );
 
   RecurringModel copyWith({
     String? title,
@@ -137,21 +152,20 @@ class RecurringModel {
     DateTime? lastRunDate,
     bool? isActive,
     String? note,
-  }) =>
-      RecurringModel(
-        id: id,
-        title: title ?? this.title,
-        amount: amount ?? this.amount,
-        type: type ?? this.type,
-        category: category ?? this.category,
-        accountId: accountId ?? this.accountId,
-        accountName: accountName ?? this.accountName,
-        frequency: frequency ?? this.frequency,
-        startDate: startDate ?? this.startDate,
-        nextRunDate: nextRunDate ?? this.nextRunDate,
-        lastRunDate: lastRunDate ?? this.lastRunDate,
-        isActive: isActive ?? this.isActive,
-        note: note ?? this.note,
-        createdAt: createdAt,
-      );
+  }) => RecurringModel(
+    id: id,
+    title: title ?? this.title,
+    amount: amount ?? this.amount,
+    type: type ?? this.type,
+    category: category ?? this.category,
+    accountId: accountId ?? this.accountId,
+    accountName: accountName ?? this.accountName,
+    frequency: frequency ?? this.frequency,
+    startDate: startDate ?? this.startDate,
+    nextRunDate: nextRunDate ?? this.nextRunDate,
+    lastRunDate: lastRunDate ?? this.lastRunDate,
+    isActive: isActive ?? this.isActive,
+    note: note ?? this.note,
+    createdAt: createdAt,
+  );
 }

@@ -69,15 +69,17 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
     });
 
     try {
-      final transcription =
-          await _openAiService.transcribeAudio(_currentAudioFile!);
+      final transcription = await _openAiService.transcribeAudio(
+        _currentAudioFile!,
+      );
       setState(() {
         _transcript = transcription;
         _status = 'Understanding your request...';
       });
 
-      final transactions =
-          await _openAiService.parseTransactions(transcription);
+      final transactions = await _openAiService.parseTransactions(
+        transcription,
+      );
 
       await ref.read(subscriptionProvider.notifier).recordVoiceLogUsed();
 
@@ -92,8 +94,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
         _error = e.toString();
       });
     } finally {
-      if (_currentAudioFile != null &&
-          await _currentAudioFile!.exists()) {
+      if (_currentAudioFile != null && await _currentAudioFile!.exists()) {
         await _currentAudioFile!.delete();
       }
     }
@@ -106,7 +107,9 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
     HapticFeedback.heavyImpact();
     final dir = await getTemporaryDirectory();
     final path = p.join(
-        dir.path, 'tx_respeak_${DateTime.now().millisecondsSinceEpoch}.m4a');
+      dir.path,
+      'tx_respeak_${DateTime.now().millisecondsSinceEpoch}.m4a',
+    );
     await _audioRecorder.start(
       const RecordConfig(encoder: AudioEncoder.aacLc),
       path: path,
@@ -177,10 +180,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
               tc: tc,
             )
           else if (_isReRecording)
-            _ReRecordingView(
-              tc: tc,
-              onStop: _stopReSpeak,
-            )
+            _ReRecordingView(tc: tc, onStop: _stopReSpeak)
           else if (_error != null)
             _ErrorView(
               error: _error!,
@@ -236,7 +236,9 @@ class _ProcessingView extends StatelessWidget {
                 color: tc.surfaceContainerHigh,
                 boxShadow: [
                   BoxShadow(
-                    color: tc.onSurface.withOpacity(0.08 + waveController.value * 0.1),
+                    color: tc.onSurface.withOpacity(
+                      0.08 + waveController.value * 0.1,
+                    ),
                     blurRadius: 20 + waveController.value * 10,
                     spreadRadius: 2,
                   ),
@@ -248,16 +250,15 @@ class _ProcessingView extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          status,
-          style: GoogleFonts.inter(
-            color: tc.onSurface,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ).animate(onPlay: (c) => c.repeat()).shimmer(
-              color: tc.onSurfaceVariant,
-              duration: 1500.ms,
-            ),
+              status,
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+            .animate(onPlay: (c) => c.repeat())
+            .shimmer(color: tc.onSurfaceVariant, duration: 1500.ms),
         if (transcript.isNotEmpty) ...[
           const SizedBox(height: 16),
           Container(
@@ -301,14 +302,16 @@ class _ReRecordingView extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.red.withOpacity(0.15),
-          ),
-          child: const Icon(Icons.mic_rounded, color: Colors.red, size: 36),
-        ).animate(onPlay: (c) => c.repeat()).scaleXY(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.red.withOpacity(0.15),
+              ),
+              child: const Icon(Icons.mic_rounded, color: Colors.red, size: 36),
+            )
+            .animate(onPlay: (c) => c.repeat())
+            .scaleXY(
               begin: 1.0,
               end: 1.12,
               duration: 700.ms,
@@ -330,13 +333,16 @@ class _ReRecordingView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onStop,
             icon: const Icon(Icons.stop_rounded),
-            label: Text('Stop & Process',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+            label: Text(
+              'Stop & Process',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100)),
+                borderRadius: BorderRadius.circular(100),
+              ),
             ),
           ),
         ),
@@ -376,25 +382,26 @@ class _ErrorView extends StatelessWidget {
           child: Icon(Icons.error_outline_rounded, color: Colors.red, size: 32),
         ),
         const SizedBox(height: 16),
-        Text('Processing failed',
-            style: GoogleFonts.inter(
-                color: tc.onSurface,
-                fontSize: 18,
-                fontWeight: FontWeight.w700)),
+        Text(
+          'Processing failed',
+          style: GoogleFonts.inter(
+            color: tc.onSurface,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 8),
         Text(
           error.length > 140 ? '${error.substring(0, 140)}...' : error,
           textAlign: TextAlign.center,
-          style:
-              GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 12, height: 1.4),
+          style: GoogleFonts.inter(
+            color: tc.onSurfaceVariant,
+            fontSize: 12,
+            height: 1.4,
+          ),
         ),
         const SizedBox(height: 24),
-        _Btn(
-          label: '🎤  Re-speak',
-          onTap: onRetry,
-          isPrimary: true,
-          tc: tc,
-        ),
+        _Btn(label: '🎤  Re-speak', onTap: onRetry, isPrimary: true, tc: tc),
         const SizedBox(height: 10),
         _Btn(label: 'Close', onTap: onClose, isPrimary: false, tc: tc),
       ],
@@ -427,25 +434,39 @@ class _ResultView extends StatelessWidget {
 
   Color _typeColor(TransactionType type) {
     switch (type) {
-      case TransactionType.income:       return const Color(0xFF22C55E);
-      case TransactionType.lendReturn:   return const Color(0xFF22C55E);
-      case TransactionType.expense:      return Colors.red;
-      case TransactionType.borrowReturn: return Colors.red;
-      case TransactionType.lend:         return const Color(0xFFF59E0B);
-      case TransactionType.borrow:       return const Color(0xFF8B5CF6);
-      case TransactionType.investment:   return const Color(0xFF3B82F6);
+      case TransactionType.income:
+        return const Color(0xFF22C55E);
+      case TransactionType.lendReturn:
+        return const Color(0xFF22C55E);
+      case TransactionType.expense:
+        return Colors.red;
+      case TransactionType.borrowReturn:
+        return Colors.red;
+      case TransactionType.lend:
+        return const Color(0xFFF59E0B);
+      case TransactionType.borrow:
+        return const Color(0xFF8B5CF6);
+      case TransactionType.investment:
+        return const Color(0xFF3B82F6);
     }
   }
 
   IconData _typeIcon(TransactionType type) {
     switch (type) {
-      case TransactionType.income:       return Icons.arrow_downward_rounded;
-      case TransactionType.lendReturn:   return Icons.undo_rounded;
-      case TransactionType.expense:      return Icons.arrow_upward_rounded;
-      case TransactionType.borrowReturn: return Icons.redo_rounded;
-      case TransactionType.lend:         return Icons.people_rounded;
-      case TransactionType.borrow:       return Icons.savings_rounded;
-      case TransactionType.investment:   return Icons.trending_up_rounded;
+      case TransactionType.income:
+        return Icons.arrow_downward_rounded;
+      case TransactionType.lendReturn:
+        return Icons.undo_rounded;
+      case TransactionType.expense:
+        return Icons.arrow_upward_rounded;
+      case TransactionType.borrowReturn:
+        return Icons.redo_rounded;
+      case TransactionType.lend:
+        return Icons.people_rounded;
+      case TransactionType.borrow:
+        return Icons.savings_rounded;
+      case TransactionType.investment:
+        return Icons.trending_up_rounded;
     }
   }
 
@@ -464,8 +485,11 @@ class _ResultView extends StatelessWidget {
                 color: const Color(0xFF22C55E).withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_rounded,
-                  color: Color(0xFF22C55E), size: 20),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Color(0xFF22C55E),
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -475,17 +499,19 @@ class _ResultView extends StatelessWidget {
                   Text(
                     '${transactions.length} transaction${transactions.length == 1 ? '' : 's'} found',
                     style: GoogleFonts.inter(
-                        color: tc.onSurface,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700),
+                      color: tc.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   if (transcript.isNotEmpty)
                     Text(
                       '"$transcript"',
                       style: GoogleFonts.inter(
-                          color: tc.onSurfaceVariant,
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic),
+                        color: tc.onSurfaceVariant,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -501,52 +527,62 @@ class _ResultView extends StatelessWidget {
           final tx = e.value;
           final color = _typeColor(tx.type);
           return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: tc.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(_typeIcon(tx.type), color: color, size: 18),
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: tc.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: color.withOpacity(0.3)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tx.note.isNotEmpty ? tx.note : tx.category,
-                        style: GoogleFonts.inter(
-                            color: tc.onSurface, fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
+                        shape: BoxShape.circle,
                       ),
-                      Text(
-                        '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
-                        style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant, fontSize: 11),
+                      child: Icon(_typeIcon(tx.type), color: color, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tx.note.isNotEmpty ? tx.note : tx.category,
+                            style: GoogleFonts.inter(
+                              color: tc.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
+                            style: GoogleFonts.inter(
+                              color: tc.onSurfaceVariant,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Text(
+                      currency.format(tx.amount),
+                      style: GoogleFonts.inter(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  currency.format(tx.amount),
-                  style: GoogleFonts.inter(
-                      color: color, fontWeight: FontWeight.w700, fontSize: 16),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 300.ms, delay: (e.key * 80).ms).slideY(begin: 0.2);
+              )
+              .animate()
+              .fadeIn(duration: 300.ms, delay: (e.key * 80).ms)
+              .slideY(begin: 0.2);
         }),
 
         const SizedBox(height: 16),
@@ -562,14 +598,17 @@ class _ResultView extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onRespeak,
                 icon: const Icon(Icons.mic_rounded, size: 16),
-                label: Text('Re-speak',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Re-speak',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: tc.onSurface,
                   side: BorderSide(color: tc.outlineVariant),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100)),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
                 ),
               ),
             ),
@@ -582,10 +621,10 @@ class _ResultView extends StatelessWidget {
                   side: BorderSide(color: tc.outlineVariant),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100)),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
                 ),
-                child:
-                    Text('Cancel', style: GoogleFonts.inter()),
+                child: Text('Cancel', style: GoogleFonts.inter()),
               ),
             ),
           ],
@@ -620,8 +659,10 @@ class _Btn extends StatelessWidget {
       child: isPrimary
           ? ElevatedButton(
               onPressed: onTap,
-              child: Text(label,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+              child: Text(
+                label,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
             )
           : OutlinedButton(
               onPressed: onTap,
@@ -629,7 +670,8 @@ class _Btn extends StatelessWidget {
                 foregroundColor: tc.onSurfaceVariant,
                 side: BorderSide(color: tc.outlineVariant),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100)),
+                  borderRadius: BorderRadius.circular(100),
+                ),
               ),
               child: Text(label, style: GoogleFonts.inter()),
             ),
