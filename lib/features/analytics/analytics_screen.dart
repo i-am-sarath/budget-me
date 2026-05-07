@@ -30,7 +30,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     return Scaffold(
       backgroundColor: tc.surface,
       body: txAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (all) {
           final filtered = _filterByRange(all);
@@ -43,13 +44,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 snap: true,
                 elevation: 0,
                 titleSpacing: 20,
-                title: Text('Analytics',
-                    style: GoogleFonts.inter(
-                      color: tc.onSurface,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22,
-                      letterSpacing: -0.5,
-                    )),
+                title: Text(
+                  'Analytics',
+                  style: GoogleFonts.inter(
+                    color: tc.onSurface,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    letterSpacing: -0.5,
+                  ),
+                ),
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
@@ -63,15 +66,19 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                     const SizedBox(height: 20),
 
                     // Summary row
-                    _SummaryRow(transactions: filtered, currency: currency)
-                        .animate().fadeIn(delay: 60.ms),
+                    _SummaryRow(
+                      transactions: filtered,
+                      currency: currency,
+                    ).animate().fadeIn(delay: 60.ms),
                     const SizedBox(height: 24),
 
                     // Bar chart
                     _SectionTitle('Daily Spending', tc),
                     const SizedBox(height: 12),
-                    _BarChartCard(transactions: filtered, currency: currency)
-                        .animate().fadeIn(delay: 100.ms),
+                    _BarChartCard(
+                      transactions: filtered,
+                      currency: currency,
+                    ).animate().fadeIn(delay: 100.ms),
                     const SizedBox(height: 24),
 
                     // Category breakdown
@@ -88,8 +95,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                     // Income vs Expense trend
                     _SectionTitle('Income vs Expense', tc),
                     const SizedBox(height: 12),
-                    _LineChartCard(transactions: filtered, currency: currency)
-                        .animate().fadeIn(delay: 180.ms),
+                    _LineChartCard(
+                      transactions: filtered,
+                      currency: currency,
+                    ).animate().fadeIn(delay: 180.ms),
                   ]),
                 ),
               ),
@@ -165,24 +174,41 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
-    final income = transactions
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final expense = transactions
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
+
+    // ⚡ Bolt: single-pass loop instead of multiple where/fold chains
+    double income = 0.0;
+    double expense = 0.0;
+    for (final t in transactions) {
+      if (t.type == TransactionType.income) {
+        income += t.amount;
+      } else if (t.type == TransactionType.expense) {
+        expense += t.amount;
+      }
+    }
     final saved = income - expense;
 
     return Row(
       children: [
-        _StatBox(label: 'Income', value: currency.format(income),
-            color: tc.income, tc: tc),
+        _StatBox(
+          label: 'Income',
+          value: currency.format(income),
+          color: tc.income,
+          tc: tc,
+        ),
         const SizedBox(width: 10),
-        _StatBox(label: 'Spent', value: currency.format(expense),
-            color: tc.expense, tc: tc),
+        _StatBox(
+          label: 'Spent',
+          value: currency.format(expense),
+          color: tc.expense,
+          tc: tc,
+        ),
         const SizedBox(width: 10),
-        _StatBox(label: 'Saved', value: currency.format(saved.abs()),
-            color: saved >= 0 ? tc.income : tc.expense, tc: tc),
+        _StatBox(
+          label: 'Saved',
+          value: currency.format(saved.abs()),
+          color: saved >= 0 ? tc.income : tc.expense,
+          tc: tc,
+        ),
       ],
     );
   }
@@ -192,8 +218,12 @@ class _StatBox extends StatelessWidget {
   final String label, value;
   final Color color;
   final AppThemeColors tc;
-  const _StatBox({required this.label, required this.value,
-      required this.color, required this.tc});
+  const _StatBox({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.tc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -208,17 +238,32 @@ class _StatBox extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(width: 6, height: 6,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
             const SizedBox(height: 8),
-            Text(label,
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant,
-                    fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: tc.onSurfaceVariant,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
             const SizedBox(height: 3),
-            Text(value,
-                style: GoogleFonts.inter(color: tc.onSurface,
-                    fontSize: 13, fontWeight: FontWeight.w800),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
@@ -233,9 +278,14 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title, this.tc);
 
   @override
-  Widget build(BuildContext context) => Text(title,
-      style: GoogleFonts.inter(
-          color: tc.onSurface, fontSize: 15, fontWeight: FontWeight.w700));
+  Widget build(BuildContext context) => Text(
+    title,
+    style: GoogleFonts.inter(
+      color: tc.onSurface,
+      fontSize: 15,
+      fontWeight: FontWeight.w700,
+    ),
+  );
 }
 
 // ─── Bar Chart ────────────────────────────────────────────
@@ -277,13 +327,21 @@ class _BarChartCard extends StatelessWidget {
               show: true,
               drawVerticalLine: false,
               getDrawingHorizontalLine: (_) => FlLine(
-                  color: tc.outlineVariant.withOpacity(0.5), strokeWidth: 0.5),
+                color: tc.outlineVariant.withOpacity(0.5),
+                strokeWidth: 0.5,
+              ),
             ),
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
-              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
@@ -292,9 +350,13 @@ class _BarChartCard extends StatelessWidget {
                     final daysAgo = 13 - val.toInt();
                     if (daysAgo % 4 != 0) return const SizedBox.shrink();
                     final date = now.subtract(Duration(days: daysAgo));
-                    return Text(DateFormat('d/M').format(date),
-                        style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant, fontSize: 9));
+                    return Text(
+                      DateFormat('d/M').format(date),
+                      style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 9,
+                      ),
+                    );
                   },
                 ),
               ),
@@ -308,8 +370,16 @@ class _BarChartCard extends StatelessWidget {
               final barColor = value == 0
                   ? tc.outlineVariant
                   : intensity < 0.5
-                      ? Color.lerp(const Color(0xFF38BDF8), const Color(0xFFFBBF24), intensity * 2)!
-                      : Color.lerp(const Color(0xFFFBBF24), const Color(0xFFEF4444), (intensity - 0.5) * 2)!;
+                  ? Color.lerp(
+                      const Color(0xFF38BDF8),
+                      const Color(0xFFFBBF24),
+                      intensity * 2,
+                    )!
+                  : Color.lerp(
+                      const Color(0xFFFBBF24),
+                      const Color(0xFFEF4444),
+                      (intensity - 0.5) * 2,
+                    )!;
               return BarChartGroupData(
                 x: i,
                 barRods: [
@@ -325,7 +395,8 @@ class _BarChartCard extends StatelessWidget {
                     color: value == 0 ? tc.outlineVariant : null,
                     width: 14,
                     borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(6)),
+                      top: Radius.circular(6),
+                    ),
                   ),
                 ],
               );
@@ -335,8 +406,11 @@ class _BarChartCard extends StatelessWidget {
                 getTooltipColor: (_) => tc.surfaceContainerHigh,
                 getTooltipItem: (group, _, rod, __) => BarTooltipItem(
                   currency.format(rod.toY),
-                  GoogleFonts.inter(color: tc.onSurface,
-                      fontWeight: FontWeight.w700, fontSize: 11),
+                  GoogleFonts.inter(
+                    color: tc.onSurface,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
                 ),
               ),
             ),
@@ -364,7 +438,9 @@ class _PieSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
-    final expenses = transactions.where((t) => t.type == TransactionType.expense);
+    final expenses = transactions.where(
+      (t) => t.type == TransactionType.expense,
+    );
     final catMap = <String, double>{};
     for (final t in expenses) {
       catMap[t.category] = (catMap[t.category] ?? 0) + t.amount;
@@ -443,7 +519,8 @@ class _PieSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 10, height: 10,
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
                       color: greys[i % greys.length],
                       borderRadius: BorderRadius.circular(3),
@@ -453,7 +530,9 @@ class _PieSection extends StatelessWidget {
                   Text(
                     '${top[i].key} · ${currency.format(top[i].value)}',
                     style: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant, fontSize: 11),
+                      color: tc.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               );
@@ -465,16 +544,18 @@ class _PieSection extends StatelessWidget {
   }
 
   Widget _emptyCard(String msg, AppThemeColors tc) => Container(
-        height: 160,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: tc.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: tc.outlineVariant, width: 0.5),
-        ),
-        child: Text(msg,
-            style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13)),
-      );
+    height: 160,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: tc.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: tc.outlineVariant, width: 0.5),
+    ),
+    child: Text(
+      msg,
+      style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13),
+    ),
+  );
 }
 
 // ─── Line Chart ───────────────────────────────────────────
@@ -514,97 +595,125 @@ class _LineChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            _LegendDot(color: tc.income, label: 'Income', tc: tc),
-            const SizedBox(width: 16),
-            _LegendDot(color: tc.expense, label: 'Expense', tc: tc),
-          ]),
+          Row(
+            children: [
+              _LegendDot(color: tc.income, label: 'Income', tc: tc),
+              const SizedBox(width: 16),
+              _LegendDot(color: tc.expense, label: 'Expense', tc: tc),
+            ],
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 160,
-            child: LineChart(LineChartData(
-              minY: 0,
-              maxY: maxY == 0 ? 100 : maxY * 1.3,
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (_) => FlLine(
-                    color: tc.outlineVariant.withOpacity(0.5), strokeWidth: 0.5),
-              ),
-              borderData: FlBorderData(show: false),
-              titlesData: FlTitlesData(
-                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 20,
-                    getTitlesWidget: (val, _) {
-                      final weeksAgo = weeks - 1 - val.toInt();
-                      if (weeksAgo % 2 != 0) return const SizedBox.shrink();
-                      final date = now.subtract(Duration(days: weeksAgo * 7));
-                      return Text(DateFormat('d/M').format(date),
-                          style: GoogleFonts.inter(
-                              color: tc.onSurfaceVariant, fontSize: 9));
-                    },
+            child: LineChart(
+              LineChartData(
+                minY: 0,
+                maxY: maxY == 0 ? 100 : maxY * 1.3,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color: tc.outlineVariant.withOpacity(0.5),
+                    strokeWidth: 0.5,
                   ),
                 ),
+                borderData: FlBorderData(show: false),
+                titlesData: FlTitlesData(
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 20,
+                      getTitlesWidget: (val, _) {
+                        final weeksAgo = weeks - 1 - val.toInt();
+                        if (weeksAgo % 2 != 0) return const SizedBox.shrink();
+                        final date = now.subtract(Duration(days: weeksAgo * 7));
+                        return Text(
+                          DateFormat('d/M').format(date),
+                          style: GoogleFonts.inter(
+                            color: tc.onSurfaceVariant,
+                            fontSize: 9,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                lineBarsData: [
+                  _line(
+                    List.generate(weeks, (i) => spot(i, incomeW[i])),
+                    tc.income,
+                  ),
+                  _line(
+                    List.generate(weeks, (i) => spot(i, expenseW[i])),
+                    tc.expense,
+                  ),
+                ],
               ),
-              lineBarsData: [
-                _line(List.generate(weeks, (i) => spot(i, incomeW[i])),
-                    tc.income),
-                _line(List.generate(weeks, (i) => spot(i, expenseW[i])),
-                    tc.expense),
-              ],
-            )),
+            ),
           ),
         ],
       ),
     );
   }
 
-  LineChartBarData _line(List<FlSpot> spots, Color color) =>
-      LineChartBarData(
-        spots: spots,
-        isCurved: true,
+  LineChartBarData _line(List<FlSpot> spots, Color color) => LineChartBarData(
+    spots: spots,
+    isCurved: true,
+    color: color,
+    barWidth: 2.5,
+    dotData: FlDotData(
+      show: true,
+      getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+        radius: spot.y == 0 ? 0 : 3,
         color: color,
-        barWidth: 2.5,
-        dotData: FlDotData(
-          show: true,
-          getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
-            radius: spot.y == 0 ? 0 : 3,
-            color: color,
-            strokeWidth: 1.5,
-            strokeColor: Colors.white,
-          ),
-        ),
-        belowBarData: BarAreaData(
-          show: true,
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.18), color.withOpacity(0.0)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-      );
+        strokeWidth: 1.5,
+        strokeColor: Colors.white,
+      ),
+    ),
+    belowBarData: BarAreaData(
+      show: true,
+      gradient: LinearGradient(
+        colors: [color.withOpacity(0.18), color.withOpacity(0.0)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+  );
 }
 
 class _LegendDot extends StatelessWidget {
   final Color color;
   final String label;
   final AppThemeColors tc;
-  const _LegendDot({required this.color, required this.label, required this.tc});
+  const _LegendDot({
+    required this.color,
+    required this.label,
+    required this.tc,
+  });
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 8, height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 5),
-          Text(label, style: GoogleFonts.inter(
-              color: tc.onSurfaceVariant, fontSize: 11)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 5),
+      Text(
+        label,
+        style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 11),
+      ),
+    ],
+  );
 }
