@@ -2,14 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/subscriptions/models/subscription_model.dart';
 
-final subscriptionRepositoryProvider =
-    Provider((ref) => SubscriptionRepository());
+final subscriptionRepositoryProvider = Provider(
+  (ref) => SubscriptionRepository(),
+);
 
-final subscriptionListProvider = StateNotifierProvider<
-    SubscriptionListNotifier,
-    AsyncValue<List<SubscriptionModel>>>((ref) {
-  return SubscriptionListNotifier(ref.read(subscriptionRepositoryProvider));
-});
+final subscriptionListProvider =
+    StateNotifierProvider<
+      SubscriptionListNotifier,
+      AsyncValue<List<SubscriptionModel>>
+    >((ref) {
+      return SubscriptionListNotifier(ref.read(subscriptionRepositoryProvider));
+    });
 
 class SubscriptionListNotifier
     extends StateNotifier<AsyncValue<List<SubscriptionModel>>> {
@@ -56,8 +59,10 @@ class SubscriptionRepository {
   final DatabaseHelper _db = DatabaseHelper();
 
   Future<List<SubscriptionModel>> getAll() async {
-    final maps = await _db.queryAll('subscriptions',
-        orderBy: 'next_due_date ASC');
+    final maps = await _db.queryAll(
+      'subscriptions',
+      orderBy: 'next_due_date ASC',
+    );
     return maps.map(SubscriptionModel.fromMap).toList();
   }
 
