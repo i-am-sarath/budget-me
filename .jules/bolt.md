@@ -1,0 +1,1 @@
+## SummaryCard O(N) Iteration Optimization\nAvoid repeated `Iterable.where()` or `.fold()` chains on the same list, particularly in the widget `build()` method. Use a single-pass loop instead for improved performance from O(X*N) to O(N).
