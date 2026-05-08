@@ -1,0 +1,1 @@
+- Added `tooltip` property and wrapped `IconButton` in `Semantics(button: true, label: ...)` to improve accessibility for screen readers.
