@@ -1,0 +1,1 @@
+- In `SummaryCard` inside `lib/features/dashboard/widgets/summary_card.dart`, repeated `Iterable.where().fold()` chained calls iterating over all transactions caused significant redundant iterations. It has been replaced by a single-pass traversal of the transaction list with conditional checks inside the loop, transforming an O(N * 7) computation into O(N).
