@@ -1,0 +1,1 @@
+- Missing input validation on transaction amounts is a critical issue that can allow attackers to perform negative balance exploits. Validations must ensure amounts are strictly positive.
