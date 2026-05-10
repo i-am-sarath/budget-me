@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/main.dart';
 
 void main() {
-  testWidgets('App smoke test — renders without crashing', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: BudgetTrackerApp()),
-    );
+  testWidgets('App smoke test — renders without crashing', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const ProviderScope(child: BudgetTrackerApp()));
     // Let timers settle (there's an onboard splash timer)
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
