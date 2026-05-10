@@ -107,16 +107,26 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute("ALTER TABLE transactions ADD COLUMN payee TEXT DEFAULT ''");
+      await db.execute(
+        "ALTER TABLE transactions ADD COLUMN payee TEXT DEFAULT ''",
+      );
       try {
-        await db.execute("ALTER TABLE transactions ADD COLUMN account_id TEXT DEFAULT ''");
-        await db.execute("ALTER TABLE transactions ADD COLUMN account_name TEXT DEFAULT ''");
+        await db.execute(
+          "ALTER TABLE transactions ADD COLUMN account_id TEXT DEFAULT ''",
+        );
+        await db.execute(
+          "ALTER TABLE transactions ADD COLUMN account_name TEXT DEFAULT ''",
+        );
       } catch (_) {}
     }
     if (oldVersion < 3) {
       try {
-        await db.execute("ALTER TABLE transactions ADD COLUMN account_id TEXT DEFAULT ''");
-        await db.execute("ALTER TABLE transactions ADD COLUMN account_name TEXT DEFAULT ''");
+        await db.execute(
+          "ALTER TABLE transactions ADD COLUMN account_id TEXT DEFAULT ''",
+        );
+        await db.execute(
+          "ALTER TABLE transactions ADD COLUMN account_name TEXT DEFAULT ''",
+        );
       } catch (_) {}
       try {
         await db.execute('''
@@ -185,14 +195,19 @@ class DatabaseHelper {
 
   Future<int> insert(String table, Map<String, dynamic> data) async {
     final db = await database;
-    return await db.insert(table, data,
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      table,
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<List<Map<String, dynamic>>> queryAll(String table,
-      {String? whereClause,
-      List<dynamic>? whereArgs,
-      String orderBy = 'created_at DESC'}) async {
+  Future<List<Map<String, dynamic>>> queryAll(
+    String table, {
+    String? whereClause,
+    List<dynamic>? whereArgs,
+    String orderBy = 'created_at DESC',
+  }) async {
     final db = await database;
     return await db.query(
       table,
@@ -218,10 +233,17 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> queryByField(
-      String table, String field, dynamic value) async {
+    String table,
+    String field,
+    dynamic value,
+  ) async {
     final db = await database;
-    return await db.query(table,
-        where: '$field = ?', whereArgs: [value], orderBy: 'date DESC');
+    return await db.query(
+      table,
+      where: '$field = ?',
+      whereArgs: [value],
+      orderBy: 'date DESC',
+    );
   }
 
   // ─────────────────────────────────────────────

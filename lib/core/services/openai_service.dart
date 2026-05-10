@@ -20,11 +20,13 @@ class OpenAIService {
       ..fields['model'] = 'whisper-1'
       // No 'language' field → Whisper auto-detects (Tamil, Hindi, English, Hinglish)
       ..fields['response_format'] = 'text'
-      ..files.add(await http.MultipartFile.fromPath(
-        'file',
-        audioFile.path,
-        filename: 'audio.m4a',
-      ));
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          audioFile.path,
+          filename: 'audio.m4a',
+        ),
+      );
 
     final streamedResponse = await request.send().timeout(
       const Duration(seconds: 30),
@@ -48,7 +50,8 @@ class OpenAIService {
     final url = Uri.parse('$_baseUrl/chat/completions');
 
     final today = DateTime.now().toIso8601String().split('T')[0];
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are a multilingual financial transaction parser for an app called Budget Me.
 The user's voice transcript may be in English, Hindi, Tamil, Hinglish, or any mix.
 
@@ -197,15 +200,15 @@ Return ONLY valid JSON. No markdown, no explanation, no extra keys.
       } else if (parsed.containsKey('data')) {
         items = parsed['data'] as List<dynamic>;
       } else {
-        items = parsed.values.firstWhere(
-          (v) => v is List,
-          orElse: () => [],
-        ) as List<dynamic>;
+        items =
+            parsed.values.firstWhere((v) => v is List, orElse: () => [])
+                as List<dynamic>;
       }
 
       return items.map((item) {
         final map = item as Map<String, dynamic>;
-        final dateStr = map['date'] as String? ??
+        final dateStr =
+            map['date'] as String? ??
             DateTime.now().toIso8601String().split('T')[0];
 
         DateTime date;
