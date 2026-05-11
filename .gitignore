@@ -50,3 +50,6 @@ app.*.map.json
 # Local build secrets — never commit
 dart_defines.env
 *.env
+
+# Kotlin daemon cache
+android/.kotlin/
