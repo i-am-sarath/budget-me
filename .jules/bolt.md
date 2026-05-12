@@ -1,0 +1,1 @@
+- Dart: Optimize multiple `.where().fold()` chains into a single-pass loop over list elements to reduce iteration count and improve performance.
