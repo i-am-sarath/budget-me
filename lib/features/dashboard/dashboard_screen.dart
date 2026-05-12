@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
@@ -229,7 +228,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionListProvider);
     final currency = ref.watch(currencyProvider);
-    final sub = ref.watch(subscriptionProvider);
     final accountsAsync = ref.watch(accountProvider);
     final themeMode = ref.watch(themeProvider);
     final tc = AppThemeColors.of(context);
@@ -278,32 +276,9 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // ─── Balance Hero ──────────────────────────
+              // ─── Budget Progress (hero spot) ───────────
               transactionsAsync.when(
                 loading: () => const _BalanceSkeleton(),
-                error: (e, _) => const SizedBox(),
-                data: (txs) => _BalanceHero(
-                  transactions: txs,
-                  currency: currency,
-                  sub: sub,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // ─── Quick Stats ───────────────────────────
-              transactionsAsync.when(
-                loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
-                data: (txs) => SummaryCard(
-                  transactions: txs,
-                  currency: currency,
-                ).animate().fadeIn(delay: 200.ms),
-              ),
-              const SizedBox(height: 16),
-
-              // ─── Budget Progress ───────────────────────
-              transactionsAsync.when(
-                loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
                 data: (txs) {
                   if (!budget.hasBudget) return const SizedBox();
@@ -318,8 +293,19 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     budget: budget,
                     spent: spent,
                     currency: currency,
-                  ).animate().fadeIn(delay: 400.ms);
+                  ).animate().fadeIn(duration: 350.ms);
                 },
+              ),
+              const SizedBox(height: 16),
+
+              // ─── Quick Stats ───────────────────────────
+              transactionsAsync.when(
+                loading: () => const SizedBox(),
+                error: (_, __) => const SizedBox(),
+                data: (txs) => SummaryCard(
+                  transactions: txs,
+                  currency: currency,
+                ).animate().fadeIn(delay: 200.ms),
               ),
 
               const SizedBox(height: 24),
@@ -549,142 +535,6 @@ class _MoreMenuItem extends StatelessWidget {
       trailing:
           Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant, size: 20),
       onTap: onTap,
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Balance Hero
-// ─────────────────────────────────────────────
-
-class _BalanceHero extends StatelessWidget {
-  final List<TransactionModel> transactions;
-  final CurrencyState currency;
-  final SubscriptionState sub;
-
-  const _BalanceHero({
-    required this.transactions,
-    required this.currency,
-    required this.sub,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
-    final income = thisMonth
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final expense = thisMonth
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final balance = thisMonth.fold(0.0, (s, t) => s + t.balanceDelta);
-
-    final tc = AppThemeColors.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: tc.onSurface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: tc.onSurface.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            DateFormat('MMMM yyyy').format(now).toUpperCase(),
-            style: GoogleFonts.inter(
-              color: tc.surface.withOpacity(0.5),
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.5,
-            ),
-          ).animate().fadeIn(duration: 400.ms),
-          const SizedBox(height: 6),
-          Text(
-            currency.format(balance),
-            style: GoogleFonts.inter(
-              color: tc.surface,
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1.2,
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 500.ms, delay: 100.ms)
-              .slideY(begin: 0.2, end: 0),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              _MiniStat(
-                label: 'Income',
-                value: currency.format(income),
-                color: tc.income,
-                surface: tc.surface,
-              ),
-              const Spacer(),
-              _MiniStat(
-                label: 'Spent',
-                value: currency.format(expense),
-                color: tc.expense,
-                surface: tc.surface,
-              ),
-              const Spacer(),
-              _MiniStat(
-                label: 'Savings',
-                value: currency.format(balance > 0 ? balance : 0),
-                color: tc.primaryContainer,
-                surface: tc.surface,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final Color surface;
-
-  const _MiniStat({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.surface,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: GoogleFonts.inter(
-              color: surface.withOpacity(0.5),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            )),
-        const SizedBox(height: 2),
-        Text(value,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            )),
-      ],
     );
   }
 }

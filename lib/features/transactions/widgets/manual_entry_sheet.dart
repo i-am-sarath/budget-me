@@ -123,13 +123,20 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
   bool _accountInitialized = false;
 
-  void _initAccountFromPrefill(List<AccountModel> accounts) {
-    if (_accountInitialized || widget.prefill == null) return;
+  /// On first build, set the default account. Editing → restore the saved
+  /// account. New entry → default to the first account so the user sees the
+  /// picker is active and doesn't accidentally save without one.
+  void _initAccount(List<AccountModel> accounts) {
+    if (_accountInitialized) return;
     _accountInitialized = true;
-    final prefillAccountId = widget.prefill!.accountId;
+    if (accounts.isEmpty) return;
+
+    final prefillAccountId = widget.prefill?.accountId;
     if (prefillAccountId != null && prefillAccountId.isNotEmpty) {
       _selectedAccount =
           accounts.where((a) => a.id == prefillAccountId).firstOrNull;
+    } else if (widget.prefill == null) {
+      _selectedAccount = accounts.first;
     }
   }
 
@@ -202,6 +209,48 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     }
   }
 
+  Future<void> _confirmDelete() async {
+    final tc = AppThemeColors.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: tc.surfaceContainerLow,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete this transaction?',
+          style: GoogleFonts.inter(
+              color: tc.onSurface, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'The linked account balance will be reversed.',
+          style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete',
+                style: GoogleFonts.inter(
+                    color: tc.expense, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    HapticFeedback.mediumImpact();
+    ref
+        .read(transactionListProvider.notifier)
+        .deleteTransaction(widget.prefill!.id);
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = ref.watch(currencyProvider);
@@ -234,6 +283,52 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                     borderRadius: BorderRadius.circular(100),
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+
+              // Header row — title + (Delete in edit mode)
+              Row(
+                children: [
+                  Text(
+                    widget.prefill != null
+                        ? 'Edit transaction'
+                        : 'New transaction',
+                    style: GoogleFonts.inter(
+                      color: tc.onSurface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (widget.prefill != null)
+                    GestureDetector(
+                      onTap: _confirmDelete,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: tc.expense.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_outline_rounded,
+                                color: tc.expense, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Delete',
+                              style: GoogleFonts.inter(
+                                color: tc.expense,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 16),
 
@@ -278,7 +373,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
                 data: (accounts) {
-                  _initAccountFromPrefill(accounts);
+                  _initAccount(accounts);
                   return _buildAccountSelector(accounts, tc);
                 },
               ),

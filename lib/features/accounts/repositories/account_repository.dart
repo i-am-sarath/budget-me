@@ -51,3 +51,49 @@ final accountProvider =
     StateNotifierProvider<AccountNotifier, AsyncValue<List<AccountModel>>>(
   (ref) => AccountNotifier(),
 );
+
+// ─── Voice account-name matcher ─────────────────────────────
+//
+// Resolves a free-form name spoken by the user (e.g. "SBI", "my hdfc bank")
+// to the user's actual accounts. Returns the best match or null.
+
+AccountModel? matchAccountByName(String query, List<AccountModel> accounts) {
+  if (accounts.isEmpty) return null;
+  final q = _normalizeForMatch(query);
+  if (q.length < 2) return null;
+
+  AccountModel? best;
+  int bestScore = 0;
+  for (final a in accounts) {
+    final name = _normalizeForMatch(a.name);
+    final bank = _normalizeForMatch(a.bankName);
+    int score = 0;
+
+    if (name == q || (bank.isNotEmpty && bank == q)) {
+      score = 100;
+    } else if (name.contains(q) || (q.contains(name) && name.length >= 2)) {
+      score = 80;
+    } else if (bank.isNotEmpty &&
+        (bank.contains(q) || (q.contains(bank) && bank.length >= 2))) {
+      score = 70;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = a;
+    }
+  }
+
+  return bestScore >= 70 ? best : null;
+}
+
+String _normalizeForMatch(String s) {
+  var n = s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9 ]'), ' ');
+  const fillers = [
+    'my', 'the', 'account', 'bank', 'savings', 'checking', 'card', 'wallet',
+  ];
+  for (final w in fillers) {
+    n = n.replaceAll(RegExp(r'\b' + w + r'\b'), '');
+  }
+  return n.replaceAll(RegExp(r'\s+'), '').trim();
+}

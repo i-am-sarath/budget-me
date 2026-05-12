@@ -1,0 +1,28 @@
+# Budget Me proxy worker.
+#
+# First-time setup:
+#   1. cd backend
+#   2. npm install
+#   3. npx wrangler login
+#   4. npx wrangler kv namespace create RATE_LIMIT
+#      → copy the returned id into kv_namespaces below
+#   5. npx wrangler secret put OPENAI_API_KEY     (paste your sk-... key)
+#   6. npx wrangler secret put CLIENT_SECRET      (generate one: `openssl rand -hex 32`)
+#   7. npm run deploy
+#
+# Your worker URL will be printed (e.g. https://budgetme-proxy.<you>.workers.dev).
+# Put that URL + the CLIENT_SECRET into dart_defines.env as PROXY_BASE_URL and PROXY_CLIENT_SECRET.
+
+name = "budgetme-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-09-25"
+
+# Per-user monthly request cap. Free tier in the app is 100 voice logs/month;
+# we leave a small safety margin here so retries on errors don't lock users out.
+[vars]
+MONTHLY_LIMIT = "150"
+
+# Run `wrangler kv namespace create RATE_LIMIT` and paste the id below.
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "e37aa062fc734e1baa045d2802d6382e"

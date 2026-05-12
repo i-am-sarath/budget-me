@@ -1,186 +1,151 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 
+/// User-facing exception for voice-log failures.
+/// Messages here are safe to render directly in the UI.
+class VoiceLogException implements Exception {
+  final String message;
+  final bool isRateLimit;
+  VoiceLogException(this.message, {this.isRateLimit = false});
+
+  @override
+  String toString() => message;
+}
+
 class OpenAIService {
-  static const String _baseUrl = 'https://api.openai.com/v1';
+  void _validateConfig() {
+    if (ApiConfig.proxyBaseUrl.isEmpty || ApiConfig.proxyClientSecret.isEmpty) {
+      throw VoiceLogException(
+        'Voice logging is temporarily unavailable. Please try manual entry.',
+      );
+    }
+  }
+
+  Future<String> _userId() async {
+    try {
+      return await Purchases.appUserID;
+    } catch (_) {
+      // RevenueCat not initialized (e.g. desktop). Fall back to a stable-enough
+      // device identifier so rate limiting still works coarsely.
+      return 'anon-${Platform.operatingSystem}';
+    }
+  }
+
+  Map<String, String> _baseHeaders(String userId) => {
+        'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
+        'X-User-Id': userId,
+      };
 
   // ─────────────────────────────────────────────
-  // Step 1: Transcribe audio with Whisper
-  // No forced language — auto-detect handles Tamil, Hindi, English, Hinglish
+  // Step 1: Transcribe audio (proxied → Whisper)
   // ─────────────────────────────────────────────
 
   Future<String> transcribeAudio(File audioFile) async {
-    final url = Uri.parse('$_baseUrl/audio/transcriptions');
+    _validateConfig();
+    final userId = await _userId();
+    final url = Uri.parse('${ApiConfig.proxyBaseUrl}/v1/transcribe');
 
     final request = http.MultipartRequest('POST', url)
-      ..headers['Authorization'] = 'Bearer ${ApiConfig.openAiKey}'
-      ..fields['model'] = 'whisper-1'
-      // No 'language' field → Whisper auto-detects (Tamil, Hindi, English, Hinglish)
-      ..fields['response_format'] = 'text'
+      ..headers.addAll(_baseHeaders(userId))
       ..files.add(await http.MultipartFile.fromPath(
         'file',
         audioFile.path,
         filename: 'audio.m4a',
       ));
 
-    final streamedResponse = await request.send().timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception('Whisper API timed out'),
+    final streamed = await request.send().timeout(
+      const Duration(seconds: 45),
+      onTimeout: () => throw VoiceLogException(
+        'Transcription took too long. Please try again.',
+      ),
     );
-    final responseBody = await streamedResponse.stream.bytesToString();
+    final body = await streamed.stream.bytesToString();
 
-    if (streamedResponse.statusCode == 200) {
-      return responseBody.trim();
-    } else {
-      final error = _parseErrorMessage(responseBody);
-      throw Exception('Transcription failed: $error');
+    if (streamed.statusCode == 200) {
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      return (data['text'] as String? ?? '').trim();
     }
+    throw _mapProxyError(streamed.statusCode, body, isTranscribe: true);
   }
 
   // ─────────────────────────────────────────────
-  // Step 2: Parse transactions with GPT-4o-mini
+  // Step 2: Parse transactions (proxied → GPT-4o-mini)
   // ─────────────────────────────────────────────
 
   Future<List<TransactionModel>> parseTransactions(String transcript) async {
-    final url = Uri.parse('$_baseUrl/chat/completions');
-
+    _validateConfig();
+    final userId = await _userId();
+    final url = Uri.parse('${ApiConfig.proxyBaseUrl}/v1/parse');
     final today = DateTime.now().toIso8601String().split('T')[0];
-    final systemPrompt = '''
-You are a multilingual financial transaction parser for an app called Budget Me.
-The user's voice transcript may be in English, Hindi, Tamil, Hinglish, or any mix.
-
-Extract ALL transactions and return them as a JSON object with a "transactions" array.
-
-━━━ TYPES ━━━
-"type" must be exactly one of: expense, income, lend, borrow, lend_return, borrow_return, investment
-  - expense: user spent money (bought something, paid a bill, rent, EMI, subscriptions)
-  - income: user received money (salary, freelance, sold something, cashback)
-  - investment: user invested money (SIP, DigiGold, stocks, mutual fund, FD, PPF, NPS, crypto)
-  - lend: user gave money TO someone (gave loan, paid for friend, gave advance)
-  - borrow: user borrowed money FROM someone (took loan, friend paid for me, took advance)
-  - lend_return: someone RETURNED money they owed the user ("he paid me back", "returned my money", "got the money back from him")
-  - borrow_return: user RETURNED borrowed money ("I returned the money", "paid back my loan", "repaid", "settled")
-
-━━━ FIELDS ━━━
-  - "amount": positive number. Parse "five hundred" → 500, "2k" → 2000, "₹" or "\$" prefix.
-  - "category": one of: Food, Transport, Shopping, Rent, Health, Bills, Entertainment, Education, Travel, Salary, Freelance, Investment, Gift, Interest, General, Loan Repayment
-  - "note": short English description of the transaction (translate non-English to English)
-  - "payee": person's name for lend/borrow types, merchant for expense. Leave "" if unknown.
-  - "account_name": if the user mentions a specific account (e.g. "from savings", "to HDFC", "cash", "UPI"), include it. Otherwise leave "".
-  - "date": ISO format YYYY-MM-DD. Today is: $today. Use today unless user says otherwise.
-
-━━━ INVESTMENT VOCABULARY ━━━
-  - SIP / sip = Systematic Investment Plan → investment
-  - DigiGold / digi gold / digital gold → investment
-  - Mutual fund / MF → investment
-  - FD / fixed deposit → investment
-  - PPF / NPS / ELSS → investment
-  - Stocks / shares / equity → investment
-  - Crypto / bitcoin / ethereum → investment
-
-━━━ MULTILINGUAL VOCABULARY ━━━
-Tamil:
-  - maligai / மளிகை = grocery/shopping (category: Shopping)
-  - unavagam / சாப்பாட்டு கடை = restaurant (category: Food)
-  - jama / ஜாமா = paid / credited (context-sensitive)
-  - kadan / கடன் = loan/lend
-  - thiruppi kuduthan / திரும்பி குடுத்தான் = he returned the money → lend_return
-  - saadam / சாதம் = rice/food
-  - kadai = shop
-  - auto = auto-rickshaw (category: Transport)
-  - petrol = fuel (category: Transport)
-Hindi/Hinglish:
-  - khana / khaana = food
-  - gaadi / gadi = vehicle/transport
-  - dukaan = shop
-  - dost ko diya = lent to friend → lend
-  - wapas mila / wapas kiya = returned → lend_return or borrow_return
-  - salary aayi = received salary → income
-  - EMI / kiraya = rent/EMI → expense
-  - udhar diya = lent → lend
-  - udhar liya = borrowed → borrow
-  - loan bhara = repaid loan → borrow_return
-
-━━━ REPAYMENT LOGIC (IMPORTANT) ━━━
-When someone RETURNS money to the user:
-  → type = "lend_return" (reduces outstanding lent amount, adds to user balance)
-  → Example: "Rahul gave me back the 500 he owed" → lend_return, amount=500, payee="Rahul"
-
-When user RETURNS money they borrowed:
-  → type = "borrow_return" (reduces outstanding borrowed amount, reduces user balance)
-  → Example: "I paid back the 1000 I borrowed from Priya" → borrow_return, amount=1000, payee="Priya"
-
-When user pays EMI or loan installment:
-  → type = "borrow_return", category = "Loan Repayment"
-  → Example: "Paid EMI 15000" → borrow_return, amount=15000, category="Loan Repayment", note="EMI payment"
-
-━━━ TRANSFER RECOGNITION ━━━
-If the user says "transferred X to Y account" or "moved money from A to B":
-  → Create TWO transactions:
-    1. expense from source account
-    2. income to destination account
-  → Both should have category="Transfer"
-
-━━━ EXAMPLES ━━━
-Input: "Spent 300 on lunch at office canteen"
-Output: {"transactions":[{"amount":300,"type":"expense","category":"Food","note":"Lunch at office canteen","payee":"","account_name":"","date":"$today"}]}
-
-Input: "SIP payment 5000 for mutual fund"
-Output: {"transactions":[{"amount":5000,"type":"investment","category":"Investment","note":"SIP mutual fund payment","payee":"","account_name":"","date":"$today"}]}
-
-Input: "Rahul gave me back 500 rupees"
-Output: {"transactions":[{"amount":500,"type":"lend_return","category":"General","note":"Rahul returned 500","payee":"Rahul","account_name":"","date":"$today"}]}
-
-Input: "Paid EMI 15000 from HDFC account"
-Output: {"transactions":[{"amount":15000,"type":"borrow_return","category":"Loan Repayment","note":"EMI payment","payee":"","account_name":"HDFC","date":"$today"}]}
-
-Input: "Got salary 50000, paid 12000 rent"
-Output: {"transactions":[{"amount":50000,"type":"income","category":"Salary","note":"Monthly salary","payee":"","account_name":"","date":"$today"},{"amount":12000,"type":"expense","category":"Rent","note":"Monthly rent","payee":"","account_name":"","date":"$today"}]}
-
-Input: "50 rupees kuduthen Ravi ku" (Tamil: gave 50 rupees to Ravi)
-Output: {"transactions":[{"amount":50,"type":"lend","category":"General","note":"Lent to Ravi","payee":"Ravi","account_name":"","date":"$today"}]}
-
-Return ONLY valid JSON. No markdown, no explanation, no extra keys.
-''';
 
     final response = await http
         .post(
           url,
           headers: {
+            ..._baseHeaders(userId),
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${ApiConfig.openAiKey}',
           },
-          body: jsonEncode({
-            'model': 'gpt-4o-mini',
-            'messages': [
-              {'role': 'system', 'content': systemPrompt},
-              {'role': 'user', 'content': transcript},
-            ],
-            'temperature': 0,
-            'response_format': {'type': 'json_object'},
-          }),
+          body: jsonEncode({'transcript': transcript, 'today': today}),
         )
         .timeout(
           const Duration(seconds: 30),
-          onTimeout: () => throw Exception('GPT API timed out'),
+          onTimeout: () => throw VoiceLogException(
+            'Could not understand the audio. Please try again.',
+          ),
         );
 
     if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final content = json['choices'][0]['message']['content'] as String;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final content = data['content'] as String? ?? '';
       return _parseTransactionList(content);
-    } else {
-      final error = _parseErrorMessage(response.body);
-      throw Exception('Parsing failed: $error');
     }
+    throw _mapProxyError(response.statusCode, response.body, isTranscribe: false);
   }
 
   // ─────────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────────
+
+  /// Maps proxy HTTP errors to user-friendly messages.
+  /// The proxy returns {"error": {"code": "...", "message": "..."}}; we ignore
+  /// the message and pick our own copy keyed on the HTTP status + code.
+  VoiceLogException _mapProxyError(
+    int status,
+    String body, {
+    required bool isTranscribe,
+  }) {
+    String? code;
+    try {
+      final parsed = jsonDecode(body) as Map<String, dynamic>;
+      code = (parsed['error'] as Map<String, dynamic>?)?['code'] as String?;
+    } catch (_) {/* body wasn't JSON */}
+
+    if (status == 429 || code == 'rate_limited') {
+      return VoiceLogException(
+        'You\'ve reached your monthly voice log limit. Upgrade to Pro for unlimited.',
+        isRateLimit: true,
+      );
+    }
+    if (status == 401 || status == 403) {
+      return VoiceLogException(
+        'Voice logging is temporarily unavailable. Please update the app.',
+      );
+    }
+    if (status >= 500 || status == 502) {
+      return VoiceLogException(
+        isTranscribe
+            ? 'Could not transcribe audio right now. Please try again.'
+            : 'Could not understand the audio right now. Please try again.',
+      );
+    }
+    return VoiceLogException(
+      'Something went wrong. Please try again or use manual entry.',
+    );
+  }
 
   List<TransactionModel> _parseTransactionList(String content) {
     try {
@@ -215,27 +180,30 @@ Return ONLY valid JSON. No markdown, no explanation, no extra keys.
           date = DateTime.now();
         }
 
-        // Map lend_return / borrow_return to correct TransactionType
         final typeRaw = (map['type'] as String? ?? 'expense').toLowerCase();
         final type = _resolveType(typeRaw);
 
+        final accountName = (map['account_name'] as String?)?.trim();
         return TransactionModel(
           amount: (map['amount'] as num).toDouble(),
           type: type,
           category: map['category'] as String? ?? 'General',
           note: map['note'] as String? ?? '',
           payee: map['payee'] as String?,
+          accountName: (accountName != null && accountName.isNotEmpty)
+              ? accountName
+              : null,
           date: date,
         );
       }).toList();
-    } catch (e) {
-      throw Exception('Could not parse AI response. Please try again.\n$e');
+    } catch (_) {
+      throw VoiceLogException(
+        'Could not understand the audio. Please try speaking again.',
+      );
     }
   }
 
-  /// Maps GPT type strings (including lend_return/borrow_return) to TransactionType.
-  /// lend_return → income  (money coming back to user from someone they lent to)
-  /// borrow_return → expense (user sending back money they borrowed)
+  /// lend_return → income, borrow_return → expense at the model layer.
   TransactionType _resolveType(String raw) {
     switch (raw) {
       case 'lend_return':
@@ -244,15 +212,6 @@ Return ONLY valid JSON. No markdown, no explanation, no extra keys.
         return TransactionType.borrowReturn;
       default:
         return TransactionType.fromString(raw);
-    }
-  }
-
-  String _parseErrorMessage(String responseBody) {
-    try {
-      final json = jsonDecode(responseBody) as Map<String, dynamic>;
-      return json['error']?['message'] as String? ?? responseBody;
-    } catch (_) {
-      return responseBody;
     }
   }
 }

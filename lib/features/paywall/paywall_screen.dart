@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -500,12 +502,20 @@ class _PurchaseButton extends StatelessWidget {
 // Helper
 // ─────────────────────────────────────────────
 
-Future<void> showPaywall(BuildContext context) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    useSafeArea: true,
-    builder: (_) => const PaywallScreen(isSheet: true),
-  );
+/// Shows the RevenueCat paywall if the user doesn't already have [entitlementPro].
+/// Falls back to the custom [PaywallScreen] if the RC paywall isn't configured.
+Future<void> showPaywall(BuildContext context) async {
+  try {
+    await RevenueCatUI.presentPaywallIfNeeded(ApiConfig.entitlementPro);
+  } catch (_) {
+    if (context.mounted) {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        useSafeArea: true,
+        builder: (_) => const PaywallScreen(isSheet: true),
+      );
+    }
+  }
 }

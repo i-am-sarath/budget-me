@@ -36,14 +36,27 @@ class TransactionNotifier
 
   Future<void> addTransaction(TransactionModel transaction) async {
     try {
-      await _repository.addTransaction(transaction);
+      var tx = transaction;
+
+      // Voice flow returns a free-form account_name (e.g. "SBI"). Resolve it to
+      // a real account by fuzzy-matching, so the balance update below kicks in.
+      if ((tx.accountId == null || tx.accountId!.isEmpty) &&
+          tx.accountName != null &&
+          tx.accountName!.isNotEmpty) {
+        final accounts = _ref.read(accountProvider).valueOrNull ?? [];
+        final matched = matchAccountByName(tx.accountName!, accounts);
+        if (matched != null) {
+          tx = tx.copyWith(accountId: matched.id, accountName: matched.name);
+        }
+      }
+
+      await _repository.addTransaction(tx);
 
       // Adjust linked account balance
-      if (transaction.accountId != null &&
-          transaction.accountId!.isNotEmpty) {
+      if (tx.accountId != null && tx.accountId!.isNotEmpty) {
         await _ref
             .read(accountProvider.notifier)
-            .adjustBalance(transaction.accountId!, transaction.balanceDelta);
+            .adjustBalance(tx.accountId!, tx.balanceDelta);
       }
 
       await refresh();

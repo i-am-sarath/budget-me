@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/database/database_helper.dart';
@@ -753,19 +754,20 @@ class _SubscriptionManagementCard extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.manage_accounts_rounded,
               label: 'Manage Subscription',
-              sub: 'Cancel or change your plan',
+              sub: 'Cancel, change plan, or get help',
               tc: tc,
               onTap: () async {
-                // Direct users to manage via OS store settings
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'To cancel, open Play Store / App Store → Subscriptions.',
+                try {
+                  await RevenueCatUI.presentCustomerCenter();
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('To cancel, open Play Store → Subscriptions.'),
+                        duration: Duration(seconds: 4),
                       ),
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
+                    );
+                  }
                 }
               },
             )

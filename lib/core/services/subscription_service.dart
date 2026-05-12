@@ -21,6 +21,7 @@ class SubscriptionState {
   final bool isLoading;
   final Package? monthlyPackage;
   final Package? annualPackage;
+  final Package? lifetimePackage;
   final CustomerInfo? customerInfo;
 
   const SubscriptionState({
@@ -30,6 +31,7 @@ class SubscriptionState {
     this.isLoading = false,
     this.monthlyPackage,
     this.annualPackage,
+    this.lifetimePackage,
     this.customerInfo,
   });
 
@@ -44,7 +46,7 @@ class SubscriptionState {
 
   bool get hasCloudSync => isPro;
 
-  bool get hasOfferings => monthlyPackage != null || annualPackage != null;
+  bool get hasOfferings => monthlyPackage != null || annualPackage != null || lifetimePackage != null;
 
   SubscriptionState copyWith({
     SubscriptionTier? tier,
@@ -53,6 +55,7 @@ class SubscriptionState {
     bool? isLoading,
     Package? monthlyPackage,
     Package? annualPackage,
+    Package? lifetimePackage,
     CustomerInfo? customerInfo,
   }) {
     return SubscriptionState(
@@ -62,6 +65,7 @@ class SubscriptionState {
       isLoading: isLoading ?? this.isLoading,
       monthlyPackage: monthlyPackage ?? this.monthlyPackage,
       annualPackage: annualPackage ?? this.annualPackage,
+      lifetimePackage: lifetimePackage ?? this.lifetimePackage,
       customerInfo: customerInfo ?? this.customerInfo,
     );
   }
@@ -162,15 +166,18 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
       Package? monthly;
       Package? annual;
+      Package? lifetime;
 
       for (final pkg in current.availablePackages) {
         if (pkg.packageType == PackageType.monthly) monthly = pkg;
         if (pkg.packageType == PackageType.annual) annual = pkg;
+        if (pkg.packageType == PackageType.lifetime) lifetime = pkg;
       }
 
       state = state.copyWith(
         monthlyPackage: monthly,
         annualPackage: annual,
+        lifetimePackage: lifetime,
       );
     } catch (_) {
       // Offerings not critical — paywall will show "Contact support"
@@ -191,6 +198,12 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   Future<String?> purchaseAnnual() async {
     final pkg = state.annualPackage;
     if (pkg == null) return 'Annual plan not available';
+    return _purchase(pkg);
+  }
+
+  Future<String?> purchaseLifetime() async {
+    final pkg = state.lifetimePackage;
+    if (pkg == null) return 'Lifetime plan not available';
     return _purchase(pkg);
   }
 
@@ -250,6 +263,14 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       voiceLogsUsedThisMonth: newCount,
       lastVoiceLogDate: now,
     );
+  }
+
+  Future<void> addBonusVoiceLogs(int count) async {
+    if (state.isPro) return;
+    final prefs = await SharedPreferences.getInstance();
+    final newCount = (state.voiceLogsUsedThisMonth - count).clamp(0, SubscriptionState.freeVoiceLogLimit);
+    await prefs.setInt(_voiceCountKey, newCount);
+    state = state.copyWith(voiceLogsUsedThisMonth: newCount);
   }
 
   @override

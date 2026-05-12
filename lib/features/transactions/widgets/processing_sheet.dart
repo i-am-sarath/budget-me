@@ -10,6 +10,8 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/openai_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
+import 'package:agent_money/features/accounts/models/account_model.dart';
+import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -79,10 +81,20 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
       final transactions =
           await _openAiService.parseTransactions(transcription);
 
+      // Eagerly resolve account names against the user's accounts so the
+      // result view can show the linked account (or a picker if no match).
+      final accounts = ref.read(accountProvider).valueOrNull ?? [];
+      final resolved = transactions.map((tx) {
+        if (tx.accountName == null || tx.accountName!.isEmpty) return tx;
+        final matched = matchAccountByName(tx.accountName!, accounts);
+        if (matched == null) return tx;
+        return tx.copyWith(accountId: matched.id, accountName: matched.name);
+      }).toList();
+
       await ref.read(subscriptionProvider.notifier).recordVoiceLogUsed();
 
       setState(() {
-        _transactions = transactions;
+        _transactions = resolved;
         _isProcessing = false;
         _status = 'Done';
       });
@@ -97,6 +109,16 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
         await _currentAudioFile!.delete();
       }
     }
+  }
+
+  void _setTransactionAccount(int index, AccountModel? account) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _transactions[index] = _transactions[index].copyWith(
+        accountId: account?.id,
+        accountName: account?.name,
+      );
+    });
   }
 
   // ── Re-speak: record a new clip without closing the sheet ──
@@ -142,6 +164,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
     final currency = ref.watch(currencyProvider);
+    final accounts = ref.watch(accountProvider).valueOrNull ?? [];
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
@@ -193,10 +216,12 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
               transactions: _transactions,
               transcript: _transcript,
               currency: currency,
+              accounts: accounts,
               tc: tc,
               onSave: _saveAll,
               onRespeak: _startReSpeak,
               onCancel: () => Navigator.pop(context),
+              onSetAccount: _setTransactionAccount,
             ),
         ],
       ),
@@ -410,19 +435,23 @@ class _ResultView extends StatelessWidget {
   final List<TransactionModel> transactions;
   final String transcript;
   final CurrencyState currency;
+  final List<AccountModel> accounts;
   final AppThemeColors tc;
   final VoidCallback onSave;
   final VoidCallback onRespeak;
   final VoidCallback onCancel;
+  final void Function(int index, AccountModel? account) onSetAccount;
 
   const _ResultView({
     required this.transactions,
     required this.transcript,
     required this.currency,
+    required this.accounts,
     required this.tc,
     required this.onSave,
     required this.onRespeak,
     required this.onCancel,
+    required this.onSetAccount,
   });
 
   Color _typeColor(TransactionType type) {
@@ -447,6 +476,16 @@ class _ResultView extends StatelessWidget {
       case TransactionType.borrow:       return Icons.savings_rounded;
       case TransactionType.investment:   return Icons.trending_up_rounded;
     }
+  }
+
+  /// Whether this transaction type modifies an account balance.
+  /// Lend/borrow are between people, not accounts — no picker needed.
+  bool _affectsAccount(TransactionType t) {
+    return t == TransactionType.income ||
+        t == TransactionType.expense ||
+        t == TransactionType.investment ||
+        t == TransactionType.lendReturn ||
+        t == TransactionType.borrowReturn;
   }
 
   @override
@@ -498,8 +537,13 @@ class _ResultView extends StatelessWidget {
 
         // Transaction cards
         ...transactions.asMap().entries.map((e) {
+          final i = e.key;
           final tx = e.value;
           final color = _typeColor(tx.type);
+          final showPicker = _affectsAccount(tx.type) &&
+              accounts.isNotEmpty &&
+              (tx.accountId == null || tx.accountId!.isEmpty);
+
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
@@ -508,45 +552,68 @@ class _ResultView extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: color.withOpacity(0.3)),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(_typeIcon(tx.type), color: color, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tx.note.isNotEmpty ? tx.note : tx.category,
-                        style: GoogleFonts.inter(
-                            color: tc.onSurface, fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
+                        shape: BoxShape.circle,
                       ),
-                      Text(
-                        '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
-                        style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant, fontSize: 11),
+                      child: Icon(_typeIcon(tx.type), color: color, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tx.note.isNotEmpty ? tx.note : tx.category,
+                            style: GoogleFonts.inter(
+                                color: tc.onSurface, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
+                            style: GoogleFonts.inter(
+                                color: tc.onSurfaceVariant, fontSize: 11),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Text(
+                      currency.format(tx.amount),
+                      style: GoogleFonts.inter(
+                          color: color, fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
+                  ],
                 ),
-                Text(
-                  currency.format(tx.amount),
-                  style: GoogleFonts.inter(
-                      color: color, fontWeight: FontWeight.w700, fontSize: 16),
-                ),
+
+                // Linked account tag (matched) OR picker (unmatched)
+                if (_affectsAccount(tx.type) && accounts.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  if (showPicker)
+                    _AccountPicker(
+                      accounts: accounts,
+                      selected: null,
+                      tc: tc,
+                      onPick: (a) => onSetAccount(i, a),
+                    )
+                  else
+                    _LinkedAccountTag(
+                      accountName: tx.accountName ?? '',
+                      tc: tc,
+                      onChange: () => onSetAccount(i, null),
+                    ),
+                ],
               ],
             ),
-          ).animate().fadeIn(duration: 300.ms, delay: (e.key * 80).ms).slideY(begin: 0.2);
+          ).animate().fadeIn(duration: 300.ms, delay: (i * 80).ms).slideY(begin: 0.2);
         }),
 
         const SizedBox(height: 16),
@@ -591,6 +658,146 @@ class _ResultView extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Account picker — shown when no match was found.
+// ─────────────────────────────────────────────
+
+class _AccountPicker extends StatelessWidget {
+  final List<AccountModel> accounts;
+  final AccountModel? selected;
+  final AppThemeColors tc;
+  final ValueChanged<AccountModel?> onPick;
+
+  const _AccountPicker({
+    required this.accounts,
+    required this.selected,
+    required this.tc,
+    required this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.account_balance_wallet_outlined,
+                size: 12, color: tc.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              'Pick account',
+              style: GoogleFonts.inter(
+                color: tc.onSurfaceVariant,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: accounts.map((a) {
+              final isSelected = selected?.id == a.id;
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: GestureDetector(
+                  onTap: () => onPick(a),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? tc.onSurface
+                          : tc.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(
+                          color: isSelected
+                              ? Colors.transparent
+                              : tc.outlineVariant,
+                          width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(a.type.icon,
+                            size: 11,
+                            color: isSelected ? tc.surface : a.type.color),
+                        const SizedBox(width: 4),
+                        Text(
+                          a.name,
+                          style: GoogleFonts.inter(
+                            color: isSelected
+                                ? tc.surface
+                                : tc.onSurfaceVariant,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Linked account tag — shown after matched/picked.
+// ─────────────────────────────────────────────
+
+class _LinkedAccountTag extends StatelessWidget {
+  final String accountName;
+  final AppThemeColors tc;
+  final VoidCallback onChange;
+
+  const _LinkedAccountTag({
+    required this.accountName,
+    required this.tc,
+    required this.onChange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onChange,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.link_rounded, size: 11, color: tc.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              accountName,
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.close_rounded, size: 11, color: tc.onSurfaceVariant),
+          ],
+        ),
+      ),
     );
   }
 }

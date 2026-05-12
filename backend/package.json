@@ -1,0 +1,17 @@
+{
+  "name": "budgetme-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that proxies OpenAI calls for Budget Me. Keeps the OpenAI API key off-device.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240821.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^3.78.0"
+  }
+}

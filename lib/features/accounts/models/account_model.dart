@@ -92,7 +92,12 @@ class AccountModel {
         createdAt = createdAt ?? DateTime.now();
 
   Color get displayColor => Color(colorValue);
-  IconData get displayIcon => IconData(iconCode, fontFamily: 'MaterialIcons');
+  IconData get displayIcon => AccountType.values
+      .firstWhere(
+        (type) => type.icon.codePoint == iconCode,
+        orElse: () => AccountType.bank,
+      )
+      .icon;
 
   Map<String, dynamic> toMap() => {
         'id': id,

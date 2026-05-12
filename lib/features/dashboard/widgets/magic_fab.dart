@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
+import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/services/ad_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
@@ -50,6 +52,12 @@ class _MagicFabState extends ConsumerState<MagicFab>
       return;
     }
 
+    if (ApiConfig.proxyBaseUrl.isEmpty ||
+        ApiConfig.proxyClientSecret.isEmpty) {
+      _showVoiceUnavailableSnackbar();
+      return;
+    }
+
     final subscription = ref.read(subscriptionProvider);
     if (!subscription.canUseVoice) {
       _showVoiceLimitDialog(subscription);
@@ -57,6 +65,14 @@ class _MagicFabState extends ConsumerState<MagicFab>
     }
 
     await _startRecording();
+  }
+
+  void _showVoiceUnavailableSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Voice logging unavailable. Try manual entry.'),
+      ),
+    );
   }
 
   Future<void> _startRecording() async {
@@ -107,6 +123,7 @@ class _MagicFabState extends ConsumerState<MagicFab>
 
   void _showVoiceLimitDialog(SubscriptionState subscription) {
     final tc = AppThemeColors.of(context);
+    final isMobile = Platform.isAndroid || Platform.isIOS;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -119,10 +136,31 @@ class _MagicFabState extends ConsumerState<MagicFab>
             fontWeight: FontWeight.w700,
           ),
         ),
-        content: Text(
-          'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging, or wait until next month.',
-          style: GoogleFonts.inter(
-              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging, or watch an ad for +5 logs.',
+              style: GoogleFonts.inter(
+                  color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+            ),
+            if (isMobile) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
+                  label: Text('Watch ad for +5 logs',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _watchAdForBonusLogs();
+                  },
+                ),
+              ),
+            ],
+          ],
         ),
         actions: [
           TextButton(
@@ -141,6 +179,34 @@ class _MagicFabState extends ConsumerState<MagicFab>
         ],
       ),
     );
+  }
+
+  Future<void> _watchAdForBonusLogs() async {
+    final adState = ref.read(adProvider);
+    if (!adState.isAdLoaded) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ad not ready yet, try again in a moment')),
+      );
+      return;
+    }
+
+    final shown = await ref.read(adProvider.notifier).show(
+      onRewarded: () {
+        ref.read(subscriptionProvider.notifier).addBonusVoiceLogs(5);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You earned 5 bonus voice logs!')),
+          );
+        }
+      },
+    );
+
+    if (!shown && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ad not ready yet, try again in a moment')),
+      );
+    }
   }
 
   void _showPermissionSnackbar() {

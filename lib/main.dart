@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/budget_service.dart';
@@ -34,6 +36,11 @@ void main() async {
     await initRevenueCat();
   } catch (_) {
     // RC key not configured yet — app continues without subscription features
+  }
+
+  // Initialize AdMob (mobile only)
+  if (Platform.isAndroid || Platform.isIOS) {
+    await MobileAds.instance.initialize();
   }
 
   runApp(const ProviderScope(child: BudgetTrackerApp()));

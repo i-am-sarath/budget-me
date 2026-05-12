@@ -4,29 +4,36 @@
 /// Secret key (sk_...) is for dashboard only — DO NOT embed it.
 /// The public API keys below are safe to ship.
 class ApiConfig {
-  // ─── OpenAI ───────────────────────────────────────────
-  static const String openAiKey = String.fromEnvironment('OPENAI_API_KEY');
+  // ─── Budget Me proxy backend ──────────────────────────
+  // OpenAI calls are routed through our Cloudflare Worker so the OpenAI key
+  // never ships in the AAB. See backend/ for the worker.
+  static const String proxyBaseUrl = String.fromEnvironment('PROXY_BASE_URL');
+  static const String proxyClientSecret =
+      String.fromEnvironment('PROXY_CLIENT_SECRET');
 
   // ─── RevenueCat PUBLIC Keys ───────────────────────────
-  // Note: sk_whcyqZUXynYpTIXMnPSupfyzmtiPv is your SECRET key for the
-  // RevenueCat dashboard API — it must NEVER be embedded in the app.
-  // You need your PUBLIC Google/Apple keys from:
-  //   RevenueCat Dashboard → Project Settings → API Keys → Public
+  // Override at build time: --dart-define=RC_ANDROID_KEY=xxx
   static const String revenueCatAndroidKey = String.fromEnvironment(
     'RC_ANDROID_KEY',
-    defaultValue: 'goog_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your Android public key
+    defaultValue: 'test_PZwqjFJDFOucmHwgoHeAyMquzbG',
   );
 
   static const String revenueCatIosKey = String.fromEnvironment(
     'RC_IOS_KEY',
-    defaultValue: 'appl_whcyqZUXynYpTIXMnPSupfyzmtiPv', // replace with your iOS public key
+    defaultValue: 'test_PZwqjFJDFOucmHwgoHeAyMquzbG', // replace with Apple key when submitting to iOS
   );
 
   // ─── RevenueCat Entitlement & Product IDs ─────────────
+  // Verify this matches the entitlement identifier in your RC dashboard.
   static const String entitlementPro = 'pro';
   static const String offeringId = 'default';
 
   // ─── Product IDs (must match Play Console & App Store Connect) ─
-  static const String productMonthly = 'voicelog_pro_monthly';
-  static const String productYearly  = 'voicelog_pro_yearly';
+  static const String productMonthly  = 'monthly';
+  static const String productYearly   = 'yearly';
+  static const String productLifetime = 'lifetime';
+
+  // ─── AdMob ────────────────────────────────────
+  static const String rewardedInterstitialAdUnitId =
+      'ca-app-pub-6384260983473792/8085872177';
 }
