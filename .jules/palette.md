@@ -1,0 +1,1 @@
+- Wrapping `IconButton` widgets in `Semantics` (with `label` and `button: true`) and providing a `tooltip` significantly improves accessibility for screen readers and visual hover indicators without altering the primary layout.
