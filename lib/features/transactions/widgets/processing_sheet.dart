@@ -30,8 +30,7 @@ class ProcessingSheet extends ConsumerStatefulWidget {
   ConsumerState<ProcessingSheet> createState() => _ProcessingSheetState();
 }
 
-class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
-    with SingleTickerProviderStateMixin {
+class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
   final _openAiService = OpenAIService();
   final _audioRecorder = AudioRecorder();
 
@@ -42,22 +41,16 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
   bool _isReRecording = false;
   String? _error;
   File? _currentAudioFile;
-  late AnimationController _waveController;
 
   @override
   void initState() {
     super.initState();
     _currentAudioFile = widget.audioFile;
-    _waveController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
     _processAudio();
   }
 
   @override
   void dispose() {
-    _waveController.dispose();
     _audioRecorder.dispose();
     super.dispose();
   }
@@ -196,7 +189,6 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
             _ProcessingView(
               status: _status,
               transcript: _transcript,
-              waveController: _waveController,
               tc: tc,
             )
           else if (_isReRecording)
@@ -236,13 +228,11 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet>
 class _ProcessingView extends StatelessWidget {
   final String status;
   final String transcript;
-  final AnimationController waveController;
   final AppThemeColors tc;
 
   const _ProcessingView({
     required this.status,
     required this.transcript,
-    required this.waveController,
     required this.tc,
   });
 
@@ -250,26 +240,14 @@ class _ProcessingView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        AnimatedBuilder(
-          animation: waveController,
-          builder: (_, __) {
-            return Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: tc.surfaceContainerHigh,
-                boxShadow: [
-                  BoxShadow(
-                    color: tc.onSurface.withOpacity(0.08 + waveController.value * 0.1),
-                    blurRadius: 20 + waveController.value * 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Icon(Icons.mic_rounded, color: tc.onSurface, size: 36),
-            );
-          },
+        SizedBox(
+          width: 52,
+          height: 52,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(tc.onSurface),
+            backgroundColor: tc.outlineVariant,
+          ),
         ),
         const SizedBox(height: 20),
         Text(
@@ -279,12 +257,17 @@ class _ProcessingView extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
-        ).animate(onPlay: (c) => c.repeat()).shimmer(
-              color: tc.onSurfaceVariant,
-              duration: 1500.ms,
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'This usually takes a few seconds',
+          style: GoogleFonts.inter(
+            color: tc.onSurfaceVariant,
+            fontSize: 12,
+          ),
+        ),
         if (transcript.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -292,16 +275,38 @@ class _ProcessingView extends StatelessWidget {
               color: tc.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Text(
-              '"$transcript"',
-              style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant,
-                fontSize: 13,
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.record_voice_over_rounded,
+                        size: 12, color: tc.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      'TRANSCRIBED',
+                      style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '"$transcript"',
+                  style: GoogleFonts.inter(
+                    color: tc.onSurface,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    height: 1.4,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
