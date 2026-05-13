@@ -1,0 +1,1 @@
+- Single-pass filtering avoids multiple allocations and repeated list iterations.
