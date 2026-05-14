@@ -1,0 +1,1 @@
+- When validating transaction amounts in the Flutter app, strictly enforce that parsed amounts are greater than zero (`parsed > 0`) to prevent negative balance exploits.
