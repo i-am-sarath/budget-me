@@ -1,0 +1,1 @@
+2025-05-13: Replaced chained .where().toList() with single-pass for-loop in history screen filtering. Chained Iterables create multiple short-lived lists and execute O(N*M) operations where N is list length and M is number of filters. A single loop performs O(N) operations and avoids allocations, significantly reducing jank during real-time search typing.
