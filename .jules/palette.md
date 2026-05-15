@@ -1,0 +1,1 @@
+- Added Semantics and tooltips to IconButtons to make them properly accessible.
