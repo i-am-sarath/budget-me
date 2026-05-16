@@ -42,11 +42,19 @@ class SubscriptionState {
 
   bool get canUseVoice => isPro || voiceLogsUsedThisMonth < freeVoiceLogLimit;
 
-  int get voiceLogsRemaining => isPro ? -1 : (freeVoiceLogLimit - voiceLogsUsedThisMonth).clamp(0, freeVoiceLogLimit); // -1 = unlimited sentinel
+  int get voiceLogsRemaining => isPro
+      ? -1
+      : (freeVoiceLogLimit - voiceLogsUsedThisMonth).clamp(
+          0,
+          freeVoiceLogLimit,
+        ); // -1 = unlimited sentinel
 
   bool get hasCloudSync => isPro;
 
-  bool get hasOfferings => monthlyPackage != null || annualPackage != null || lifetimePackage != null;
+  bool get hasOfferings =>
+      monthlyPackage != null ||
+      annualPackage != null ||
+      lifetimePackage != null;
 
   SubscriptionState copyWith({
     SubscriptionTier? tier,
@@ -60,7 +68,8 @@ class SubscriptionState {
   }) {
     return SubscriptionState(
       tier: tier ?? this.tier,
-      voiceLogsUsedThisMonth: voiceLogsUsedThisMonth ?? this.voiceLogsUsedThisMonth,
+      voiceLogsUsedThisMonth:
+          voiceLogsUsedThisMonth ?? this.voiceLogsUsedThisMonth,
       lastVoiceLogDate: lastVoiceLogDate ?? this.lastVoiceLogDate,
       isLoading: isLoading ?? this.isLoading,
       monthlyPackage: monthlyPackage ?? this.monthlyPackage,
@@ -147,7 +156,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   }
 
   void _applyCustomerInfo(CustomerInfo info) {
-    final isPro = info.entitlements.active.containsKey(ApiConfig.entitlementPro);
+    final isPro = info.entitlements.active.containsKey(
+      ApiConfig.entitlementPro,
+    );
     state = state.copyWith(
       tier: isPro ? SubscriptionTier.pro : SubscriptionTier.free,
       customerInfo: info,
@@ -216,7 +227,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       return null; // success
     } on PurchasesErrorCode catch (e) {
       state = state.copyWith(isLoading: false);
-      if (e == PurchasesErrorCode.purchaseCancelledError) return null; // user cancelled
+      if (e == PurchasesErrorCode.purchaseCancelledError) {
+        return null; // user cancelled
+      }
       return e.name;
     } catch (e) {
       state = state.copyWith(isLoading: false);
@@ -230,7 +243,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       final info = await Purchases.restorePurchases();
       _applyCustomerInfo(info);
       state = state.copyWith(isLoading: false);
-      final isPro = info.entitlements.active.containsKey(ApiConfig.entitlementPro);
+      final isPro = info.entitlements.active.containsKey(
+        ApiConfig.entitlementPro,
+      );
       return isPro ? null : 'No active subscription found';
     } catch (e) {
       state = state.copyWith(isLoading: false);
@@ -268,7 +283,10 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   Future<void> addBonusVoiceLogs(int count) async {
     if (state.isPro) return;
     final prefs = await SharedPreferences.getInstance();
-    final newCount = (state.voiceLogsUsedThisMonth - count).clamp(0, SubscriptionState.freeVoiceLogLimit);
+    final newCount = (state.voiceLogsUsedThisMonth - count).clamp(
+      0,
+      SubscriptionState.freeVoiceLogLimit,
+    );
     await prefs.setInt(_voiceCountKey, newCount);
     state = state.copyWith(voiceLogsUsedThisMonth: newCount);
   }
@@ -286,5 +304,5 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
 final subscriptionProvider =
     StateNotifierProvider<SubscriptionNotifier, SubscriptionState>(
-  (ref) => SubscriptionNotifier(),
-);
+      (ref) => SubscriptionNotifier(),
+    );

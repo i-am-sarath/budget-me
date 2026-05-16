@@ -8,8 +8,9 @@ class ApiConfig {
   // OpenAI calls are routed through our Cloudflare Worker so the OpenAI key
   // never ships in the AAB. See backend/ for the worker.
   static const String proxyBaseUrl = String.fromEnvironment('PROXY_BASE_URL');
-  static const String proxyClientSecret =
-      String.fromEnvironment('PROXY_CLIENT_SECRET');
+  static const String proxyClientSecret = String.fromEnvironment(
+    'PROXY_CLIENT_SECRET',
+  );
 
   // ─── RevenueCat PUBLIC Keys ───────────────────────────
   // Override at build time: --dart-define=RC_ANDROID_KEY=xxx
@@ -20,7 +21,8 @@ class ApiConfig {
 
   static const String revenueCatIosKey = String.fromEnvironment(
     'RC_IOS_KEY',
-    defaultValue: 'test_PZwqjFJDFOucmHwgoHeAyMquzbG', // replace with Apple key when submitting to iOS
+    defaultValue:
+        'test_PZwqjFJDFOucmHwgoHeAyMquzbG', // replace with Apple key when submitting to iOS
   );
 
   // ─── RevenueCat Entitlement & Product IDs ─────────────
@@ -29,8 +31,8 @@ class ApiConfig {
   static const String offeringId = 'default';
 
   // ─── Product IDs (must match Play Console & App Store Connect) ─
-  static const String productMonthly  = 'monthly';
-  static const String productYearly   = 'yearly';
+  static const String productMonthly = 'monthly';
+  static const String productYearly = 'yearly';
   static const String productLifetime = 'lifetime';
 
   // ─── AdMob ────────────────────────────────────

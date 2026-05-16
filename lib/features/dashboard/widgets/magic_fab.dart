@@ -188,7 +188,10 @@ class _MagicFabState extends ConsumerState<MagicFab> {
             Text(
               'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging, or watch an ad for +5 logs.',
               style: GoogleFonts.inter(
-                  color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+                color: tc.onSurfaceVariant,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
             if (isMobile) ...[
               const SizedBox(height: 16),
@@ -196,8 +199,10 @@ class _MagicFabState extends ConsumerState<MagicFab> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
-                  label: Text('Watch ad for +5 logs',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  label: Text(
+                    'Watch ad for +5 logs',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                  ),
                   onPressed: () {
                     Navigator.pop(ctx);
                     _watchAdForBonusLogs();
@@ -210,16 +215,20 @@ class _MagicFabState extends ConsumerState<MagicFab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Maybe later',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+            child: Text(
+              'Maybe later',
+              style: GoogleFonts.inter(color: tc.onSurfaceVariant),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               showPaywall(context);
             },
-            child: Text('Upgrade to Pro',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Upgrade to Pro',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -232,24 +241,28 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Ad not ready yet, try again in a moment')),
+          content: Text('Ad not ready yet, try again in a moment'),
+        ),
       );
       return;
     }
-    final shown = await ref.read(adProvider.notifier).show(
-      onRewarded: () {
-        ref.read(subscriptionProvider.notifier).addBonusVoiceLogs(5);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You earned 5 bonus voice logs!')),
-          );
-        }
-      },
-    );
+    final shown = await ref
+        .read(adProvider.notifier)
+        .show(
+          onRewarded: () {
+            ref.read(subscriptionProvider.notifier).addBonusVoiceLogs(5);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('You earned 5 bonus voice logs!')),
+              );
+            }
+          },
+        );
     if (!shown && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Ad not ready yet, try again in a moment')),
+          content: Text('Ad not ready yet, try again in a moment'),
+        ),
       );
     }
   }
@@ -259,8 +272,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
-    final cancelProgress =
-        (_dragOffset / _cancelThreshold).clamp(0.0, 1.0);
+    final cancelProgress = (_dragOffset / _cancelThreshold).clamp(0.0, 1.0);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -338,11 +350,7 @@ class _ManualEntryPill extends StatelessWidget {
   final AppThemeColors tc;
   final VoidCallback onTap;
 
-  const _ManualEntryPill({
-    super.key,
-    required this.tc,
-    required this.onTap,
-  });
+  const _ManualEntryPill({super.key, required this.tc, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -412,9 +420,7 @@ class _RecordingInfoPill extends StatelessWidget {
             : tc.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(100),
         border: Border.all(
-          color: isCancelling
-              ? Colors.red.withOpacity(0.5)
-              : tc.outlineVariant,
+          color: isCancelling ? Colors.red.withOpacity(0.5) : tc.outlineVariant,
         ),
       ),
       child: Row(
@@ -435,16 +441,18 @@ class _RecordingInfoPill extends StatelessWidget {
             : [
                 Icon(
                   Icons.chevron_left_rounded,
-                  color: tc.onSurfaceVariant
-                      .withOpacity(0.35 + cancelProgress * 0.65),
+                  color: tc.onSurfaceVariant.withOpacity(
+                    0.35 + cancelProgress * 0.65,
+                  ),
                   size: 16,
                 ),
                 const SizedBox(width: 2),
                 Text(
                   'Slide to cancel',
                   style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant
-                        .withOpacity(0.35 + cancelProgress * 0.65),
+                    color: tc.onSurfaceVariant.withOpacity(
+                      0.35 + cancelProgress * 0.65,
+                    ),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
