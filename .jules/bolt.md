@@ -1,0 +1,1 @@
+- Avoid repeated `.where()` and `.fold()` chains on lists. Use a single pass `for` loop to optimize calculations over large lists from O(N*k) to O(N).
