@@ -36,9 +36,9 @@ class OpenAIService {
   }
 
   Map<String, String> _baseHeaders(String userId) => {
-        'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
-        'X-User-Id': userId,
-      };
+    'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
+    'X-User-Id': userId,
+  };
 
   // ─────────────────────────────────────────────
   // Step 1: Transcribe audio (proxied → Whisper)
@@ -51,11 +51,13 @@ class OpenAIService {
 
     final request = http.MultipartRequest('POST', url)
       ..headers.addAll(_baseHeaders(userId))
-      ..files.add(await http.MultipartFile.fromPath(
-        'file',
-        audioFile.path,
-        filename: 'audio.m4a',
-      ));
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          audioFile.path,
+          filename: 'audio.m4a',
+        ),
+      );
 
     final streamed = await request.send().timeout(
       const Duration(seconds: 45),
@@ -103,7 +105,11 @@ class OpenAIService {
       final content = data['content'] as String? ?? '';
       return _parseTransactionList(content);
     }
-    throw _mapProxyError(response.statusCode, response.body, isTranscribe: false);
+    throw _mapProxyError(
+      response.statusCode,
+      response.body,
+      isTranscribe: false,
+    );
   }
 
   // ─────────────────────────────────────────────
@@ -122,7 +128,9 @@ class OpenAIService {
     try {
       final parsed = jsonDecode(body) as Map<String, dynamic>;
       code = (parsed['error'] as Map<String, dynamic>?)?['code'] as String?;
-    } catch (_) {/* body wasn't JSON */}
+    } catch (_) {
+      /* body wasn't JSON */
+    }
 
     if (status == 429 || code == 'rate_limited') {
       return VoiceLogException(
@@ -162,15 +170,15 @@ class OpenAIService {
       } else if (parsed.containsKey('data')) {
         items = parsed['data'] as List<dynamic>;
       } else {
-        items = parsed.values.firstWhere(
-          (v) => v is List,
-          orElse: () => [],
-        ) as List<dynamic>;
+        items =
+            parsed.values.firstWhere((v) => v is List, orElse: () => [])
+                as List<dynamic>;
       }
 
       return items.map((item) {
         final map = item as Map<String, dynamic>;
-        final dateStr = map['date'] as String? ??
+        final dateStr =
+            map['date'] as String? ??
             DateTime.now().toIso8601String().split('T')[0];
 
         DateTime date;

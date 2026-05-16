@@ -109,15 +109,20 @@ class _LoadingOrOnboarding extends ConsumerWidget {
                       color: tc.onSurface,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(Icons.account_balance_wallet_rounded,
-                        color: tc.surface, size: 36),
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: tc.surface,
+                      size: 36,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  Text('Budget Me',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          )),
+                  Text(
+                    'Budget Me',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                 ],
               ),
             ),

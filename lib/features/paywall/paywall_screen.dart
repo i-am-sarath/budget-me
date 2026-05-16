@@ -40,8 +40,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   color: tc.surfaceContainerHigh,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.close_rounded,
-                    color: tc.onSurfaceVariant, size: 16),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: tc.onSurfaceVariant,
+                  size: 16,
+                ),
               ),
             ),
           ),
@@ -59,8 +62,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                     color: tc.onSurface,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Icon(Icons.workspace_premium_rounded,
-                      color: tc.surface, size: 34),
+                  child: Icon(
+                    Icons.workspace_premium_rounded,
+                    color: tc.surface,
+                    size: 34,
+                  ),
                 ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
                 const SizedBox(height: 20),
@@ -92,10 +98,13 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 // Feature list
                 ..._features.asMap().entries.map((e) {
                   return _FeatureRow(
-                    icon: e.value.$1,
-                    label: e.value.$2,
-                    sub: e.value.$3,
-                  ).animate().fadeIn(delay: (180 + e.key * 55).ms).slideX(begin: -0.08);
+                        icon: e.value.$1,
+                        label: e.value.$2,
+                        sub: e.value.$3,
+                      )
+                      .animate()
+                      .fadeIn(delay: (180 + e.key * 55).ms)
+                      .slideX(begin: -0.08);
                 }),
 
                 const SizedBox(height: 28),
@@ -119,8 +128,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 const SizedBox(height: 10),
 
                 TextButton(
-                  onPressed:
-                      sub.isLoading ? null : () => _handleRestore(sub),
+                  onPressed: sub.isLoading ? null : () => _handleRestore(sub),
                   child: Text(
                     'Restore purchases',
                     style: GoogleFonts.inter(
@@ -151,10 +159,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       return Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
-              color: AppThemeColors.of(context).outlineVariant, width: 0.5),
+            color: AppThemeColors.of(context).outlineVariant,
+            width: 0.5,
+          ),
         ),
         child: content,
       );
@@ -176,16 +185,16 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     if (!mounted) return;
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     } else {
       final updatedSub = ref.read(subscriptionProvider);
       if (updatedSub.isPro && mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Welcome to Pro! 🎉')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Welcome to Pro! 🎉')));
       }
     }
   }
@@ -195,12 +204,12 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       _showNotConfiguredDialog();
       return;
     }
-    final error =
-        await ref.read(subscriptionProvider.notifier).restorePurchases();
+    final error = await ref
+        .read(subscriptionProvider.notifier)
+        .restorePurchases();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(error ?? 'Purchases restored successfully!')),
+      SnackBar(content: Text(error ?? 'Purchases restored successfully!')),
     );
     if (error == null && mounted) Navigator.pop(context);
   }
@@ -215,18 +224,28 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         title: Text(
           'In-app purchases',
           style: GoogleFonts.inter(
-              color: tc.onSurface, fontWeight: FontWeight.w700),
+            color: tc.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           'Store payments are not yet configured for this build. Pro features will be available when the app is published.',
-          style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+          style: GoogleFonts.inter(
+            color: tc.onSurfaceVariant,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK',
-                style: GoogleFonts.inter(
-                    color: tc.onSurface, fontWeight: FontWeight.w600)),
+            child: Text(
+              'OK',
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -241,7 +260,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 const _features = [
   (Icons.mic_rounded, 'Unlimited voice logs', 'No 1/day limit'),
   (Icons.cloud_sync_rounded, 'Cloud sync', 'Access on any device'),
-  (Icons.receipt_long_rounded, 'Full transaction history', 'View & export all records'),
+  (
+    Icons.receipt_long_rounded,
+    'Full transaction history',
+    'View & export all records',
+  ),
   (Icons.trending_up_rounded, 'Investment tracking', 'Portfolio insights'),
   (Icons.repeat_rounded, 'Unlimited recurring rules', 'DigiGold, SIP and more'),
 ];
@@ -251,7 +274,11 @@ class _FeatureRow extends StatelessWidget {
   final String label;
   final String sub;
 
-  const _FeatureRow({required this.icon, required this.label, required this.sub});
+  const _FeatureRow({
+    required this.icon,
+    required this.label,
+    required this.sub,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -274,14 +301,21 @@ class _FeatureRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: GoogleFonts.inter(
-                        color: tc.onSurface,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13)),
-                Text(sub,
-                    style: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant, fontSize: 11)),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: tc.onSurface,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  sub,
+                  style: GoogleFonts.inter(
+                    color: tc.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
               ],
             ),
           ),
@@ -357,7 +391,8 @@ class _PlanToggle extends StatelessWidget {
     final monthly = pkg.storeProduct.price / 12;
     // Replicate the currency symbol from the priceString
     final symbol = pkg.storeProduct.priceString
-        .replaceAll(RegExp(r'[\d.,\s]+'), '').trim();
+        .replaceAll(RegExp(r'[\d.,\s]+'), '')
+        .trim();
     return '$symbol${monthly.toStringAsFixed(2)}/mo';
   }
 }
@@ -365,7 +400,7 @@ class _PlanToggle extends StatelessWidget {
 class _PlanOption extends StatelessWidget {
   final String label;
   final String price;
-  final String subLabel;   // e.g. "/month" or "₹12.50/mo · Save 37%"
+  final String subLabel; // e.g. "/month" or "₹12.50/mo · Save 37%"
   final bool isSelected;
   final VoidCallback onTap;
   final String? badge;
@@ -398,7 +433,9 @@ class _PlanOption extends StatelessWidget {
               if (badge != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 2),
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   margin: const EdgeInsets.only(bottom: 6),
                   decoration: BoxDecoration(
                     color: isSelected

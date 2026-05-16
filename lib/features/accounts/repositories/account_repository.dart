@@ -12,10 +12,8 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   Future<void> loadAccounts() async {
     try {
       state = const AsyncValue.loading();
-      final rows = await _db.queryAll('accounts',
-          orderBy: 'created_at DESC');
-      state = AsyncValue.data(
-          rows.map(AccountModel.fromMap).toList());
+      final rows = await _db.queryAll('accounts', orderBy: 'created_at DESC');
+      state = AsyncValue.data(rows.map(AccountModel.fromMap).toList());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -43,14 +41,13 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
     await loadAccounts();
   }
 
-  List<AccountModel> get accounts =>
-      state.valueOrNull ?? [];
+  List<AccountModel> get accounts => state.valueOrNull ?? [];
 }
 
 final accountProvider =
     StateNotifierProvider<AccountNotifier, AsyncValue<List<AccountModel>>>(
-  (ref) => AccountNotifier(),
-);
+      (ref) => AccountNotifier(),
+    );
 
 // ─── Voice account-name matcher ─────────────────────────────
 //
@@ -90,7 +87,14 @@ AccountModel? matchAccountByName(String query, List<AccountModel> accounts) {
 String _normalizeForMatch(String s) {
   var n = s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9 ]'), ' ');
   const fillers = [
-    'my', 'the', 'account', 'bank', 'savings', 'checking', 'card', 'wallet',
+    'my',
+    'the',
+    'account',
+    'bank',
+    'savings',
+    'checking',
+    'card',
+    'wallet',
   ];
   for (final w in fillers) {
     n = n.replaceAll(RegExp(r'\b' + w + r'\b'), '');

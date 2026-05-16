@@ -3,16 +3,17 @@ import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 
-final transactionRepositoryProvider =
-    Provider((ref) => TransactionRepository());
+final transactionRepositoryProvider = Provider(
+  (ref) => TransactionRepository(),
+);
 
-final transactionListProvider = StateNotifierProvider<TransactionNotifier,
-    AsyncValue<List<TransactionModel>>>((ref) {
-  return TransactionNotifier(
-    ref.read(transactionRepositoryProvider),
-    ref,
-  );
-});
+final transactionListProvider =
+    StateNotifierProvider<
+      TransactionNotifier,
+      AsyncValue<List<TransactionModel>>
+    >((ref) {
+      return TransactionNotifier(ref.read(transactionRepositoryProvider), ref);
+    });
 
 class TransactionNotifier
     extends StateNotifier<AsyncValue<List<TransactionModel>>> {
@@ -20,7 +21,7 @@ class TransactionNotifier
   final Ref _ref;
 
   TransactionNotifier(this._repository, this._ref)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     refresh();
   }
 
@@ -70,9 +71,7 @@ class TransactionNotifier
       // Reverse the balance effect before deleting
       final current = state.valueOrNull ?? [];
       final tx = current.where((t) => t.id == id).firstOrNull;
-      if (tx != null &&
-          tx.accountId != null &&
-          tx.accountId!.isNotEmpty) {
+      if (tx != null && tx.accountId != null && tx.accountId!.isNotEmpty) {
         await _ref
             .read(accountProvider.notifier)
             .adjustBalance(tx.accountId!, -tx.balanceDelta);
@@ -91,7 +90,10 @@ class TransactionNotifier
     }
   }
 
-  Future<void> updateTransaction(TransactionModel oldTx, TransactionModel newTx) async {
+  Future<void> updateTransaction(
+    TransactionModel oldTx,
+    TransactionModel newTx,
+  ) async {
     try {
       // Reverse old balance effect
       if (oldTx.accountId != null && oldTx.accountId!.isNotEmpty) {
@@ -137,7 +139,10 @@ class TransactionRepository {
 
   Future<List<TransactionModel>> getByAccount(String accountId) async {
     final maps = await _dbHelper.queryByField(
-        'transactions', 'account_id', accountId);
+      'transactions',
+      'account_id',
+      accountId,
+    );
     return maps.map(TransactionModel.fromMap).toList();
   }
 }
