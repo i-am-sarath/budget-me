@@ -1,0 +1,1 @@
+# Sentinel Journal\n\n- [CRITICAL] Fixed missing transaction input validation. Parsed amounts must be strictly greater than zero to prevent negative balance exploits. Checked `double.tryParse(text)` and added `amount <= 0` exit conditions.
