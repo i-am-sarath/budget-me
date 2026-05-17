@@ -80,10 +80,15 @@ async function transcribe(req: Request, env: Env, _userId: string): Promise<Resp
     return error('bad_request', 'Missing audio file', 400);
   }
 
+  const language = incoming.get('language');
+
   const upstream = new FormData();
   upstream.append('file', file, file.name || 'audio.m4a');
   upstream.append('model', 'whisper-1');
   upstream.append('response_format', 'text');
+  if (language && typeof language === 'string' && language !== 'auto') {
+    upstream.append('language', language);
+  }
 
   const res = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
     method: 'POST',

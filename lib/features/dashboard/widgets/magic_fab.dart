@@ -7,9 +7,9 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/services/ad_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
+import 'package:agent_money/core/providers/voice_processing_provider.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -112,7 +112,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       _dragOffset = 0;
     });
     if (path != null && mounted) {
-      _showProcessingSheet(File(path));
+      ref.read(voiceProcessingProvider.notifier).startProcessing(File(path));
     }
   }
 
@@ -131,15 +131,6 @@ class _MagicFabState extends ConsumerState<MagicFab> {
   }
 
   // ── Sheets ───────────────────────────────────────────────
-
-  void _showProcessingSheet(File audioFile) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => ProcessingSheet(audioFile: audioFile),
-    );
-  }
 
   void _showManualEntry() {
     showModalBottomSheet(

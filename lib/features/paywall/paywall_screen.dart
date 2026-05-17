@@ -239,8 +239,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 // ─────────────────────────────────────────────
 
 const _features = [
-  (Icons.mic_rounded, 'Unlimited voice logs', 'No 1/day limit'),
-  (Icons.cloud_sync_rounded, 'Cloud sync', 'Access on any device'),
+  (Icons.mic_rounded, 'Unlimited voice AI logging', 'No monthly limit'),
+  (Icons.language_rounded, 'Multilingual voice', 'Tamil, Hindi, English & more'),
   (Icons.receipt_long_rounded, 'Full transaction history', 'View & export all records'),
   (Icons.trending_up_rounded, 'Investment tracking', 'Portfolio insights'),
   (Icons.repeat_rounded, 'Unlimited recurring rules', 'DigiGold, SIP and more'),

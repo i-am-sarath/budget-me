@@ -44,7 +44,7 @@ class SubscriptionState {
 
   int get voiceLogsRemaining => isPro ? -1 : (freeVoiceLogLimit - voiceLogsUsedThisMonth).clamp(0, freeVoiceLogLimit); // -1 = unlimited sentinel
 
-  bool get hasCloudSync => isPro;
+  bool get hasCloudSync => false;
 
   bool get hasOfferings => monthlyPackage != null || annualPackage != null || lifetimePackage != null;
 

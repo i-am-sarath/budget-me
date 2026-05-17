@@ -11,6 +11,7 @@ import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
+import 'package:agent_money/core/services/voice_language_service.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
@@ -24,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
     final currency = ref.watch(currencyProvider);
     final subscription = ref.watch(subscriptionProvider);
     final themeMode = ref.watch(themeProvider);
+    final voiceLang = ref.watch(voiceLanguageProvider);
     final tc = AppThemeColors.of(context);
     final budget = ref.watch(budgetProvider);
 
@@ -83,12 +85,16 @@ class SettingsScreen extends ConsumerWidget {
                     .fadeIn(duration: 350.ms, delay: 100.ms),
                 const SizedBox(height: 28),
 
-                // Voice usage
+                // Voice usage + language
                 _SectionLabel('VOICE'),
                 const SizedBox(height: 10),
                 _VoiceCard(subscription: subscription)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 150.ms),
+                const SizedBox(height: 10),
+                _VoiceLanguageCard(currentCode: voiceLang)
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 165.ms),
                 const SizedBox(height: 28),
 
                 // About
@@ -199,8 +205,8 @@ class _SubscriptionCard extends ConsumerWidget {
                 ),
                 Text(
                   isPro
-                      ? 'Unlimited · Cloud sync active'
-                      : '${SubscriptionState.freeVoiceLogLimit} voice logs/month · Local only',
+                      ? 'Unlimited voice AI logging'
+                      : '${SubscriptionState.freeVoiceLogLimit} voice logs/month',
                   style: GoogleFonts.inter(
                     color: isPro
                         ? tc.surface.withOpacity(0.6)
@@ -420,6 +426,154 @@ class _CurrencySection extends ConsumerWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
+  }
+}
+
+// ─────────────────────────────────────────────
+// Voice Language Card
+// ─────────────────────────────────────────────
+
+class _VoiceLanguageCard extends ConsumerWidget {
+  final String currentCode;
+  const _VoiceLanguageCard({required this.currentCode});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+    final current = voiceLanguageOptions
+        .firstWhere((o) => o.$1 == currentCode,
+            orElse: () => voiceLanguageOptions.first);
+
+    return GestureDetector(
+      onTap: () => _showPicker(context, ref, tc),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Text(current.$3, style: const TextStyle(fontSize: 20)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Voice language',
+                    style: GoogleFonts.inter(
+                      color: tc.onSurface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    current.$2,
+                    style: GoogleFonts.inter(
+                      color: tc.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                color: tc.onSurfaceVariant, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPicker(
+      BuildContext context, WidgetRef ref, AppThemeColors tc) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerLow,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: tc.outlineVariant,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Voice Language',
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              'Helps Whisper transcribe accurately',
+              style: GoogleFonts.inter(
+                  color: tc.onSurfaceVariant, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            ...voiceLanguageOptions.map((opt) {
+              final isSelected = opt.$1 == currentCode;
+              return GestureDetector(
+                onTap: () {
+                  ref
+                      .read(voiceLanguageProvider.notifier)
+                      .setLanguage(opt.$1);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? tc.onSurface
+                        : tc.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(opt.$3,
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 12),
+                      Text(
+                        opt.$2,
+                        style: GoogleFonts.inter(
+                          color:
+                              isSelected ? tc.surface : tc.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        const Spacer(),
+                        Icon(Icons.check_rounded,
+                            color: tc.surface, size: 18),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
   }
 }
 

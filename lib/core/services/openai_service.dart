@@ -44,7 +44,8 @@ class OpenAIService {
   // Step 1: Transcribe audio (proxied → Whisper)
   // ─────────────────────────────────────────────
 
-  Future<String> transcribeAudio(File audioFile) async {
+  Future<String> transcribeAudio(File audioFile,
+      {String languageCode = 'auto'}) async {
     _validateConfig();
     final userId = await _userId();
     final url = Uri.parse('${ApiConfig.proxyBaseUrl}/v1/transcribe');
@@ -56,6 +57,10 @@ class OpenAIService {
         audioFile.path,
         filename: 'audio.m4a',
       ));
+
+    if (languageCode != 'auto' && languageCode.isNotEmpty) {
+      request.fields['language'] = languageCode;
+    }
 
     final streamed = await request.send().timeout(
       const Duration(seconds: 45),

@@ -7,6 +7,7 @@ import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
+import 'package:agent_money/core/providers/voice_processing_provider.dart';
 import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
 import 'package:agent_money/features/dashboard/widgets/summary_card.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
@@ -352,6 +353,18 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               // ─── Filter Chips ──────────────────────────
               _buildFilterChips(tc),
               const SizedBox(height: 14),
+
+              // ─── Voice processing card (shown while AI processes) ───
+              Consumer(
+                builder: (_, ref, __) {
+                  final vp = ref.watch(voiceProcessingProvider);
+                  if (vp.isIdle) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _VoiceProcessingCard(state: vp),
+                  );
+                },
+              ),
 
               // ─── Transactions for selected month ───────
               transactionsAsync.when(
@@ -890,6 +903,211 @@ class _BudgetCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Voice processing card — shown at the top of the transaction list
+// while the AI is working, then briefly shows confirmation.
+// ─────────────────────────────────────────────
+
+class _VoiceProcessingCard extends ConsumerWidget {
+  final VoiceProcessingState state;
+  const _VoiceProcessingCard({required this.state});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: state.isProcessing
+          ? _processingView(tc)
+          : state.isSaved
+              ? _savedView(tc)
+              : state.isError
+                  ? _errorView(tc, ref)
+                  : const SizedBox.shrink(),
+    );
+  }
+
+  Widget _processingView(AppThemeColors tc) {
+    return Container(
+      key: const ValueKey('processing'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(11),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(tc.onSurface),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 11,
+                  width: 130,
+                  decoration: BoxDecoration(
+                    color: tc.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  state.statusMessage,
+                  style: GoogleFonts.inter(
+                    color: tc.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                height: 11,
+                width: 52,
+                decoration: BoxDecoration(
+                  color: tc.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 9,
+                width: 32,
+                decoration: BoxDecoration(
+                  color: tc.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _savedView(AppThemeColors tc) {
+    return Container(
+      key: const ValueKey('saved'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF22C55E).withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+            color: const Color(0xFF22C55E).withOpacity(0.3), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFF22C55E).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.check_rounded,
+                color: Color(0xFF22C55E), size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              state.statusMessage,
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _errorView(AppThemeColors tc, WidgetRef ref) {
+    return Container(
+      key: const ValueKey('error'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.red.withOpacity(0.4), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.error_outline_rounded,
+                color: Colors.red, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Processing failed',
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () =>
+                ref.read(voiceProcessingProvider.notifier).dismiss(),
+            child: Icon(Icons.close_rounded,
+                color: tc.onSurfaceVariant, size: 18),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => ref.read(voiceProcessingProvider.notifier).retry(),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: Text(
+                'Retry',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
