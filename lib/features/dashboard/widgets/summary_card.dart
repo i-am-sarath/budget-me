@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
+import 'package:agent_money/core/services/balance_visibility_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class SummaryCard extends StatelessWidget {
+class SummaryCard extends ConsumerWidget {
   final List<TransactionModel> transactions;
   final CurrencyState currency;
 
@@ -15,7 +17,8 @@ class SummaryCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isHidden = ref.watch(balanceVisibilityProvider);
     final now = DateTime.now();
     final thisMonth = transactions.where(
         (t) => t.date.month == now.month && t.date.year == now.year);
@@ -29,7 +32,6 @@ class SummaryCard extends StatelessWidget {
         .where((t) => t.type == TransactionType.investment)
         .fold(0.0, (s, t) => s + t.amount);
 
-    // Outstanding lent/borrowed — all-time running totals
     final totalLent = transactions
         .where((t) => t.type == TransactionType.lend)
         .fold(0.0, (s, t) => s + t.amount);
@@ -53,7 +55,6 @@ class SummaryCard extends StatelessWidget {
 
     return Column(
       children: [
-        // Row 1 — always visible: Spent | Earned | Invested
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -64,6 +65,7 @@ class SummaryCard extends StatelessWidget {
                   amount: expense,
                   currency: currency,
                   accentColor: tc.expense,
+                  isHidden: isHidden,
                 ),
               ),
               const SizedBox(width: 10),
@@ -73,6 +75,7 @@ class SummaryCard extends StatelessWidget {
                   amount: income,
                   currency: currency,
                   accentColor: tc.income,
+                  isHidden: isHidden,
                 ),
               ),
               const SizedBox(width: 10),
@@ -82,13 +85,13 @@ class SummaryCard extends StatelessWidget {
                   amount: invested,
                   currency: currency,
                   accentColor: tc.investment,
+                  isHidden: isHidden,
                 ),
               ),
             ],
           ),
         ),
 
-        // Row 2 — Lent | Borrowed | (spacer for alignment)
         if (showLendBorrow) ...[
           const SizedBox(height: 10),
           IntrinsicHeight(
@@ -102,6 +105,7 @@ class SummaryCard extends StatelessWidget {
                     currency: currency,
                     accentColor: tc.lend,
                     sublabel: 'outstanding',
+                    isHidden: isHidden,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -112,9 +116,9 @@ class SummaryCard extends StatelessWidget {
                     currency: currency,
                     accentColor: tc.borrow,
                     sublabel: 'outstanding',
+                    isHidden: isHidden,
                   ),
                 ),
-                // Third column spacer keeps same item width as row above
                 const SizedBox(width: 10),
                 Expanded(child: const SizedBox()),
               ],
@@ -132,12 +136,14 @@ class _BentoItem extends StatelessWidget {
   final CurrencyState currency;
   final Color accentColor;
   final String? sublabel;
+  final bool isHidden;
 
   const _BentoItem({
     required this.label,
     required this.amount,
     required this.currency,
     required this.accentColor,
+    required this.isHidden,
     this.sublabel,
   });
 
@@ -174,16 +180,20 @@ class _BentoItem extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            _compactFormat(amount, currency),
-            style: GoogleFonts.inter(
-              color: tc.onSurface,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: Text(
+              isHidden ? '• • •' : _compactFormat(amount, currency),
+              key: ValueKey(isHidden),
+              style: GoogleFonts.inter(
+                color: tc.onSurface,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           if (sublabel != null) ...[
             const SizedBox(height: 2),

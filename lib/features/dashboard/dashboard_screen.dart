@@ -21,6 +21,7 @@ import 'package:agent_money/core/services/budget_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
+import 'package:agent_money/core/services/balance_visibility_service.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -257,6 +258,22 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             ),
           ),
           actions: [
+            Consumer(
+              builder: (_, ref, __) {
+                final isHidden = ref.watch(balanceVisibilityProvider);
+                return IconButton(
+                  onPressed: () =>
+                      ref.read(balanceVisibilityProvider.notifier).toggle(),
+                  icon: Icon(
+                    isHidden
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    color: tc.onSurface,
+                    size: 20,
+                  ),
+                );
+              },
+            ),
             IconButton(
               onPressed: () => ref.read(themeProvider.notifier).toggle(),
               icon: Icon(
@@ -277,26 +294,8 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // ─── Budget Progress (hero spot) ───────────
-              transactionsAsync.when(
-                loading: () => const _BalanceSkeleton(),
-                error: (_, __) => const SizedBox(),
-                data: (txs) {
-                  if (!budget.hasBudget) return const SizedBox();
-                  final now = DateTime.now();
-                  final spent = txs
-                      .where((t) =>
-                          t.type == TransactionType.expense &&
-                          t.date.month == now.month &&
-                          t.date.year == now.year)
-                      .fold(0.0, (s, t) => s + t.amount);
-                  return _BudgetCard(
-                    budget: budget,
-                    spent: spent,
-                    currency: currency,
-                  ).animate().fadeIn(duration: 350.ms);
-                },
-              ),
+              // ─── Net Balance Hero ──────────────────────
+              const _NetBalanceHero(),
               const SizedBox(height: 16),
 
               // ─── Quick Stats ───────────────────────────
@@ -306,10 +305,34 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 data: (txs) => SummaryCard(
                   transactions: txs,
                   currency: currency,
-                ).animate().fadeIn(delay: 200.ms),
+                ).animate().fadeIn(delay: 100.ms),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+
+              // ─── Budget Progress ───────────────────────
+              transactionsAsync.when(
+                loading: () => const SizedBox(),
+                error: (_, __) => const SizedBox(),
+                data: (txs) {
+                  if (!budget.hasBudget) return const SizedBox.shrink();
+                  final now = DateTime.now();
+                  final spent = txs
+                      .where((t) =>
+                          t.type == TransactionType.expense &&
+                          t.date.month == now.month &&
+                          t.date.year == now.year)
+                      .fold(0.0, (s, t) => s + t.amount);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _BudgetCard(
+                      budget: budget,
+                      spent: spent,
+                      currency: currency,
+                    ).animate().fadeIn(duration: 350.ms),
+                  );
+                },
+              ),
 
               // ─── Accounts Strip ────────────────────────
               accountsAsync.when(
@@ -354,7 +377,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               _buildFilterChips(tc),
               const SizedBox(height: 14),
 
-              // ─── Voice processing card (shown while AI processes) ───
+              // ─── Voice processing card ─────────────────
               Consumer(
                 builder: (_, ref, __) {
                   final vp = ref.watch(voiceProcessingProvider);
@@ -366,7 +389,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 },
               ),
 
-              // ─── Transactions for selected month ───────
+              // ─── Date-grouped Transactions ─────────────
               transactionsAsync.when(
                 loading: () => const _TransactionsSkeleton(),
                 error: (e, _) => Center(
@@ -385,26 +408,35 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                         filtered.where((t) => t.type == _filter).toList();
                   }
                   if (filtered.isEmpty) return _EmptyTransactions();
+                  final groups = _groupByDate(filtered);
                   return Column(
-                    children: filtered.asMap().entries.map((e) {
-                      return GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) =>
-                              ManualEntrySheet(prefill: e.value),
-                        ),
-                        child: TransactionTile(
-                          transaction: e.value,
-                          currency: currency,
-                        )
-                            .animate()
-                            .fadeIn(
-                                duration: 300.ms,
-                                delay: (e.key * 30).ms)
-                            .slideY(begin: 0.08, end: 0),
-                      );
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: groups.entries.expand((entry) {
+                      return <Widget>[
+                        _DateGroupHeader(label: entry.key),
+                        const SizedBox(height: 8),
+                        ...entry.value.asMap().entries.map((e) {
+                          return GestureDetector(
+                            onTap: () => showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) =>
+                                  ManualEntrySheet(prefill: e.value),
+                            ),
+                            child: TransactionTile(
+                              transaction: e.value,
+                              currency: currency,
+                            )
+                                .animate()
+                                .fadeIn(
+                                    duration: 300.ms,
+                                    delay: (e.key * 30).ms)
+                                .slideY(begin: 0.06, end: 0),
+                          );
+                        }),
+                        const SizedBox(height: 4),
+                      ];
                     }).toList(),
                   );
                 },
@@ -556,7 +588,7 @@ class _MoreMenuItem extends StatelessWidget {
 // Account Mini Cards
 // ─────────────────────────────────────────────
 
-class _AccountMiniCard extends StatelessWidget {
+class _AccountMiniCard extends ConsumerWidget {
   final AccountModel account;
   final CurrencyState currency;
 
@@ -567,8 +599,9 @@ class _AccountMiniCard extends StatelessWidget {
       account.type == AccountType.creditCard;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tc = AppThemeColors.of(context);
+    final isHidden = ref.watch(balanceVisibilityProvider);
     final balanceColor = _isLiability ? tc.expense : tc.onSurface;
     final displayBalance = account.balance.abs();
 
@@ -609,14 +642,20 @@ class _AccountMiniCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _isLiability
-                    ? '−${currency.format(displayBalance)}'
-                    : currency.format(displayBalance),
-                style: GoogleFonts.inter(
-                  color: balanceColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Text(
+                  isHidden
+                      ? '• • •'
+                      : _isLiability
+                          ? '−${currency.format(displayBalance)}'
+                          : currency.format(displayBalance),
+                  key: ValueKey(isHidden),
+                  style: GoogleFonts.inter(
+                    color: balanceColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               if (_isLiability)
@@ -905,6 +944,158 @@ class _BudgetCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Net Balance Hero
+// ─────────────────────────────────────────────
+
+class _NetBalanceHero extends ConsumerWidget {
+  const _NetBalanceHero();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+    final currency = ref.watch(currencyProvider);
+    final accountsAsync = ref.watch(accountProvider);
+    final txAsync = ref.watch(transactionListProvider);
+    final isHidden = ref.watch(balanceVisibilityProvider);
+
+    return accountsAsync.when(
+      loading: () => const _BalanceSkeleton(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (accounts) {
+        if (accounts.isEmpty) return const SizedBox.shrink();
+
+        double netBalance = 0;
+        for (final acc in accounts) {
+          final isLiab = acc.type == AccountType.loan ||
+              acc.type == AccountType.creditCard;
+          netBalance += isLiab ? -acc.balance.abs() : acc.balance;
+        }
+
+        final now = DateTime.now();
+        final monthNet = txAsync.valueOrNull?.fold<double>(0, (sum, t) {
+              if (t.date.month != now.month || t.date.year != now.year) {
+                return sum;
+              }
+              if (t.type == TransactionType.income) return sum + t.amount;
+              if (t.type == TransactionType.expense) return sum - t.amount;
+              return sum;
+            }) ??
+            0.0;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: tc.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: tc.outlineVariant, width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'NET BALANCE',
+                style: GoogleFonts.inter(
+                  color: tc.onSurfaceVariant,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  isHidden
+                      ? '• • • • •'
+                      : netBalance < 0
+                          ? '−${currency.format(netBalance.abs())}'
+                          : currency.format(netBalance),
+                  key: ValueKey(isHidden),
+                  style: GoogleFonts.inter(
+                    color: netBalance < 0 ? tc.expense : tc.onSurface,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    monthNet >= 0
+                        ? Icons.trending_up_rounded
+                        : Icons.trending_down_rounded,
+                    color: monthNet >= 0 ? tc.income : tc.expense,
+                    size: 13,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    isHidden
+                        ? '• • •  this month'
+                        : '${monthNet >= 0 ? '+' : '−'}${currency.format(monthNet.abs())}  this month',
+                    style: GoogleFonts.inter(
+                      color: monthNet >= 0 ? tc.income : tc.expense,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ).animate().fadeIn(duration: 350.ms);
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Date-group helpers
+// ─────────────────────────────────────────────
+
+Map<String, List<TransactionModel>> _groupByDate(
+    List<TransactionModel> txs) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final Map<String, List<TransactionModel>> groups = {};
+  for (final tx in txs) {
+    final d = DateTime(tx.date.year, tx.date.month, tx.date.day);
+    final diff = today.difference(d).inDays;
+    final key = diff == 0
+        ? 'Today'
+        : diff == 1
+            ? 'Yesterday'
+            : DateFormat('EEE, d MMM').format(tx.date);
+    (groups[key] ??= []).add(tx);
+  }
+  return groups;
+}
+
+class _DateGroupHeader extends StatelessWidget {
+  final String label;
+  const _DateGroupHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 2),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: tc.onSurfaceVariant,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }
