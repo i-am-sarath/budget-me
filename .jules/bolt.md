@@ -1,0 +1,1 @@
+- Single pass iteration over transactions instead of chained .where().fold() calls reduces iteration complexity from O(8N) to O(N).
