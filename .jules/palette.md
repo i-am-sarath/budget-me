@@ -1,0 +1,1 @@
+- Accessibility: Ensure IconButtons always have tooltips and Semantics wrappers (with button: true and a descriptive label) for proper screen reader support and usability.
