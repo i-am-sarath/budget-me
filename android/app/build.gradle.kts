@@ -40,7 +40,7 @@ android {
 
     defaultConfig {
         applicationId = "com.budgetme.budgettracker"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26  // Required for TYPE_APPLICATION_OVERLAY (flutter_overlay_window)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

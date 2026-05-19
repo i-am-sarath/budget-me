@@ -22,6 +22,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
 import 'package:agent_money/core/services/balance_visibility_service.dart';
+import 'package:agent_money/core/providers/overlay_event_provider.dart';
+import 'package:agent_money/features/overlay/overlay_queue_service.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -168,6 +170,23 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   TransactionType? _filter;
 
+  @override
+  void initState() {
+    super.initState();
+    // Drain any transactions the overlay saved while the app was closed.
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _processOverlayQueue());
+  }
+
+  Future<void> _processOverlayQueue() async {
+    try {
+      final txs = await OverlayQueueService.dequeueAll();
+      for (final tx in txs) {
+        await ref.read(transactionListProvider.notifier).addTransaction(tx);
+      }
+    } catch (_) {}
+  }
+
   void _changeMonth(int offset) {
     setState(() {
       _selectedMonth =
@@ -234,6 +253,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     final themeMode = ref.watch(themeProvider);
     final tc = AppThemeColors.of(context);
     final budget = ref.watch(budgetProvider);
+
+    // Refresh when the overlay saves transactions while the app is in the foreground.
+    ref.listen(overlayEventProvider, (_, next) {
+      next.whenData((_) => _processOverlayQueue());
+    });
 
     final isDark = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&

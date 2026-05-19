@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,7 +13,9 @@ import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/core/services/voice_language_service.dart';
+import 'package:agent_money/core/providers/overlay_settings_provider.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:agent_money/features/overlay/overlay_permission_service.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -95,6 +98,16 @@ class SettingsScreen extends ConsumerWidget {
                 _VoiceLanguageCard(currentCode: voiceLang)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 165.ms),
+                const SizedBox(height: 28),
+
+                // Floating overlay button (Android only)
+                if (Platform.isAndroid) ...[
+                  _SectionLabel('FLOATING BUTTON'),
+                  const SizedBox(height: 10),
+                  const _OverlayMicCard()
+                      .animate()
+                      .fadeIn(duration: 350.ms, delay: 170.ms),
+                ],
                 const SizedBox(height: 28),
 
                 // About
@@ -993,6 +1006,200 @@ class _SettingsTile extends StatelessWidget {
           ),
         ),
       );
+}
+
+// ─────────────────────────────────────────────
+// Floating Overlay Mic Card (Android)
+// ─────────────────────────────────────────────
+
+class _OverlayMicCard extends ConsumerStatefulWidget {
+  const _OverlayMicCard();
+
+  @override
+  ConsumerState<_OverlayMicCard> createState() => _OverlayMicCardState();
+}
+
+class _OverlayMicCardState extends ConsumerState<_OverlayMicCard>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _autoEnableIfPermitted();
+  }
+
+  Future<void> _autoEnableIfPermitted() async {
+    if (!Platform.isAndroid) return;
+    final isEnabled = ref.read(overlaySettingsProvider);
+    if (isEnabled) return;
+    final hasOverlay = await OverlayPermissionService.hasOverlayPermission();
+    final hasMic = await OverlayPermissionService.hasMicPermission();
+    if (hasOverlay && hasMic && mounted) {
+      await ref.read(overlaySettingsProvider.notifier).enable();
+    }
+  }
+
+  Future<void> _onToggle(bool value) async {
+    if (value) {
+      final hasOverlay = await OverlayPermissionService.hasOverlayPermission();
+      if (!hasOverlay) {
+        _showOverlayPermissionDialog();
+        return;
+      }
+      final hasMic = await OverlayPermissionService.hasMicPermission();
+      if (!hasMic) {
+        final granted = await OverlayPermissionService.requestMicPermission();
+        if (!granted) return;
+      }
+      await ref.read(overlaySettingsProvider.notifier).enable();
+    } else {
+      await ref.read(overlaySettingsProvider.notifier).disable();
+    }
+  }
+
+  void _showOverlayPermissionDialog() {
+    final tc = AppThemeColors.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: tc.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Overlay Permission',
+          style: GoogleFonts.inter(
+              color: tc.onSurface, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Budget Me needs "Display over other apps" permission to show the floating mic button on top of other apps.\n\nTap "Open Settings", enable the permission, then return here.',
+          style: GoogleFonts.inter(
+              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: tc.onSurface,
+              foregroundColor: tc.surface,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await OverlayPermissionService.requestOverlayPermission();
+            },
+            child: Text('Open Settings',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = ref.watch(overlaySettingsProvider);
+    final tc = AppThemeColors.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isEnabled
+                      ? tc.onSurface
+                      : tc.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.mic_rounded,
+                  color: isEnabled ? tc.surface : tc.onSurfaceVariant,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Floating mic button',
+                      style: GoogleFonts.inter(
+                        color: tc.onSurface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      'Hold to record from any screen',
+                      style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isEnabled,
+                onChanged: _onToggle,
+                activeColor: tc.onSurface,
+              ),
+            ],
+          ),
+          if (isEnabled) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: tc.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      color: tc.onSurfaceVariant, size: 14),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Account balances update when you next open Budget Me.',
+                      style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────
