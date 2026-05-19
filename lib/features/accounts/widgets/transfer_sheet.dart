@@ -67,10 +67,10 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     final isLoanRepayment =
         _to!.type == AccountType.loan || _to!.type == AccountType.creditCard;
 
-    // Debit from source (always expense — reduces source balance)
+    // Debit from source — uses transferOut so it does NOT count as a budget expense
     final debit = TransactionModel(
       amount: amount,
-      type: TransactionType.expense,
+      type: TransactionType.transferOut,
       category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
       note: '$displayNote → ${_to!.name}',
       accountId: _from!.id,
@@ -79,11 +79,11 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     );
 
     // Credit to destination
-    // For loan/credit card: borrowReturn → balanceDelta is -amount (reduces debt)
-    // For normal accounts: income → balanceDelta is +amount (adds funds)
+    // For loan/credit card: borrowReturn → reduces the liability balance
+    // For normal accounts: transferIn → does NOT inflate "Earned" summary
     final credit = TransactionModel(
       amount: amount,
-      type: isLoanRepayment ? TransactionType.borrowReturn : TransactionType.income,
+      type: isLoanRepayment ? TransactionType.borrowReturn : TransactionType.transferIn,
       category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
       note: '$displayNote ← ${_from!.name}',
       accountId: _to!.id,
@@ -93,10 +93,18 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
 
     final txNotifier = ref.read(transactionListProvider.notifier);
 
-    // Sequential: add both legs — addTransaction already adjusts linked account balances
-    await txNotifier.addTransaction(debit);
-    await txNotifier.addTransaction(credit);
-    if (mounted) Navigator.pop(context);
+    try {
+      await txNotifier.addTransaction(debit);
+      if (!mounted) return;
+      await txNotifier.addTransaction(credit);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Transfer failed: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override

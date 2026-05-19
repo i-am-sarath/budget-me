@@ -223,6 +223,41 @@ class _RecurringTile extends StatelessWidget {
         ),
         child: Icon(Icons.delete_sweep_rounded, color: tc.expense, size: 26),
       ),
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            final dtc = AppThemeColors.of(ctx);
+            return AlertDialog(
+              backgroundColor: dtc.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Text('Delete "${rule.title}"?',
+                  style: GoogleFonts.inter(
+                      color: dtc.onSurface, fontWeight: FontWeight.w700)),
+              content: Text('This recurring rule will be permanently removed.',
+                  style: GoogleFonts.inter(
+                      color: dtc.onSurfaceVariant,
+                      fontSize: 13,
+                      height: 1.5)),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text('Cancel',
+                        style: GoogleFonts.inter(
+                            color: dtc.onSurfaceVariant))),
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text('Delete',
+                        style: GoogleFonts.inter(
+                            color: dtc.expense,
+                            fontWeight: FontWeight.w700))),
+              ],
+            );
+          },
+        ) ??
+            false;
+      },
       onDismissed: (_) => onDelete(),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -358,6 +393,8 @@ class _RecurringTile extends StatelessWidget {
       case TransactionType.borrow:       return tc.borrow;
       case TransactionType.lendReturn:   return tc.income;
       case TransactionType.borrowReturn: return tc.expense;
+      case TransactionType.transferOut:  return tc.investment;
+      case TransactionType.transferIn:   return tc.investment;
     }
   }
 
@@ -370,6 +407,8 @@ class _RecurringTile extends StatelessWidget {
       case TransactionType.borrow:       return Icons.person_add_alt_1_rounded;
       case TransactionType.lendReturn:   return Icons.undo_rounded;
       case TransactionType.borrowReturn: return Icons.redo_rounded;
+      case TransactionType.transferOut:  return Icons.swap_horiz_rounded;
+      case TransactionType.transferIn:   return Icons.swap_horiz_rounded;
     }
   }
 }
@@ -517,6 +556,9 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
 
   void _submit() {
     if (_titleCtrl.text.trim().isEmpty || _amountCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a title and amount')),
+      );
       return;
     }
     final amount = double.tryParse(_amountCtrl.text) ?? 0;

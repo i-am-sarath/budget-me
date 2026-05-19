@@ -6,8 +6,10 @@ enum TransactionType {
   investment,
   lend,
   borrow,
-  lendReturn,   // someone returned money they owed → user receives money back
-  borrowReturn; // user returns money they borrowed → user pays out
+  lendReturn,    // someone returned money they owed → user receives money back
+  borrowReturn,  // user returns money they borrowed → user pays out
+  transferOut,   // money leaving an account via transfer (not a budget expense)
+  transferIn;    // money arriving in an account via transfer (not real income)
 
   static TransactionType fromString(String value) {
     return TransactionType.values.firstWhere(
@@ -25,6 +27,8 @@ enum TransactionType {
       case TransactionType.borrow:       return 'Borrowed';
       case TransactionType.lendReturn:   return 'Lent - Returned';
       case TransactionType.borrowReturn: return 'Borrow - Repaid';
+      case TransactionType.transferOut:  return 'Transfer Out';
+      case TransactionType.transferIn:   return 'Transfer In';
     }
   }
 }
@@ -62,12 +66,14 @@ class TransactionModel {
     switch (type) {
       case TransactionType.income:
       case TransactionType.borrow:
-      case TransactionType.lendReturn:   // money returned TO user → positive
+      case TransactionType.lendReturn:
+      case TransactionType.transferIn:   // funds arrive → positive
         return amount;
       case TransactionType.expense:
       case TransactionType.lend:
       case TransactionType.investment:
-      case TransactionType.borrowReturn: // user repays → negative
+      case TransactionType.borrowReturn:
+      case TransactionType.transferOut:  // funds leave → negative
         return -amount;
     }
   }

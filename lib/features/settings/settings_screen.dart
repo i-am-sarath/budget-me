@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
@@ -515,9 +516,23 @@ class _AboutCard extends StatelessWidget {
         children: [
           _AboutRow(label: 'Version', value: '1.0.0'),
           Divider(height: 1, color: tc.outlineVariant),
-          _AboutRow(label: 'Privacy Policy', hasArrow: true),
+          _AboutRow(
+            label: 'Privacy Policy',
+            hasArrow: true,
+            onTap: () => launchUrl(
+              Uri.parse('https://i-am-sarath.github.io/budget-me/privacy'),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
           Divider(height: 1, color: tc.outlineVariant),
-          _AboutRow(label: 'Terms of Service', hasArrow: true),
+          _AboutRow(
+            label: 'Terms of Service',
+            hasArrow: true,
+            onTap: () => launchUrl(
+              Uri.parse('https://i-am-sarath.github.io/budget-me/terms'),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
         ],
       ),
     );
@@ -528,17 +543,21 @@ class _AboutRow extends StatelessWidget {
   final String label;
   final String? value;
   final bool hasArrow;
+  final VoidCallback? onTap;
 
   const _AboutRow({
     required this.label,
     this.value,
     this.hasArrow = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
-    return Padding(
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
@@ -564,7 +583,7 @@ class _AboutRow extends StatelessWidget {
                 color: tc.onSurfaceVariant, size: 18),
         ],
       ),
-    );
+    ));
   }
 }
 

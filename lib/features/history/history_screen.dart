@@ -109,8 +109,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant),
-                          onPressed: () => _changeMonth(1),
+                          icon: Icon(
+                            Icons.chevron_right_rounded,
+                            color: (_selectedMonth.year == DateTime.now().year &&
+                                    _selectedMonth.month == DateTime.now().month)
+                                ? tc.onSurfaceVariant.withOpacity(0.3)
+                                : tc.onSurfaceVariant,
+                          ),
+                          onPressed: (_selectedMonth.year == DateTime.now().year &&
+                                  _selectedMonth.month == DateTime.now().month)
+                              ? null
+                              : () => _changeMonth(1),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),

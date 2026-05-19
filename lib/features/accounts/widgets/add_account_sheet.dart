@@ -285,8 +285,9 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
         return GestureDetector(
           onTap: () => setState(() {
             _type = t;
-            // Clear bank-specific fields if switching away
+            // Clear bank-specific fields when switching away from bank/credit card
             if (t != AccountType.bank && t != AccountType.creditCard) {
+              _bankCtrl.clear();
               _lastFourCtrl.clear();
             }
           }),

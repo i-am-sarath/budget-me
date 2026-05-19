@@ -172,6 +172,10 @@ class TransactionTile extends ConsumerWidget {
         return (tc.income, '←', Icons.undo_rounded);
       case TransactionType.borrowReturn:
         return (tc.expense, '→', Icons.redo_rounded);
+      case TransactionType.transferOut:
+        return (tc.investment, '⇄', Icons.swap_horiz_rounded);
+      case TransactionType.transferIn:
+        return (tc.investment, '⇄', Icons.swap_horiz_rounded);
     }
   }
 

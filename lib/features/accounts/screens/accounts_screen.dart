@@ -54,7 +54,9 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => TransferSheet(fromAccount: from),
-    );
+    ).then((_) {
+      ref.read(accountProvider.notifier).loadAccounts();
+    });
   }
 
   void _confirmDelete(AccountModel account) {

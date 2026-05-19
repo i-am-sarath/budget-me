@@ -468,6 +468,8 @@ class _ResultView extends StatelessWidget {
       case TransactionType.lend:         return const Color(0xFFF59E0B);
       case TransactionType.borrow:       return const Color(0xFF8B5CF6);
       case TransactionType.investment:   return const Color(0xFF3B82F6);
+      case TransactionType.transferOut:  return const Color(0xFF3B82F6);
+      case TransactionType.transferIn:   return const Color(0xFF3B82F6);
     }
   }
 
@@ -480,6 +482,8 @@ class _ResultView extends StatelessWidget {
       case TransactionType.lend:         return Icons.people_rounded;
       case TransactionType.borrow:       return Icons.savings_rounded;
       case TransactionType.investment:   return Icons.trending_up_rounded;
+      case TransactionType.transferOut:  return Icons.swap_horiz_rounded;
+      case TransactionType.transferIn:   return Icons.swap_horiz_rounded;
     }
   }
 

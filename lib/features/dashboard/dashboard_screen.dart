@@ -467,6 +467,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
       (TransactionType.lendReturn, 'Got Back'),
       (TransactionType.borrow, 'Borrowed'),
       (TransactionType.borrowReturn, 'Repaid'),
+      (TransactionType.transferOut, 'Transfer'),
     ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,

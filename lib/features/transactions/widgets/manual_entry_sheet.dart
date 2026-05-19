@@ -39,6 +39,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       ('📱', 'Bills & Utilities'),
       ('🎬', 'Entertainment'),
       ('📚', 'Education'),
+      ('📖', 'Books'),
       ('✈️', 'Travel'),
       ('👗', 'Clothing'),
       ('🐾', 'Pet Care'),
@@ -413,6 +414,8 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         case TransactionType.lendReturn:   return tc.income;
         case TransactionType.borrow:       return tc.borrow;
         case TransactionType.borrowReturn: return tc.expense;
+        case TransactionType.transferOut:  return tc.investment;
+        case TransactionType.transferIn:   return tc.investment;
       }
     }
 
