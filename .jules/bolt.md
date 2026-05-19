@@ -1,0 +1,1 @@
+- Dart Single Pass Loop Optimization: Instead of multiple chains of .where followed by .fold on an unindexed list, performance is substantially improved by a single-pass loop mapping items dynamically.
