@@ -52,7 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: tc.surfaceContainerLow,
+          color: tc.surfaceContainer,
           border: Border(
             top: BorderSide(color: tc.outlineVariant, width: 0.5),
           ),
@@ -125,13 +125,15 @@ class _NavItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? tc.onSurface.withOpacity(0.08)
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.12)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 icon,
-                color: isSelected ? tc.onSurface : tc.onSurfaceVariant.withOpacity(0.6),
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : tc.onSurfaceVariant.withOpacity(0.6),
                 size: 24,
               ),
             ),
@@ -139,7 +141,9 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: GoogleFonts.inter(
-                color: isSelected ? tc.onSurface : tc.onSurfaceVariant.withOpacity(0.6),
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : tc.onSurfaceVariant.withOpacity(0.6),
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),

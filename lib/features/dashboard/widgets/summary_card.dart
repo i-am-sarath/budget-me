@@ -144,12 +144,22 @@ class _BentoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
+        color: tc.surfaceContainer,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: tc.outlineVariant, width: 0.5),
+        boxShadow: isLight
+            ? [
+                BoxShadow(
+                  color: const Color(0x0A000000),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
