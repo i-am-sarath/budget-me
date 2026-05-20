@@ -17,36 +17,51 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final thisMonth = transactions.where(
-        (t) => t.date.month == now.month && t.date.year == now.year);
-    final expense = thisMonth
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final income = thisMonth
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final invested = thisMonth
-        .where((t) => t.type == TransactionType.investment)
-        .fold(0.0, (s, t) => s + t.amount);
 
-    // Outstanding lent/borrowed — all-time running totals
-    final totalLent = transactions
-        .where((t) => t.type == TransactionType.lend)
-        .fold(0.0, (s, t) => s + t.amount);
-    final totalLentReturned = transactions
-        .where((t) => t.type == TransactionType.lendReturn)
-        .fold(0.0, (s, t) => s + t.amount);
-    final outstandingLent =
-        (totalLent - totalLentReturned).clamp(0.0, double.infinity);
+    // Performance optimization: Single pass iteration.
+    // Instead of doing multiple `.where().fold()` passes (O(N*M) complexity),
+    // we do a single pass (O(N) complexity) over the transactions list to compute all totals.
+    double expense = 0.0;
+    double income = 0.0;
+    double invested = 0.0;
+    double totalLent = 0.0;
+    double totalLentReturned = 0.0;
+    double totalBorrowed = 0.0;
+    double totalBorrowReturned = 0.0;
 
-    final totalBorrowed = transactions
-        .where((t) => t.type == TransactionType.borrow)
-        .fold(0.0, (s, t) => s + t.amount);
-    final totalBorrowReturned = transactions
-        .where((t) => t.type == TransactionType.borrowReturn)
-        .fold(0.0, (s, t) => s + t.amount);
-    final outstandingBorrowed =
-        (totalBorrowed - totalBorrowReturned).clamp(0.0, double.infinity);
+    for (final t in transactions) {
+      final isThisMonth = t.date.month == now.month && t.date.year == now.year;
+
+      if (isThisMonth) {
+        if (t.type == TransactionType.expense) {
+          expense += t.amount;
+        } else if (t.type == TransactionType.income) {
+          income += t.amount;
+        } else if (t.type == TransactionType.investment) {
+          invested += t.amount;
+        }
+      }
+
+      if (t.type == TransactionType.lend) {
+        totalLent += t.amount;
+      } else if (t.type == TransactionType.lendReturn) {
+        totalLentReturned += t.amount;
+      } else if (t.type == TransactionType.borrow) {
+        totalBorrowed += t.amount;
+      } else if (t.type == TransactionType.borrowReturn) {
+        totalBorrowReturned += t.amount;
+      }
+    }
+
+    final outstandingLent = (totalLent - totalLentReturned).clamp(
+      0.0,
+      double.infinity,
+    );
+
+    final outstandingBorrowed = (totalBorrowed - totalBorrowReturned).clamp(
+      0.0,
+      double.infinity,
+    );
 
     final showLendBorrow = outstandingLent > 0 || outstandingBorrowed > 0;
     final tc = AppThemeColors.of(context);
