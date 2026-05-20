@@ -1,0 +1,1 @@
+- Security Learning: Enforce >0 validations on all transaction inputs to prevent negative balance exploits.
