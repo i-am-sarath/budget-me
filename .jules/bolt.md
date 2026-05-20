@@ -1,0 +1,1 @@
+- Dart Single Pass Optimizations: Replacing multiple `.where().fold()` chains with a single `for` loop reduces list traversal overhead from O(N*M) to O(N).
