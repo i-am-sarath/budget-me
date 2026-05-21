@@ -1,0 +1,1 @@
+- Used SliverChildBuilderDelegate instead of Column inside SliverChildListDelegate to enable lazy loading for long lists, preventing unnecessary widget tree building overhead.
