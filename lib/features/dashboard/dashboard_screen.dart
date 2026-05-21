@@ -20,6 +20,9 @@ import 'package:agent_money/core/services/budget_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
+import 'package:agent_money/features/spaces/models/space_model.dart';
+import 'package:agent_money/features/spaces/repositories/space_repository.dart';
+import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -250,15 +253,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           snap: true,
           elevation: 0,
           titleSpacing: 20,
-          title: Text(
-            'Budget Me',
-            style: GoogleFonts.inter(
-              color: tc.onSurface,
-              fontWeight: FontWeight.w900,
-              fontSize: 24,
-              letterSpacing: -0.8,
-            ),
-          ),
+          title: _SpaceHeaderTitle(tc: tc),
           actions: [
             IconButton(
               onPressed: () => ref.read(themeProvider.notifier).toggle(),
@@ -896,6 +891,83 @@ class _BudgetCard extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Space header title — shows active space chip
+// ─────────────────────────────────────────────
+
+class _SpaceHeaderTitle extends ConsumerWidget {
+  final AppThemeColors tc;
+  const _SpaceHeaderTitle({required this.tc});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeId = ref.watch(activeSpaceIdProvider);
+    final spacesAsync = ref.watch(spaceListProvider);
+
+    final activeSpace = spacesAsync.valueOrNull
+        ?.where((s) => s.id == activeId)
+        .firstOrNull;
+
+    final isPersonal = activeSpace == null || activeSpace.isPersonal;
+
+    return GestureDetector(
+      onTap: () => showSpaceSwitcher(context),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Budget Me',
+            style: GoogleFonts.inter(
+              color: tc.onSurface,
+              fontWeight: FontWeight.w900,
+              fontSize: 24,
+              letterSpacing: -0.8,
+            ),
+          ),
+          if (!isPersonal) ...[
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Color(activeSpace.colorValue).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Color(activeSpace.colorValue).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(activeSpace.emoji,
+                      style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 4),
+                  Text(
+                    activeSpace.name,
+                    style: GoogleFonts.inter(
+                      color: Color(activeSpace.colorValue),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      color: Color(activeSpace.colorValue), size: 14),
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                color: tc.onSurfaceVariant.withOpacity(0.5), size: 18),
+          ],
         ],
       ),
     );

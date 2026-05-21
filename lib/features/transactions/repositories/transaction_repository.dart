@@ -2,15 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 
 final transactionRepositoryProvider =
     Provider((ref) => TransactionRepository());
 
 final transactionListProvider = StateNotifierProvider<TransactionNotifier,
     AsyncValue<List<TransactionModel>>>((ref) {
+  final spaceId = ref.watch(activeSpaceIdProvider);
   return TransactionNotifier(
     ref.read(transactionRepositoryProvider),
     ref,
+    spaceId,
   );
 });
 
@@ -18,8 +21,9 @@ class TransactionNotifier
     extends StateNotifier<AsyncValue<List<TransactionModel>>> {
   final TransactionRepository _repository;
   final Ref _ref;
+  final String _spaceId;
 
-  TransactionNotifier(this._repository, this._ref)
+  TransactionNotifier(this._repository, this._ref, this._spaceId)
       : super(const AsyncValue.loading()) {
     refresh();
   }
@@ -27,7 +31,7 @@ class TransactionNotifier
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     try {
-      final transactions = await _repository.getTransactions();
+      final transactions = await _repository.getTransactions(_spaceId);
       state = AsyncValue.data(transactions);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -50,7 +54,7 @@ class TransactionNotifier
         }
       }
 
-      await _repository.addTransaction(tx);
+      await _repository.addTransaction(tx, _spaceId);
 
       // Adjust linked account balance
       if (tx.accountId != null && tx.accountId!.isNotEmpty) {
@@ -118,13 +122,20 @@ class TransactionNotifier
 class TransactionRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<List<TransactionModel>> getTransactions() async {
-    final maps = await _dbHelper.queryAll('transactions');
+  Future<List<TransactionModel>> getTransactions(String spaceId) async {
+    final maps = await _dbHelper.queryAll(
+      'transactions',
+      whereClause: 'space_id = ?',
+      whereArgs: [spaceId],
+    );
     return maps.map(TransactionModel.fromMap).toList();
   }
 
-  Future<void> addTransaction(TransactionModel transaction) async {
-    await _dbHelper.insert('transactions', transaction.toMap());
+  Future<void> addTransaction(TransactionModel transaction, String spaceId) async {
+    await _dbHelper.insert('transactions', {
+      ...transaction.toMap(),
+      'space_id': spaceId,
+    });
   }
 
   Future<void> deleteTransaction(String id) async {

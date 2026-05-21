@@ -27,17 +27,37 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'quicklog.db');
     return await openDatabase(
       path,
-      version: 4, // v4: adds subscriptions + recurring_transactions tables
+      version: 5, // v5: adds spaces table + space_id to all tables
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    // Spaces table
+    await db.execute('''
+      CREATE TABLE spaces (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '🏠',
+        color_value INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    // Seed the default personal space
+    await db.insert('spaces', {
+      'id': 'personal',
+      'name': 'Personal',
+      'emoji': '🏠',
+      'color_value': 0xFF2D6A2D,
+      'created_at': DateTime(2024, 1, 1).toIso8601String(),
+    });
+
     // Transactions table
     await db.execute('''
       CREATE TABLE transactions (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         amount REAL NOT NULL,
         type TEXT NOT NULL,
         category TEXT NOT NULL,
@@ -55,6 +75,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE accounts (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         balance REAL NOT NULL DEFAULT 0,
@@ -71,6 +92,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE subscriptions (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         name TEXT NOT NULL,
         category TEXT NOT NULL DEFAULT 'Other',
         amount REAL NOT NULL DEFAULT 0,
@@ -88,6 +110,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE recurring_transactions (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         title TEXT NOT NULL,
         amount REAL NOT NULL,
         type TEXT NOT NULL DEFAULT 'expense',
@@ -177,6 +200,40 @@ class DatabaseHelper {
         ''');
       } catch (_) {}
     }
+    if (oldVersion < 5) {
+      // Create spaces table
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS spaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            emoji TEXT NOT NULL DEFAULT '🏠',
+            color_value INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+          )
+        ''');
+        await db.insert('spaces', {
+          'id': 'personal',
+          'name': 'Personal',
+          'emoji': '🏠',
+          'color_value': 0xFF2D6A2D,
+          'created_at': DateTime(2024, 1, 1).toIso8601String(),
+        });
+      } catch (_) {}
+
+      // Add space_id to all existing tables (existing rows → 'personal')
+      for (final table in [
+        'transactions',
+        'accounts',
+        'subscriptions',
+        'recurring_transactions',
+      ]) {
+        try {
+          await db.execute(
+              "ALTER TABLE $table ADD COLUMN space_id TEXT NOT NULL DEFAULT 'personal'");
+        } catch (_) {}
+      }
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -246,5 +303,19 @@ class DatabaseHelper {
     await db.delete('accounts');
     await db.delete('recurring_transactions');
     await db.delete('subscriptions');
+    // Remove all non-personal spaces; re-seed personal
+    await db.delete('spaces', where: 'id != ?', whereArgs: ['personal']);
+  }
+
+  Future<void> clearDataForSpace(String spaceId) async {
+    final db = await database;
+    for (final t in const [
+      'transactions',
+      'accounts',
+      'recurring_transactions',
+      'subscriptions'
+    ]) {
+      await db.delete(t, where: 'space_id = ?', whereArgs: [spaceId]);
+    }
   }
 }

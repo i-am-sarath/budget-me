@@ -1,28 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
+import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 
 class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   final DatabaseHelper _db = DatabaseHelper();
+  final String _spaceId;
 
-  AccountNotifier() : super(const AsyncValue.loading()) {
+  AccountNotifier(this._spaceId) : super(const AsyncValue.loading()) {
     loadAccounts();
   }
 
   Future<void> loadAccounts() async {
     try {
       state = const AsyncValue.loading();
-      final rows = await _db.queryAll('accounts',
-          orderBy: 'created_at DESC');
-      state = AsyncValue.data(
-          rows.map(AccountModel.fromMap).toList());
+      final rows = await _db.queryAll(
+        'accounts',
+        whereClause: 'space_id = ?',
+        whereArgs: [_spaceId],
+        orderBy: 'created_at DESC',
+      );
+      state = AsyncValue.data(rows.map(AccountModel.fromMap).toList());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
 
   Future<void> addAccount(AccountModel account) async {
-    await _db.insert('accounts', account.toMap());
+    await _db.insert('accounts', {...account.toMap(), 'space_id': _spaceId});
     await loadAccounts();
   }
 
@@ -43,13 +48,15 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
     await loadAccounts();
   }
 
-  List<AccountModel> get accounts =>
-      state.valueOrNull ?? [];
+  List<AccountModel> get accounts => state.valueOrNull ?? [];
 }
 
 final accountProvider =
     StateNotifierProvider<AccountNotifier, AsyncValue<List<AccountModel>>>(
-  (ref) => AccountNotifier(),
+  (ref) {
+    final spaceId = ref.watch(activeSpaceIdProvider);
+    return AccountNotifier(spaceId);
+  },
 );
 
 // ─── Voice account-name matcher ─────────────────────────────
