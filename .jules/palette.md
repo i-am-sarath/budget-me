@@ -1,0 +1,1 @@
+- Ensure dashboard app bar `IconButton` widgets (like theme toggle and more options) include proper accessibility `Semantics` labels and `tooltip` properties.
