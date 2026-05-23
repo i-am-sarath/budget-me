@@ -1,0 +1,1 @@
+- Dart Optimization: Avoid repeated `Iterable.where().fold()` chains on lists inside `build()` methods. Use a single-pass `for` loop instead. This reduces time complexity from O(N*M) to O(N) when performing multiple calculations over the same dataset (e.g., in SummaryCard calculating expense, income, invested, lent, borrowed simultaneously).
