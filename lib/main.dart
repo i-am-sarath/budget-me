@@ -15,6 +15,8 @@ import 'package:agent_money/features/dashboard/dashboard_screen.dart';
 import 'package:agent_money/features/onboarding/onboarding_screen.dart';
 import 'package:agent_money/features/overlay/overlay_widget.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
+import 'package:record/record.dart';
 
 /// Global navigator key — needed so the overlay IPC listener can push the
 /// quick-entry sheet from anywhere without a BuildContext.
@@ -86,23 +88,59 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
   @override
   void initState() {
     super.initState();
-    // Listen for overlay-bubble taps. The overlay (separate Flutter engine)
-    // sends 'open_quick_entry' on tap; we react by pushing the manual entry
-    // sheet over the current screen if the navigator is mounted.
+    // Listen for events from the overlay bubble (separate Flutter engine):
+    //   - {'type': 'voice_log', 'path': <m4a>}   → run transcribe + parse
+    //   - {'type': 'mic_permission_needed'}      → prompt for mic
+    //   - 'open_quick_entry' (legacy)             → manual entry sheet
     if (Platform.isAndroid) {
-      _overlaySub = OverlayService.events.listen((event) {
-        if (event != 'open_quick_entry') return;
-        final nav = rootNavigatorKey.currentState;
-        final ctx = nav?.context;
-        if (ctx == null) return;
+      _overlaySub = OverlayService.events.listen(_handleOverlayEvent);
+    }
+  }
+
+  void _handleOverlayEvent(dynamic event) {
+    final nav = rootNavigatorKey.currentState;
+    final ctx = nav?.context;
+    if (ctx == null) return;
+
+    // Legacy tap event from older overlay builds — keep so existing installs
+    // still open the manual sheet on a plain tap.
+    if (event == 'open_quick_entry') {
+      showModalBottomSheet(
+        context: ctx,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const ManualEntrySheet(),
+      );
+      return;
+    }
+
+    if (event is Map) {
+      final type = event['type'];
+      if (type == 'voice_log') {
+        final path = event['path'];
+        if (path is! String || path.isEmpty) return;
+        final file = File(path);
+        if (!file.existsSync()) return;
         showModalBottomSheet(
-          // ignore: use_build_context_synchronously
           context: ctx,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (_) => const ManualEntrySheet(),
+          builder: (_) => ProcessingSheet(audioFile: file),
         );
-      });
+        return;
+      }
+      if (type == 'mic_permission_needed') {
+        // Trigger the in-app mic permission prompt while we have a real
+        // Activity context. The overlay isolate can't prompt itself.
+        // Fire-and-forget — the result surfaces on the user's next tap.
+        AudioRecorder().hasPermission();
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          const SnackBar(
+            content: Text('Microphone access is needed for voice logging.'),
+          ),
+        );
+        return;
+      }
     }
   }
 

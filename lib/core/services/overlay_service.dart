@@ -58,12 +58,14 @@ class OverlayService {
       await FlutterOverlayWindow.showOverlay(
         enableDrag: true,
         overlayTitle: 'Budget Me',
-        overlayContent: 'Tap to log',
+        overlayContent: 'Hold to log',
         flag: OverlayFlag.defaultFlag,
         visibility: NotificationVisibility.visibilityPublic,
         positionGravity: PositionGravity.auto,
-        height: 160,
-        width: 160,
+        // Sized to the idle bubble. The widget resizes the window itself when
+        // entering the recording state so the wider waveform pill fits.
+        height: 64,
+        width: 64,
         startPosition: const OverlayPosition(0, 200),
       );
       return true;
