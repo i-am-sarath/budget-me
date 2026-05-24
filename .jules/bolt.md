@@ -1,0 +1,1 @@
+- Use single-pass loops instead of chained `Iterable.where()` to reduce list allocations and multiple iterations.
