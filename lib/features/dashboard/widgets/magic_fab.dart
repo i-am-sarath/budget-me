@@ -8,6 +8,7 @@ import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/services/ad_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/providers/voice_processing_provider.dart';
+import 'package:agent_money/core/providers/quick_log_provider.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:record/record.dart';
@@ -252,6 +253,11 @@ class _MagicFabState extends ConsumerState<MagicFab> {
     final tc = AppThemeColors.of(context);
     final cancelProgress =
         (_dragOffset / _cancelThreshold).clamp(0.0, 1.0);
+
+    // Auto-start recording when the iOS widget fires budgetme://quicklog
+    ref.listen(quickLogProvider, (_, __) {
+      if (!_isRecording) _initiateRecording();
+    });
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

@@ -6,6 +6,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:app_links/app_links.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
@@ -13,6 +14,7 @@ import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/core/providers/overlay_event_provider.dart';
+import 'package:agent_money/core/providers/quick_log_provider.dart';
 import 'package:agent_money/features/dashboard/dashboard_screen.dart';
 import 'package:agent_money/features/onboarding/onboarding_screen.dart';
 import 'package:agent_money/features/overlay/overlay_entry_point.dart'; // registers vm:entry-point
@@ -58,6 +60,13 @@ void main() async {
       if (data is Map && data['event'] == 'overlay_saved') {
         addOverlayEvent(Map<String, dynamic>.from(data as Map));
       }
+    });
+  }
+
+  // Handle budgetme://quicklog deep links (iOS home screen widget)
+  if (Platform.isIOS || Platform.isAndroid) {
+    AppLinks().uriLinkStream.listen((uri) {
+      if (uri.host == 'quicklog') triggerQuickLog();
     });
   }
 
