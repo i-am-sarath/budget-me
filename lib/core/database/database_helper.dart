@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' show join;
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -25,12 +25,38 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'quicklog.db');
-    return await openDatabase(
-      path,
-      version: 6, // v6: adds categories table with per-category budgets
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-    );
+    final backupPath = '$path.pre-upgrade-backup';
+
+    // Snapshot the existing DB file before opening, so a bad migration is
+    // recoverable. This is cheap (single file copy) and only matters when an
+    // upgrade is about to run.
+    final dbFile = File(path);
+    if (await dbFile.exists()) {
+      try {
+        await dbFile.copy(backupPath);
+      } catch (_) {
+        // Backup is best-effort; do not block startup.
+      }
+    }
+
+    try {
+      return await openDatabase(
+        path,
+        version: 6, // v6: adds categories table with per-category budgets
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    } catch (e) {
+      // Migration blew up — restore the snapshot so the user's data is
+      // preserved on the next launch, then rethrow so the failure surfaces.
+      final backup = File(backupPath);
+      if (await backup.exists()) {
+        try {
+          await backup.copy(path);
+        } catch (_) {}
+      }
+      rethrow;
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {

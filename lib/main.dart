@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
+import 'package:agent_money/core/services/backup_service.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
@@ -42,6 +44,11 @@ void main() async {
   if (Platform.isAndroid || Platform.isIOS) {
     await MobileAds.instance.initialize();
   }
+
+  // Fire-and-forget defensive backup. Rate-limited to once per 24h.
+  // The DB remains authoritative; this is JSON insurance against a future
+  // bad migration wiping user data.
+  unawaited(BackupService.exportAllIfDue());
 
   runApp(const ProviderScope(child: BudgetTrackerApp()));
 }
