@@ -197,8 +197,8 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: tc.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: tc.outlineVariant, width: 1),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: tc.outline, width: 1.0),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -666,8 +666,8 @@ class _AccountMiniCard extends StatelessWidget {
         border: Border.all(
           color: _isLiability
               ? tc.expense.withOpacity(0.3)
-              : tc.outlineVariant,
-          width: _isLiability ? 1.5 : 1,
+              : tc.outline,
+          width: _isLiability ? 1.5 : 1.0,
         ),
       ),
       child: Column(
@@ -896,8 +896,8 @@ class _BudgetCard extends StatelessWidget {
         color: tc.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isOver ? tc.expense.withOpacity(0.3) : tc.outlineVariant,
-          width: isOver ? 1.5 : 1,
+          color: isOver ? tc.expense.withOpacity(0.4) : tc.outline,
+          width: isOver ? 1.5 : 1.0,
         ),
       ),
       child: Column(

@@ -46,8 +46,14 @@ class TransactionTile extends ConsumerWidget {
           ),
         );
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: tc.outline, width: 1.0),
+        ),
         child: Row(
           children: [
             // 48px circle icon
