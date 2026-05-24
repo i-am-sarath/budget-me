@@ -1,0 +1,1 @@
+- Always wrap `IconButton` widgets with `Semantics(label: '...', button: true)` and set the `tooltip` property on the `IconButton` to ensure screen reader compatibility and provide hover hints for better accessibility.
