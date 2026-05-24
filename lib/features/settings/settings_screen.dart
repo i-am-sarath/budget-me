@@ -10,6 +10,7 @@ import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
+import 'package:agent_money/core/services/overlay_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
@@ -91,6 +92,16 @@ class SettingsScreen extends ConsumerWidget {
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 150.ms),
                 const SizedBox(height: 28),
+
+                // Always-on quick-log overlay (Android only)
+                if (OverlayService.isSupported) ...[
+                  _SectionLabel('QUICK LOG'),
+                  const SizedBox(height: 10),
+                  _OverlayToggleCard()
+                      .animate()
+                      .fadeIn(duration: 350.ms, delay: 170.ms),
+                  const SizedBox(height: 28),
+                ],
 
                 // About
                 _SectionLabel('ABOUT'),
@@ -982,6 +993,80 @@ class _ResetDataCard extends ConsumerWidget {
           SnackBar(content: Text('Reset failed: $e')),
         );
       }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// Always-on overlay toggle (Android only)
+// ─────────────────────────────────────────────
+
+class _OverlayToggleCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+    final enabled = ref.watch(overlayEnabledProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.outline, width: 1.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: tc.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.bubble_chart_rounded,
+                  color: tc.onSurface, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Floating quick-log bubble',
+                      style: GoogleFonts.inter(
+                          color: tc.onSurface,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Show a draggable button over other apps for instant logging',
+                    style: GoogleFonts.inter(
+                        color: tc.onSurfaceVariant, fontSize: 11, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: enabled,
+              onChanged: (v) => _toggle(context, ref, v),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _toggle(BuildContext context, WidgetRef ref, bool target) async {
+    final notifier = ref.read(overlayEnabledProvider.notifier);
+    if (target) {
+      final err = await notifier.turnOn();
+      if (err != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err)),
+        );
+      }
+    } else {
+      await notifier.turnOff();
     }
   }
 }

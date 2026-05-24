@@ -8,10 +8,26 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/backup_service.dart';
 import 'package:agent_money/core/services/budget_service.dart';
+import 'package:agent_money/core/services/overlay_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/dashboard/dashboard_screen.dart';
 import 'package:agent_money/features/onboarding/onboarding_screen.dart';
+import 'package:agent_money/features/overlay/overlay_widget.dart';
+import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
+
+/// Global navigator key — needed so the overlay IPC listener can push the
+/// quick-entry sheet from anywhere without a BuildContext.
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Second Flutter entry point — runs inside the system overlay window.
+/// Must be top-level and annotated with `vm:entry-point` so tree-shaking
+/// doesn't drop it from release builds.
+@pragma('vm:entry-point')
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const QuickLogOverlay());
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,18 +66,59 @@ void main() async {
   // bad migration wiping user data.
   unawaited(BackupService.exportAllIfDue());
 
+  // If the user had the always-on overlay enabled previously, bring it back.
+  // No-op on iOS / if permission was revoked.
+  unawaited(OverlayService.restoreIfEnabled());
+
   runApp(const ProviderScope(child: BudgetTrackerApp()));
 }
 
-class BudgetTrackerApp extends ConsumerWidget {
+class BudgetTrackerApp extends ConsumerStatefulWidget {
   const BudgetTrackerApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BudgetTrackerApp> createState() => _BudgetTrackerAppState();
+}
+
+class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
+  StreamSubscription<dynamic>? _overlaySub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for overlay-bubble taps. The overlay (separate Flutter engine)
+    // sends 'open_quick_entry' on tap; we react by pushing the manual entry
+    // sheet over the current screen if the navigator is mounted.
+    if (Platform.isAndroid) {
+      _overlaySub = OverlayService.events.listen((event) {
+        if (event != 'open_quick_entry') return;
+        final nav = rootNavigatorKey.currentState;
+        final ctx = nav?.context;
+        if (ctx == null) return;
+        showModalBottomSheet(
+          // ignore: use_build_context_synchronously
+          context: ctx,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const ManualEntrySheet(),
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _overlaySub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
       title: 'Budget Me',
+      navigatorKey: rootNavigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
