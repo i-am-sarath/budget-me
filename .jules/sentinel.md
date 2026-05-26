@@ -1,0 +1,1 @@
+- Added missing input validation on transaction amounts in manual_entry_sheet.dart. Prevented negative balance exploit where users could enter negative or zero values. Enforced parsed > 0 in form validator.
