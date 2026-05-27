@@ -256,17 +256,27 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
             ),
           ),
           actions: [
-            IconButton(
-              onPressed: () => ref.read(themeProvider.notifier).toggle(),
-              icon: Icon(
-                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                color: tc.onSurface,
-                size: 20,
+            Semantics(
+              label: 'Toggle theme',
+              button: true,
+              child: IconButton(
+                tooltip: 'Toggle theme',
+                onPressed: () => ref.read(themeProvider.notifier).toggle(),
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: tc.onSurface,
+                  size: 20,
+                ),
               ),
             ),
-            IconButton(
-              onPressed: () => _showMoreMenu(context, tc),
-              icon: Icon(Icons.more_horiz_rounded, color: tc.onSurface),
+            Semantics(
+              label: 'More options',
+              button: true,
+              child: IconButton(
+                tooltip: 'More options',
+                onPressed: () => _showMoreMenu(context, tc),
+                icon: Icon(Icons.more_horiz_rounded, color: tc.onSurface),
+              ),
             ),
             const SizedBox(width: 8),
           ],

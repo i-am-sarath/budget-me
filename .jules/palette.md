@@ -1,0 +1,1 @@
+- Added `Semantics` wrapper and `tooltip` to IconButtons to improve accessibility for screen readers and tooltips for mouse hover.
