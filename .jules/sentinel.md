@@ -1,0 +1,1 @@
+- Added input validation for transaction amounts in `manual_entry_sheet.dart` to prevent negative balance exploits. Validating `parsed > 0` ensures correct tracking of spending, income, and investments.
