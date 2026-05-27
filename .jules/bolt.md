@@ -1,0 +1,1 @@
+## Bolt - Performance Log\n\n- DateFormat instantiation is an expensive operation. Caching DateFormat instances outside of loops significantly improves performance when rendering large lists or grouping data, as observed in `_groupByDate`.
