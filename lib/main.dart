@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:app_links/app_links.dart';
 import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/services/notification_service.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/budget_service.dart';
@@ -73,6 +74,11 @@ void main() async {
   // Initialize AdMob (mobile only)
   if (Platform.isAndroid || Platform.isIOS) {
     await MobileAds.instance.initialize();
+  }
+
+  // Initialize notifications
+  if (Platform.isAndroid || Platform.isIOS) {
+    await NotificationService.init();
   }
 
   runApp(const ProviderScope(child: BudgetTrackerApp()));

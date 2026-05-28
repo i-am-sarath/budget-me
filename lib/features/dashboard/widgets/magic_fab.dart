@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,30 +24,44 @@ class MagicFab extends ConsumerStatefulWidget {
   ConsumerState<MagicFab> createState() => _MagicFabState();
 }
 
-class _MagicFabState extends ConsumerState<MagicFab> {
+class _MagicFabState extends ConsumerState<MagicFab>
+    with SingleTickerProviderStateMixin {
   bool _isRecording = false;
   double _dragOffset = 0.0;
   Timer? _recordingTimer;
   int _recordingSeconds = 0;
   final _audioRecorder = AudioRecorder();
 
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseAnim;
+
   static const double _cancelThreshold = -80.0;
   bool get _isCancelling => _dragOffset < _cancelThreshold;
 
   @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.14).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
   void dispose() {
     _recordingTimer?.cancel();
+    _pulseCtrl.dispose();
     _audioRecorder.dispose();
     super.dispose();
   }
 
-  // ── Gesture handlers ──────────────────────────────────────
+  // ── Gesture handlers ─────────────────────────────────────
 
   void _onTapDown(TapDownDetails _) => _initiateRecording();
-
-  void _onTapUp(TapUpDetails _) {
-    if (_isRecording) _stopRecording();
-  }
+  void _onTapUp(TapUpDetails _) { if (_isRecording) _stopRecording(); }
 
   void _onHorizontalDragUpdate(DragUpdateDetails d) {
     if (!_isRecording) return;
@@ -57,11 +72,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
 
   void _onHorizontalDragEnd(DragEndDetails _) {
     if (!_isRecording) return;
-    if (_isCancelling) {
-      _cancelRecording();
-    } else {
-      _stopRecording();
-    }
+    if (_isCancelling) _cancelRecording(); else _stopRecording();
   }
 
   // ── Recording logic ──────────────────────────────────────
@@ -99,6 +110,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       _recordingSeconds = 0;
       _dragOffset = 0;
     });
+    _pulseCtrl.repeat(reverse: true);
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _recordingSeconds++);
     });
@@ -106,6 +118,8 @@ class _MagicFabState extends ConsumerState<MagicFab> {
 
   Future<void> _stopRecording() async {
     _recordingTimer?.cancel();
+    _pulseCtrl.stop();
+    _pulseCtrl.reset();
     HapticFeedback.lightImpact();
     final path = await _audioRecorder.stop();
     setState(() {
@@ -119,6 +133,8 @@ class _MagicFabState extends ConsumerState<MagicFab> {
 
   Future<void> _cancelRecording() async {
     _recordingTimer?.cancel();
+    _pulseCtrl.stop();
+    _pulseCtrl.reset();
     HapticFeedback.mediumImpact();
     final path = await _audioRecorder.stop();
     setState(() {
@@ -131,32 +147,22 @@ class _MagicFabState extends ConsumerState<MagicFab> {
     }
   }
 
-  // ── Sheets ───────────────────────────────────────────────
+  // ── Sheets & dialogs ─────────────────────────────────────
 
-  void _showManualEntry() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const ManualEntrySheet(),
-    );
-  }
+  void _showManualEntry() => showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const ManualEntrySheet(),
+      );
 
-  // ── Dialogs / snackbars ──────────────────────────────────
+  void _showVoiceUnavailableSnackbar() => ScaffoldMessenger.of(context)
+      .showSnackBar(const SnackBar(
+          content: Text('Voice logging unavailable. Try manual entry.')));
 
-  void _showVoiceUnavailableSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Voice logging unavailable. Try manual entry.'),
-      ),
-    );
-  }
-
-  void _showPermissionSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Microphone permission required')),
-    );
-  }
+  void _showPermissionSnackbar() => ScaffoldMessenger.of(context)
+      .showSnackBar(const SnackBar(
+          content: Text('Microphone permission required')));
 
   void _showVoiceLimitDialog(SubscriptionState subscription) {
     final tc = AppThemeColors.of(context);
@@ -166,19 +172,17 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       builder: (ctx) => AlertDialog(
         backgroundColor: tc.surfaceContainerHigh,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Monthly limit reached',
-          style: GoogleFonts.inter(
-            color: tc.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        title: Text('Monthly limit reached',
+            style: GoogleFonts.inter(
+                color: tc.onSurface, fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging, or watch an ad for +5 logs.',
+              'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice '
+              'logs this month.\n\nUpgrade to Pro for unlimited voice logging, '
+              'or watch an ad for +5 logs.',
               style: GoogleFonts.inter(
                   color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
             ),
@@ -222,10 +226,8 @@ class _MagicFabState extends ConsumerState<MagicFab> {
     final adState = ref.read(adProvider);
     if (!adState.isAdLoaded) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Ad not ready yet, try again in a moment')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Ad not ready yet, try again in a moment')));
       return;
     }
     final shown = await ref.read(adProvider.notifier).show(
@@ -233,16 +235,13 @@ class _MagicFabState extends ConsumerState<MagicFab> {
         ref.read(subscriptionProvider.notifier).addBonusVoiceLogs(5);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You earned 5 bonus voice logs!')),
-          );
+              const SnackBar(content: Text('You earned 5 bonus voice logs!')));
         }
       },
     );
     if (!shown && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Ad not ready yet, try again in a moment')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Ad not ready yet, try again in a moment')));
     }
   }
 
@@ -251,10 +250,9 @@ class _MagicFabState extends ConsumerState<MagicFab> {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
-    final cancelProgress =
-        (_dragOffset / _cancelThreshold).clamp(0.0, 1.0);
+    final voiceState = ref.watch(voiceProcessingProvider);
+    final cancelProgress = (_dragOffset / _cancelThreshold).clamp(0.0, 1.0);
 
-    // Auto-start recording when the iOS widget fires budgetme://quicklog
     ref.listen(quickLogProvider, (_, __) {
       if (!_isRecording) _initiateRecording();
     });
@@ -264,60 +262,65 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Left: Manual pill (idle) ↔ recording info (recording)
+          // Left status pill — waveform while recording, status otherwise
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _isRecording
-                  ? _RecordingInfoPill(
-                      key: const ValueKey('rec'),
-                      seconds: _recordingSeconds,
-                      isCancelling: _isCancelling,
-                      cancelProgress: cancelProgress,
-                      tc: tc,
-                    )
-                  : _ManualEntryPill(
-                      key: const ValueKey('manual'),
-                      tc: tc,
-                      onTap: _showManualEntry,
-                    ),
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, anim) => SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(-0.25, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                    parent: anim, curve: Curves.easeOut)),
+                child: FadeTransition(opacity: anim, child: child),
+              ),
+              child: _buildLeftPill(tc, voiceState, cancelProgress),
             ),
           ),
           const SizedBox(width: 16),
 
-          // Right: Mic button — hold to record, slide left to cancel
+          // Mic button
           GestureDetector(
             onTapDown: _onTapDown,
             onTapUp: _onTapUp,
             onTapCancel: () {},
             onHorizontalDragUpdate: _onHorizontalDragUpdate,
             onHorizontalDragEnd: _onHorizontalDragEnd,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              width: _isRecording ? 80 : 68,
-              height: _isRecording ? 80 : 68,
-              decoration: BoxDecoration(
-                color: _isRecording
-                    ? (_isCancelling ? Colors.grey.shade600 : Colors.red)
-                    : tc.onSurface,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isRecording ? Colors.red : tc.onSurface)
-                        .withOpacity(_isRecording ? 0.45 : 0.2),
-                    blurRadius: _isRecording ? 24 : 12,
-                    spreadRadius: _isRecording ? 4 : 0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.mic_rounded,
-                color: Colors.white,
-                size: _isRecording ? 32 : 30,
+            child: ScaleTransition(
+              scale: _isRecording
+                  ? _pulseAnim
+                  : const AlwaysStoppedAnimation(1.0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                width: _isRecording ? 80 : 68,
+                height: _isRecording ? 80 : 68,
+                decoration: BoxDecoration(
+                  color: _isRecording
+                      ? (_isCancelling
+                          ? Colors.grey.shade600
+                          : Colors.red)
+                      : tc.onSurface,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isRecording ? Colors.red : tc.onSurface)
+                          .withOpacity(_isRecording ? 0.4 : 0.2),
+                      blurRadius: _isRecording ? 28 : 12,
+                      spreadRadius: _isRecording ? 6 : 0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isRecording && _isCancelling
+                      ? Icons.close_rounded
+                      : Icons.mic_rounded,
+                  color: Colors.white,
+                  size: _isRecording ? 32 : 28,
+                ),
               ),
             ),
           ),
@@ -325,10 +328,255 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       ),
     );
   }
+
+  Widget _buildLeftPill(
+      AppThemeColors tc, VoiceProcessingState vs, double cancelProgress) {
+    if (_isRecording) {
+      return _WaveformPill(
+        key: const ValueKey('waveform'),
+        seconds: _recordingSeconds,
+        isCancelling: _isCancelling,
+        cancelProgress: cancelProgress,
+        tc: tc,
+      );
+    }
+    if (vs.isProcessing) {
+      return _StatusPill(
+        key: const ValueKey('processing'),
+        tc: tc,
+        isLoading: true,
+        label: vs.statusMessage.isNotEmpty ? vs.statusMessage : 'Processing…',
+        color: tc.onSurface,
+      );
+    }
+    if (vs.isSaved) {
+      return _StatusPill(
+        key: const ValueKey('saved'),
+        tc: tc,
+        icon: Icons.check_rounded,
+        label: vs.statusMessage,
+        color: const Color(0xFF22C55E),
+      );
+    }
+    if (vs.isError) {
+      return _StatusPill(
+        key: const ValueKey('error'),
+        tc: tc,
+        icon: Icons.replay_rounded,
+        label: 'Failed · retry',
+        color: Colors.red,
+        onTap: () => ref.read(voiceProcessingProvider.notifier).retry(),
+      );
+    }
+    return _ManualEntryPill(
+      key: const ValueKey('manual'),
+      tc: tc,
+      onTap: _showManualEntry,
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Manual entry pill (shown when not recording)
+// Waveform pill — animated bars while holding the mic button
+// ─────────────────────────────────────────────────────────────
+
+class _WaveformPill extends StatefulWidget {
+  final int seconds;
+  final bool isCancelling;
+  final double cancelProgress;
+  final AppThemeColors tc;
+
+  const _WaveformPill({
+    super.key,
+    required this.seconds,
+    required this.isCancelling,
+    required this.cancelProgress,
+    required this.tc,
+  });
+
+  @override
+  State<_WaveformPill> createState() => _WaveformPillState();
+}
+
+class _WaveformPillState extends State<_WaveformPill>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  // Each bar gets a different phase offset for a natural wave look
+  static const _phases = [0.0, 0.28, 0.56, 0.84, 0.14, 0.42, 0.70];
+  static const _minH = 4.0;
+  static const _maxH = 24.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  String get _time {
+    final m = (widget.seconds ~/ 60).toString();
+    final s = (widget.seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isCancelling = widget.isCancelling;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: isCancelling
+            ? Colors.red.withOpacity(0.08)
+            : widget.tc.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(
+          color: isCancelling
+              ? Colors.red.withOpacity(0.4)
+              : widget.tc.outlineVariant,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: isCancelling
+            ? [
+                const Icon(Icons.close_rounded, color: Colors.red, size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  'Release to cancel',
+                  style: GoogleFonts.inter(
+                    color: Colors.red,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ]
+            : [
+                // Animated waveform bars
+                AnimatedBuilder(
+                  animation: _ctrl,
+                  builder: (_, __) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: List.generate(7, (i) {
+                      final t = (_ctrl.value + _phases[i]) % 1.0;
+                      final frac = (sin(t * 2 * pi) + 1) / 2;
+                      final h = _minH + frac * (_maxH - _minH);
+                      return Container(
+                        width: 3,
+                        height: h,
+                        margin:
+                            const EdgeInsets.symmetric(horizontal: 1.5),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Recording timer
+                Text(
+                  _time,
+                  style: GoogleFonts.inter(
+                    color: widget.tc.onSurface,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Slide-to-cancel hint fades in as user drags
+                Text(
+                  '← cancel',
+                  style: GoogleFonts.inter(
+                    color: widget.tc.onSurfaceVariant.withOpacity(
+                        0.25 + widget.cancelProgress * 0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Status pill — processing / saved / error
+// ─────────────────────────────────────────────────────────────
+
+class _StatusPill extends StatelessWidget {
+  final AppThemeColors tc;
+  final IconData? icon;
+  final bool isLoading;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _StatusPill({
+    super.key,
+    required this.tc,
+    this.icon,
+    this.isLoading = false,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 46,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(color: color.withOpacity(0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isLoading)
+              SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: color),
+              )
+            else if (icon != null)
+              Icon(icon, color: color, size: 14),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Manual entry pill (idle state)
 // ─────────────────────────────────────────────────────────────
 
 class _ManualEntryPill extends StatelessWidget {
@@ -368,103 +616,6 @@ class _ManualEntryPill extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Recording info pill (shown while holding the mic button)
-// ─────────────────────────────────────────────────────────────
-
-class _RecordingInfoPill extends StatelessWidget {
-  final int seconds;
-  final bool isCancelling;
-  final double cancelProgress; // 0.0 → 1.0 as user slides left
-  final AppThemeColors tc;
-
-  const _RecordingInfoPill({
-    super.key,
-    required this.seconds,
-    required this.isCancelling,
-    required this.cancelProgress,
-    required this.tc,
-  });
-
-  String get _time {
-    final m = (seconds ~/ 60).toString();
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isCancelling
-            ? Colors.red.withOpacity(0.12)
-            : tc.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(
-          color: isCancelling
-              ? Colors.red.withOpacity(0.5)
-              : tc.outlineVariant,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: isCancelling
-            ? [
-                const Icon(Icons.close_rounded, color: Colors.red, size: 14),
-                const SizedBox(width: 6),
-                Text(
-                  'Release to cancel',
-                  style: GoogleFonts.inter(
-                    color: Colors.red,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ]
-            : [
-                Icon(
-                  Icons.chevron_left_rounded,
-                  color: tc.onSurfaceVariant
-                      .withOpacity(0.35 + cancelProgress * 0.65),
-                  size: 16,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  'Slide to cancel',
-                  style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant
-                        .withOpacity(0.35 + cancelProgress * 0.65),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _time,
-                  style: GoogleFonts.inter(
-                    color: tc.onSurface,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
       ),
     );
   }

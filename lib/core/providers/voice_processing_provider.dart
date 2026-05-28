@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:agent_money/core/services/notification_service.dart';
 import 'package:agent_money/core/services/openai_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/voice_language_service.dart';
@@ -94,6 +95,18 @@ class VoiceProcessingNotifier extends StateNotifier<VoiceProcessingState> {
       // Auto-save every transaction immediately.
       for (final tx in resolved) {
         await _ref.read(transactionListProvider.notifier).addTransaction(tx);
+      }
+
+      // Fire a notification for the saved transactions
+      if (Platform.isAndroid || Platform.isIOS) {
+        final count = resolved.length;
+        final notifTitle =
+            count == 1 ? '1 transaction saved' : '$count transactions saved';
+        final notifBody = resolved.length == 1
+            ? '${resolved.first.category} · ₹${resolved.first.amount.toStringAsFixed(0)}'
+            : '$count transactions logged';
+        await NotificationService.showTransactionSaved(
+            title: notifTitle, body: notifBody);
       }
 
       if (!mounted) return;
