@@ -1,0 +1,1 @@
+- Added missing input validation on all parsed amounts (transactions, accounts, budgets, subscriptions, recurring rules) to strictly enforce positive/non-negative values and prevent negative balance exploits.
