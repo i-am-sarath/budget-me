@@ -1,0 +1,1 @@
+- Wrapped `IconButton` widgets with `Semantics` (using `label` and `button: true`) and added `tooltip` properties in the Dashboard screen to ensure screen readers provide useful information about the buttons.
