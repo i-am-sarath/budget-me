@@ -5,6 +5,8 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:agent_money/features/categories/models/category_model.dart';
+import 'package:agent_money/features/categories/providers/category_provider.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,70 +30,6 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   String _category = 'General';
   AccountModel? _selectedAccount;
   DateTime _date = DateTime.now();
-
-  static const _categories = {
-    TransactionType.expense: [
-      ('🍔', 'Food & Dining'),
-      ('🚗', 'Transport'),
-      ('🛍️', 'Shopping'),
-      ('🏠', 'Housing'),
-      ('💊', 'Health'),
-      ('📱', 'Bills & Utilities'),
-      ('🎬', 'Entertainment'),
-      ('📚', 'Education'),
-      ('✈️', 'Travel'),
-      ('👗', 'Clothing'),
-      ('🐾', 'Pet Care'),
-      ('⚙️', 'General'),
-    ],
-    TransactionType.income: [
-      ('💼', 'Salary'),
-      ('💰', 'Freelance'),
-      ('🎁', 'Gift'),
-      ('🏦', 'Interest'),
-      ('🏡', 'Rental Income'),
-      ('📦', 'Side Business'),
-      ('💹', 'Dividends'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.investment: [
-      ('📈', 'Stocks'),
-      ('🏦', 'Mutual Fund'),
-      ('🏠', 'Real Estate'),
-      ('💎', 'Crypto'),
-      ('🪙', 'Gold / Metals'),
-      ('📊', 'ETF / Index Fund'),
-      ('💵', 'Fixed Deposit'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.lend: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('💼', 'Colleague'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.borrow: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('🏦', 'Bank / Lender'),
-      ('💼', 'Colleague'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.lendReturn: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('💼', 'Colleague'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.borrowReturn: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('🏦', 'Bank / Lender'),
-      ('💼', 'Colleague'),
-      ('💳', 'Loan Repayment'),
-      ('⚙️', 'Other'),
-    ],
-  };
 
   // Types shown in the entry sheet — two rows for clarity
   static const _row1Types = [
@@ -148,15 +86,15 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     super.dispose();
   }
 
-  List<(String, String)> get _currentCategories =>
-      _categories[_type] ?? _categories[TransactionType.expense]!;
+  List<CategoryModel> _catsForType(List<CategoryModel> all, TransactionType type) =>
+      all.where((c) => c.type == type.name).toList();
 
-  void _onTypeChanged(TransactionType type) {
+  void _onTypeChanged(TransactionType type, List<CategoryModel> all) {
+    final cats = _catsForType(all, type);
     setState(() {
       _type = type;
-      final cats = _categories[type]!;
-      if (!cats.any((c) => c.$2 == _category)) {
-        _category = cats.first.$2;
+      if (!cats.any((c) => c.name == _category)) {
+        _category = cats.isNotEmpty ? cats.first.name : '';
       }
     });
   }
@@ -255,8 +193,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   Widget build(BuildContext context) {
     final currency = ref.watch(currencyProvider);
     final accountsAsync = ref.watch(accountProvider);
+    final categoriesAsync = ref.watch(categoryProvider);
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
     final tc = AppThemeColors.of(context);
+
+    final allCategories = categoriesAsync.valueOrNull ?? [];
 
     return Container(
       padding: EdgeInsets.only(
@@ -333,7 +274,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               const SizedBox(height: 16),
 
               // Type selector — two rows
-              _buildTypeSelector(tc),
+              _buildTypeSelector(tc, allCategories),
               const SizedBox(height: 16),
 
               // Amount field
@@ -343,7 +284,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               // Category chips
               _buildLabel('Category', tc),
               const SizedBox(height: 8),
-              _buildCategoryGrid(tc),
+              _buildCategoryGrid(tc, allCategories),
               const SizedBox(height: 14),
 
               // Payee field for lend/borrow/returns
@@ -403,7 +344,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     );
   }
 
-  Widget _buildTypeSelector(AppThemeColors tc) {
+  Widget _buildTypeSelector(AppThemeColors tc, List<CategoryModel> allCategories) {
     Color typeAccent(TransactionType t) {
       switch (t) {
         case TransactionType.expense:      return tc.expense;
@@ -422,7 +363,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       final accent = typeAccent(type);
       return Expanded(
         child: GestureDetector(
-          onTap: () => _onTypeChanged(type),
+          onTap: () => _onTypeChanged(type, allCategories),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 9),
@@ -538,14 +479,19 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         ),
       );
 
-  Widget _buildCategoryGrid(AppThemeColors tc) {
+  Widget _buildCategoryGrid(AppThemeColors tc, List<CategoryModel> allCategories) {
+    final cats = _catsForType(allCategories, _type);
+    if (cats.isEmpty) {
+      return Text('No categories yet',
+          style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 12));
+    }
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _currentCategories.map((cat) {
-        final isSelected = _category == cat.$2;
+      children: cats.map((cat) {
+        final isSelected = _category == cat.name;
         return GestureDetector(
-          onTap: () => setState(() => _category = cat.$2),
+          onTap: () => setState(() => _category = cat.name),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -560,10 +506,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(cat.$1, style: const TextStyle(fontSize: 13)),
+                Text(cat.emoji, style: const TextStyle(fontSize: 13)),
                 const SizedBox(width: 5),
                 Text(
-                  cat.$2,
+                  cat.name,
                   style: GoogleFonts.inter(
                     color: isSelected ? tc.surface : tc.onSurfaceVariant,
                     fontSize: 11,

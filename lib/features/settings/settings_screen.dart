@@ -8,8 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
+import 'package:agent_money/features/categories/screens/categories_screen.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/core/services/voice_language_service.dart';
@@ -30,7 +30,6 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
     final voiceLang = ref.watch(voiceLanguageProvider);
     final tc = AppThemeColors.of(context);
-    final budget = ref.watch(budgetProvider);
 
     return Scaffold(
       backgroundColor: tc.surface,
@@ -72,10 +71,10 @@ class SettingsScreen extends ConsumerWidget {
                     .fadeIn(duration: 350.ms, delay: 50.ms),
                 const SizedBox(height: 28),
 
-                // Budget
-                _SectionLabel('MONTHLY BUDGET'),
+                // Categories
+                _SectionLabel('CATEGORIES'),
                 const SizedBox(height: 10),
-                _BudgetSettingsCard(budget: budget)
+                _CategoriesCard()
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 80.ms),
                 const SizedBox(height: 28),
@@ -736,130 +735,28 @@ class _AboutRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Budget Settings Card
+// Categories Card
 // ─────────────────────────────────────────────
 
-class _BudgetSettingsCard extends ConsumerStatefulWidget {
-  final BudgetState budget;
-  const _BudgetSettingsCard({required this.budget});
-
-  @override
-  ConsumerState<_BudgetSettingsCard> createState() =>
-      _BudgetSettingsCardState();
-}
-
-class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
-  late final TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(
-      text: widget.budget.monthlyBudget > 0
-          ? widget.budget.monthlyBudget.toStringAsFixed(0)
-          : '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
+class _CategoriesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
-    final currency = ref.watch(currencyProvider);
-
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: tc.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: tc.outlineVariant, width: 0.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.budget.hasBudget
-                ? 'Current limit: ${currency.format(widget.budget.monthlyBudget)}'
-                : 'No budget set yet',
-            style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant,
-                fontSize: 12,
-                fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: tc.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(currency.currency.symbol,
-                      style: GoogleFonts.inter(
-                          color: tc.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: GoogleFonts.inter(
-                      color: tc.onSurface,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700),
-                  decoration: InputDecoration(
-                    hintText: 'Enter monthly budget',
-                    hintStyle: GoogleFonts.inter(
-                        color: tc.onSurfaceVariant, fontSize: 14),
-                    border: InputBorder.none,
-                    filled: false,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () async {
-                  final val = double.tryParse(_ctrl.text) ?? 0;
-                  await ref.read(budgetProvider.notifier).updateBudget(val);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(val > 0
-                            ? 'Budget set to ${currency.format(val)}'
-                            : 'Budget cleared'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: tc.onSurface,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text('Save',
-                      style: GoogleFonts.inter(
-                          color: tc.surface,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        ],
+      child: _SettingsTile(
+        icon: Icons.category_outlined,
+        label: 'Manage Categories',
+        sub: 'Add, edit or delete expense, income and investment categories',
+        tc: tc,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+        ),
       ),
     );
   }
