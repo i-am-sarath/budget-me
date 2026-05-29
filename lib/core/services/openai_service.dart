@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 
@@ -28,11 +29,14 @@ class OpenAIService {
   Future<String> _userId() async {
     try {
       return await Purchases.appUserID;
-    } catch (_) {
-      // RevenueCat not initialized (e.g. desktop). Fall back to a stable-enough
-      // device identifier so rate limiting still works coarsely.
-      return 'anon-${Platform.operatingSystem}';
-    }
+    } catch (_) {}
+    // Fall back to registered email, then a stable device id
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('user_email');
+      if (email != null && email.isNotEmpty) return email;
+    } catch (_) {}
+    return 'anon-${Platform.operatingSystem}';
   }
 
   Map<String, String> _baseHeaders(String userId) => {
