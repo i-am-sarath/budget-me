@@ -1,0 +1,1 @@
+- In Dart code, optimize multiple .where().toList() filter chains by combining them into a single pass to reduce iterations and avoid unnecessary intermediate memory allocations for better performance.
