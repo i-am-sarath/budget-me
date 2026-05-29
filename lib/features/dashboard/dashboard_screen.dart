@@ -23,6 +23,7 @@ import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
 import 'package:agent_money/features/spaces/models/space_model.dart';
 import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
+import 'package:agent_money/features/categories/screens/category_budget_screen.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -37,6 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   final _pages = const [
     _HomeTab(),
+    CategoryBudgetScreen(),
     AnalyticsScreen(),
     AccountsScreen(),
   ];
@@ -73,18 +75,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () => setState(() => _navIndex = 0),
                 ),
                 _NavItem(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Stats',
+                  icon: Icons.donut_large_rounded,
+                  label: 'Budget',
                   isSelected: _navIndex == 1,
                   tc: tc,
                   onTap: () => setState(() => _navIndex = 1),
                 ),
                 _NavItem(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'Accounts',
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Stats',
                   isSelected: _navIndex == 2,
                   tc: tc,
                   onTap: () => setState(() => _navIndex = 2),
+                ),
+                _NavItem(
+                  icon: Icons.account_balance_wallet_rounded,
+                  label: 'Accounts',
+                  isSelected: _navIndex == 3,
+                  tc: tc,
+                  onTap: () => setState(() => _navIndex = 3),
                 ),
               ],
             ),

@@ -7,6 +7,7 @@ import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/categories/repositories/category_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -28,6 +29,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   String _category = 'General';
   AccountModel? _selectedAccount;
   DateTime _date = DateTime.now();
+  List<(String, String)>? _dbExpenseCategoriesCache;
 
   static const _categories = {
     TransactionType.expense: [
@@ -149,15 +151,21 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     super.dispose();
   }
 
-  List<(String, String)> get _currentCategories =>
-      _categories[_type] ?? _categories[TransactionType.expense]!;
+  List<(String, String)> _currentCategories(List<(String, String)> dbExpense) {
+    if (_type == TransactionType.expense) return dbExpense;
+    return _categories[_type] ?? _categories[TransactionType.expense]!;
+  }
 
   void _onTypeChanged(TransactionType type) {
     setState(() {
       _type = type;
-      final cats = _categories[type]!;
+      final dbExpense =
+          _dbExpenseCategoriesCache ?? _categories[TransactionType.expense]!;
+      final cats = type == TransactionType.expense
+          ? dbExpense
+          : (_categories[type] ?? _categories[TransactionType.expense]!);
       if (!cats.any((c) => c.$2 == _category)) {
-        _category = cats.first.$2;
+        _category = cats.isNotEmpty ? cats.first.$2 : 'General';
       }
     });
   }
@@ -256,6 +264,16 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   Widget build(BuildContext context) {
     final currency = ref.watch(currencyProvider);
     final accountsAsync = ref.watch(accountProvider);
+    final categoriesAsync = ref.watch(categoryListProvider);
+    final freshDbExpense = categoriesAsync.valueOrNull
+        ?.where((c) => c.transactionType == 'expense')
+        .map((c) => (c.emoji, c.name))
+        .toList();
+    if (freshDbExpense != null && freshDbExpense.isNotEmpty) {
+      _dbExpenseCategoriesCache = freshDbExpense;
+    }
+    final dbExpenseCategories =
+        _dbExpenseCategoriesCache ?? _categories[TransactionType.expense]!;
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
     final tc = AppThemeColors.of(context);
 
@@ -344,7 +362,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               // Category chips
               _buildLabel('Category', tc),
               const SizedBox(height: 8),
-              _buildCategoryGrid(tc),
+              _buildCategoryGrid(tc, dbExpenseCategories),
               const SizedBox(height: 14),
 
               // Payee field for lend/borrow/returns
@@ -541,11 +559,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         ),
       );
 
-  Widget _buildCategoryGrid(AppThemeColors tc) {
+  Widget _buildCategoryGrid(AppThemeColors tc, List<(String, String)> dbExpense) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _currentCategories.map((cat) {
+      children: _currentCategories(dbExpense).map((cat) {
         final isSelected = _category == cat.$2;
         return GestureDetector(
           onTap: () => setState(() => _category = cat.$2),
