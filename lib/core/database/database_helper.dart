@@ -27,7 +27,7 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'quicklog.db');
     return await openDatabase(
       path,
-      version: 5, // v5: adds spaces table + space_id to all tables
+      version: 6, // v6: adds categories table with per-category budgets
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -123,6 +123,22 @@ class DatabaseHelper {
         last_run_date TEXT DEFAULT '',
         is_active INTEGER NOT NULL DEFAULT 1,
         note TEXT DEFAULT '',
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Categories table
+    await db.execute('''
+      CREATE TABLE categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '⚙️',
+        color_value INTEGER NOT NULL DEFAULT 0,
+        budget_amount REAL NOT NULL DEFAULT 0,
+        transaction_type TEXT NOT NULL DEFAULT 'expense',
+        is_custom INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         created_at TEXT NOT NULL
       )
     ''');
@@ -234,6 +250,24 @@ class DatabaseHelper {
         } catch (_) {}
       }
     }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS categories (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            emoji TEXT NOT NULL DEFAULT '⚙️',
+            color_value INTEGER NOT NULL DEFAULT 0,
+            budget_amount REAL NOT NULL DEFAULT 0,
+            transaction_type TEXT NOT NULL DEFAULT 'expense',
+            is_custom INTEGER NOT NULL DEFAULT 0,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            space_id TEXT NOT NULL DEFAULT 'personal',
+            created_at TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -305,6 +339,8 @@ class DatabaseHelper {
     await db.delete('subscriptions');
     // Remove all non-personal spaces; re-seed personal
     await db.delete('spaces', where: 'id != ?', whereArgs: ['personal']);
+    // Remove custom categories; default categories will be re-seeded on next load
+    await db.delete('categories', where: 'is_custom = ?', whereArgs: [1]);
   }
 
   Future<void> clearDataForSpace(String spaceId) async {
@@ -317,5 +353,7 @@ class DatabaseHelper {
     ]) {
       await db.delete(t, where: 'space_id = ?', whereArgs: [spaceId]);
     }
+    // Also clear categories for this space
+    await db.delete('categories', where: 'space_id = ?', whereArgs: [spaceId]);
   }
 }
