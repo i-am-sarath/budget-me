@@ -41,7 +41,7 @@ class SettingsScreen extends ConsumerWidget {
             titleSpacing: 20,
             title: Text(
               'Settings',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -134,7 +134,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.hankenGrotesk(
           color: AppThemeColors.of(context).onSurfaceVariant,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -192,7 +192,7 @@ class _SubscriptionCard extends ConsumerWidget {
               children: [
                 Text(
                   isPro ? 'Budget Me Pro' : 'Free Plan',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: isPro ? tc.surface : tc.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -202,7 +202,7 @@ class _SubscriptionCard extends ConsumerWidget {
                   isPro
                       ? 'Unlimited · Cloud sync active'
                       : '${SubscriptionState.freeVoiceLogLimit} voice logs/month · Local only',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: isPro
                         ? tc.surface.withOpacity(0.6)
                         : tc.onSurfaceVariant,
@@ -224,7 +224,7 @@ class _SubscriptionCard extends ConsumerWidget {
                 ),
                 child: Text(
                   'Upgrade',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.surface,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -286,7 +286,7 @@ class _ThemeCard extends ConsumerWidget {
                     const SizedBox(height: 5),
                     Text(
                       m.$2,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: isSelected ? tc.surface : tc.onSurfaceVariant,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -335,13 +335,13 @@ class _CurrencySection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(currency.currency.name,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         )),
                     Text(currency.currency.code,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurfaceVariant,
                           fontSize: 11,
                         )),
@@ -350,7 +350,7 @@ class _CurrencySection extends ConsumerWidget {
               ),
               Text(
                 currency.currency.symbol,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -390,7 +390,7 @@ class _CurrencySection extends ConsumerWidget {
                     const SizedBox(width: 6),
                     Text(
                       c.code,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: isSelected ? tc.surface : tc.onSurfaceVariant,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -406,7 +406,7 @@ class _CurrencySection extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Rates updated ${_fmtDate(currency.lastUpdated!)}',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.onSurfaceVariant,
               fontSize: 10,
             ),
@@ -458,7 +458,7 @@ class _VoiceCard extends StatelessWidget {
                 isPro
                     ? 'Unlimited voice logs'
                     : 'This month: $used / $max',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurface,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -484,7 +484,7 @@ class _VoiceCard extends StatelessWidget {
               subscription.canUseVoice
                   ? '${subscription.voiceLogsRemaining} voice logs remaining this month'
                   : 'Limit reached. Resets next month.',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: subscription.canUseVoice
                     ? tc.onSurfaceVariant
                     : tc.expense,
@@ -563,7 +563,7 @@ class _AboutRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.onSurface,
               fontWeight: FontWeight.w500,
               fontSize: 14,
@@ -573,7 +573,7 @@ class _AboutRow extends StatelessWidget {
           if (value != null)
             Text(
               value!,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 13,
               ),
@@ -638,7 +638,7 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
             widget.budget.hasBudget
                 ? 'Current limit: ${currency.format(widget.budget.monthlyBudget)}'
                 : 'No budget set yet',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: FontWeight.w500),
@@ -655,7 +655,7 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                 ),
                 child: Center(
                   child: Text(currency.currency.symbol,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w700)),
@@ -666,13 +666,13 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                 child: TextField(
                   controller: _ctrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w700),
                   decoration: InputDecoration(
                     hintText: 'Enter monthly budget',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: GoogleFonts.hankenGrotesk(
                         color: tc.onSurfaceVariant, fontSize: 14),
                     border: InputBorder.none,
                     filled: false,
@@ -703,7 +703,7 @@ class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text('Save',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.surface,
                           fontSize: 12,
                           fontWeight: FontWeight.w700)),
@@ -842,12 +842,12 @@ class _SettingsTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurface,
                             fontWeight: FontWeight.w600,
                             fontSize: 14)),
                     Text(sub,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurfaceVariant, fontSize: 11)),
                   ],
                 ),
@@ -898,12 +898,12 @@ class _ResetDataCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Reset All Data',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.expense,
                             fontWeight: FontWeight.w600,
                             fontSize: 14)),
                     Text('Delete all transactions, accounts & recurring rules',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurfaceVariant, fontSize: 11)),
                   ],
                 ),
@@ -927,19 +927,19 @@ class _ResetDataCard extends ConsumerWidget {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Reset all data?',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
               color: tc.onSurface, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'This will permanently delete all your transactions, accounts, and recurring rules. This cannot be undone.',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
               color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+                style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -951,7 +951,7 @@ class _ResetDataCard extends ConsumerWidget {
               await _doReset(context, ref);
             },
             child: Text('Reset Everything',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
           ),
         ],
       ),

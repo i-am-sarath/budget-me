@@ -143,7 +143,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 titleSpacing: 20,
                 title: Row(children: [
                   Text('Analytics',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurface,
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
@@ -279,7 +279,7 @@ class _ExportButton extends StatelessWidget {
             const SizedBox(width: 5),
             Text(
               'Export CSV',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700),
@@ -327,7 +327,7 @@ class _RangeSelector extends StatelessWidget {
                 child: Text(
                   r.label,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: sel ? tc.onPrimary : tc.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -478,14 +478,14 @@ class _StatBox extends StatelessWidget {
                     BoxDecoration(color: color, shape: BoxShape.circle)),
             const SizedBox(height: 8),
             Text(label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3)),
             const SizedBox(height: 3),
             Text(value,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w800),
@@ -493,7 +493,7 @@ class _StatBox extends StatelessWidget {
                 overflow: TextOverflow.ellipsis),
             if (sublabel != null)
               Text(sublabel!,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurfaceVariant.withOpacity(0.6),
                       fontSize: 9,
                       fontWeight: FontWeight.w500)),
@@ -515,7 +515,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(title,
-      style: GoogleFonts.inter(
+      style: GoogleFonts.hankenGrotesk(
           color: tc.onSurface,
           fontSize: 15,
           fontWeight: FontWeight.w700));
@@ -663,7 +663,7 @@ class _SpendingBarChart extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(labels[idx],
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurfaceVariant,
                             fontSize: 9,
                             fontWeight: FontWeight.w500)),
@@ -705,7 +705,7 @@ class _SpendingBarChart extends StatelessWidget {
               getTooltipColor: (_) => tc.surfaceContainerHigh,
               getTooltipItem: (group, _, rod, __) => BarTooltipItem(
                 currency.format(rod.toY),
-                GoogleFonts.inter(
+                GoogleFonts.hankenGrotesk(
                     color: tc.onSurface,
                     fontWeight: FontWeight.w700,
                     fontSize: 11),
@@ -794,7 +794,7 @@ class _CategoryPie extends StatelessWidget {
                 color: col,
                 radius: isTouched ? 76 : 62,
                 title: isTouched ? '$pct%' : '',
-                titleStyle: GoogleFonts.inter(
+                titleStyle: GoogleFonts.hankenGrotesk(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w700),
@@ -822,7 +822,7 @@ class _CategoryPie extends StatelessWidget {
                       color: col, borderRadius: BorderRadius.circular(3))),
               const SizedBox(width: 5),
               Text('${top[i].key}  $pct%  ${currency.format(top[i].value)}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurfaceVariant, fontSize: 11)),
             ]);
           }),
@@ -840,7 +840,7 @@ class _CategoryPie extends StatelessWidget {
           border: Border.all(color: tc.outlineVariant, width: 0.5),
         ),
         child: Text(msg,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant, fontSize: 13)),
       );
 }
@@ -997,7 +997,7 @@ class _TrendLineChart extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(labels[idx],
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurfaceVariant,
                               fontSize: 9,
                               fontWeight: FontWeight.w500)),
@@ -1157,7 +1157,7 @@ class _LendBorrowSection extends StatelessWidget {
                               : t.note.isNotEmpty
                                   ? t.note
                                   : t.type.label,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurface,
                               fontSize: 13,
                               fontWeight: FontWeight.w600),
@@ -1166,7 +1166,7 @@ class _LendBorrowSection extends StatelessWidget {
                         ),
                         Text(
                           '${t.type.label} · ${DateFormat('d MMM y').format(t.date)}',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurfaceVariant,
                               fontSize: 10),
                         ),
@@ -1174,7 +1174,7 @@ class _LendBorrowSection extends StatelessWidget {
                     ),
                     Text(
                       '${isReturn ? '+' : '−'} ${currency.format(t.amount)}',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: color,
                           fontSize: 13,
                           fontWeight: FontWeight.w700),
@@ -1196,7 +1196,7 @@ class _LendBorrowSection extends StatelessWidget {
           ),
           child: Center(
             child: Text('No lending or borrowing activity',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant, fontSize: 13)),
           ),
         ),
@@ -1243,7 +1243,7 @@ class _LendBorrowCard extends StatelessWidget {
               Icon(icon, color: color, size: 14),
               const SizedBox(width: 5),
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurfaceVariant,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -1252,13 +1252,13 @@ class _LendBorrowCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               currency.format(outstanding),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: outstanding > 0 ? color : tc.onSurfaceVariant,
                   fontSize: 16,
                   fontWeight: FontWeight.w800),
             ),
             Text('outstanding',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant.withOpacity(0.6),
                     fontSize: 9)),
             if (total > 0) ...[
@@ -1275,7 +1275,7 @@ class _LendBorrowCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${(settledPct * 100).toStringAsFixed(0)}% settled',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 9,
                     fontWeight: FontWeight.w500),
@@ -1349,7 +1349,7 @@ class _ExportCta extends StatelessWidget {
               Row(children: [
                 Text(
                   'Export to CSV',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontWeight: FontWeight.w700,
                       fontSize: 14),
@@ -1364,7 +1364,7 @@ class _ExportCta extends StatelessWidget {
                       borderRadius: BorderRadius.circular(100),
                     ),
                     child: Text('PRO',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onPrimary,
                             fontSize: 8,
                             fontWeight: FontWeight.w800,
@@ -1377,7 +1377,7 @@ class _ExportCta extends StatelessWidget {
                 isPro
                     ? 'Download all transactions as a spreadsheet'
                     : 'Upgrade to Pro to export your data',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant, fontSize: 11),
               ),
             ]),
@@ -1412,7 +1412,7 @@ class _LegendDot extends StatelessWidget {
                   BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 5),
           Text(label,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurfaceVariant, fontSize: 11)),
         ],
       );

@@ -67,7 +67,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
                 Text(
                   'Budget Tracker Pro',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurface,
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -80,7 +80,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 Text(
                   'Voice-log without limits.\nSync everywhere. Never lose a transaction.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 14,
                     height: 1.5,
@@ -123,7 +123,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                       sub.isLoading ? null : () => _handleRestore(sub),
                   child: Text(
                     'Restore purchases',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurfaceVariant,
                       fontSize: 13,
                     ),
@@ -133,7 +133,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 Text(
                   'Cancel anytime · Secure payment via Google / Apple',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 10,
                   ),
@@ -214,18 +214,18 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'In-app purchases',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
               color: tc.onSurface, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'Store payments are not yet configured for this build. Pro features will be available when the app is published.',
-          style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+          style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('OK',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurface, fontWeight: FontWeight.w600)),
           ),
         ],
@@ -275,12 +275,12 @@ class _FeatureRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurface,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 Text(sub,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurfaceVariant, fontSize: 11)),
               ],
             ),
@@ -408,7 +408,7 @@ class _PlanOption extends StatelessWidget {
                   ),
                   child: Text(
                     badge!,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: isSelected ? tc.surface : tc.onSurfaceVariant,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -419,7 +419,7 @@ class _PlanOption extends StatelessWidget {
                 const SizedBox(height: 22),
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: isSelected ? tc.surface : tc.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -428,7 +428,7 @@ class _PlanOption extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 price,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: isSelected ? tc.surface : tc.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -437,7 +437,7 @@ class _PlanOption extends StatelessWidget {
               Text(
                 subLabel,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: isSelected
                       ? tc.surface.withOpacity(0.7)
                       : tc.onSurfaceVariant,
@@ -488,7 +488,7 @@ class _PurchaseButton extends StatelessWidget {
               )
             : Text(
                 label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),

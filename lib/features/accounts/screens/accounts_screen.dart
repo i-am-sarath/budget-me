@@ -67,24 +67,24 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
         backgroundColor: tc.surfaceContainerLow,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Delete "${account.name}"?',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface, fontWeight: FontWeight.w700)),
         content: Text(
             'This will remove the account. Your transaction history will remain.',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant, fontSize: 13, height: 1.5)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('Cancel',
-                  style: GoogleFonts.inter(color: tc.onSurfaceVariant))),
+                  style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant))),
           TextButton(
             onPressed: () {
               ref.read(accountProvider.notifier).deleteAccount(account.id);
               Navigator.pop(ctx);
             },
             child: Text('Delete',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.expense, fontWeight: FontWeight.w700)),
           ),
         ],
@@ -111,7 +111,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
             elevation: 0,
             titleSpacing: 20,
             title: Text('Accounts',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurface,
                   fontWeight: FontWeight.w800,
                   fontSize: 22,
@@ -137,7 +137,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                           color: tc.onSurface, size: 15),
                       const SizedBox(width: 4),
                       Text('Transfer',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurface,
                               fontSize: 11,
                               fontWeight: FontWeight.w700)),
@@ -162,7 +162,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                       Icon(Icons.add_rounded, color: tc.surface, size: 15),
                       const SizedBox(width: 4),
                       Text('Add',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.surface,
                               fontSize: 11,
                               fontWeight: FontWeight.w700)),
@@ -293,7 +293,7 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Text(label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -306,7 +306,7 @@ class _SectionHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(100),
           ),
           child: Text('$count',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurfaceVariant,
                   fontSize: 9,
                   fontWeight: FontWeight.w700)),
@@ -344,7 +344,7 @@ class _NetWorthCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('NET WORTH',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.surface.withOpacity(0.5),
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -352,7 +352,7 @@ class _NetWorthCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             currency.format(netWorth),
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.surface,
               fontSize: 32,
               fontWeight: FontWeight.w800,
@@ -408,13 +408,13 @@ class _MiniStat extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: labelColor,
                   fontSize: 10,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 2),
           Text(value,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: color, fontSize: 14, fontWeight: FontWeight.w700)),
         ],
       );
@@ -478,7 +478,7 @@ class _AccountCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(account.name,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 14)),
@@ -487,7 +487,7 @@ class _AccountCard extends StatelessWidget {
                     account.bankName.isNotEmpty
                         ? '${account.bankName}${account.accountNumber.isNotEmpty ? ' •••• ${account.accountNumber}' : ''}'
                         : account.type.label,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurfaceVariant, fontSize: 11),
                   ),
                 ],
@@ -500,7 +500,7 @@ class _AccountCard extends StatelessWidget {
               children: [
                 Text(
                   currency.format(account.balance),
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: isLiability ? tc.expense : tc.income,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -508,7 +508,7 @@ class _AccountCard extends StatelessWidget {
                 ),
                 Text(
                   isLiability ? 'owed' : 'available',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurfaceVariant, fontSize: 10),
                 ),
               ],
@@ -575,12 +575,12 @@ class _AccountCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(account.name,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurface,
                               fontSize: 15,
                               fontWeight: FontWeight.w700)),
                       Text(account.type.label,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurfaceVariant, fontSize: 11)),
                     ],
                   ),
@@ -653,7 +653,7 @@ class _MenuOption extends StatelessWidget {
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 14),
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: color,
                       fontSize: 14,
                       fontWeight: FontWeight.w600)),
@@ -698,12 +698,12 @@ class _TransferCta extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Transfer between accounts',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 14)),
                   Text('Move money from one account to another',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurfaceVariant, fontSize: 11)),
                 ],
               ),
@@ -741,7 +741,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text('No accounts yet',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w700)),
@@ -749,7 +749,7 @@ class _EmptyState extends StatelessWidget {
           Text(
               'Add bank accounts, cash, loan accounts\nand track your net worth in one place.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurfaceVariant, fontSize: 13, height: 1.5)),
           const SizedBox(height: 24),
           GestureDetector(
@@ -762,7 +762,7 @@ class _EmptyState extends StatelessWidget {
                 borderRadius: BorderRadius.circular(100),
               ),
               child: Text('Add Account',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       color: tc.surface,
                       fontSize: 14,
                       fontWeight: FontWeight.w700)),

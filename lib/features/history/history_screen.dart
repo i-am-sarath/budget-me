@@ -83,7 +83,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 title: Row(
                   children: [
                     Text('History',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -101,7 +101,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('MMM yyyy').format(_selectedMonth),
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -142,11 +142,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.hankenGrotesk(
                                 color: tc.onSurface, fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Search transactions...',
-                              hintStyle: GoogleFonts.inter(
+                              hintStyle: GoogleFonts.hankenGrotesk(
                                   color: tc.onSurfaceVariant),
                               prefixIcon: Icon(Icons.search_rounded,
                                   color: tc.onSurfaceVariant, size: 20),
@@ -191,7 +191,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             color: tc.onSurfaceVariant, size: 48),
                         const SizedBox(height: 12),
                         Text('No transactions found',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurfaceVariant,
                               fontSize: 16,
                             )),
@@ -216,7 +216,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 children: [
                                   Text(
                                     _formatGroupDate(dateKey),
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.hankenGrotesk(
                                       color: tc.onSurfaceVariant,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -233,7 +233,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     _groupTotal(items, currency),
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.hankenGrotesk(
                                       color: tc.onSurfaceVariant,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -336,7 +336,7 @@ class _FilterChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: isActive ? tc.surface : tc.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w600,

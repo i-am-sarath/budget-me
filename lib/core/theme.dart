@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ─────────────────────────────────────────────
-// Premium Black & White Minimalist Palette
+// Stellar Finance / Financier Design System
 // ─────────────────────────────────────────────
 
 class AppColors {
@@ -21,9 +21,9 @@ class AppColors {
   static const Color outline          = Color(0xFF404040);
   static const Color outlineVariant   = Color(0xFF282828);
 
-  // Accent — muted green (finance-green, readable on dark)
-  static const Color primary          = Color(0xFF5CB85C); // muted green
-  static const Color primaryContainer = Color(0xFF1B3A1B); // deep green container
+  // Accent — lighter navy that works on dark backgrounds
+  static const Color primary          = Color(0xFF7BA7E0); // lighter navy for dark
+  static const Color primaryContainer = Color(0xFF1A1A1A); // dark container
   static const Color onPrimary        = Color(0xFF0A0A0A);
   static const Color onPrimaryContainer = Color(0xFFA5D6A7);
 
@@ -53,33 +53,39 @@ class AppColors {
 }
 
 class AppColorsLight {
-  // ── Light Mode (Wispr Flow-inspired: warm gray scaffold, white cards, forest green) ──
-  static const Color surface                = Color(0xFFEDEEF0); // warm light gray scaffold
+  static const Color surface                = Color(0xFFF8F9FF);
   static const Color surfaceBright          = Color(0xFFFFFFFF);
-  static const Color surfaceContainer       = Color(0xFFFFFFFF); // white cards
-  static const Color surfaceContainerLow    = Color(0xFFFFFFFF);
-  static const Color surfaceContainerHigh   = Color(0xFFF0F1F3); // inputs
-  static const Color surfaceContainerHighest = Color(0xFFE8E9EC);
+  static const Color surfaceContainer       = Color(0xFFFFFFFF);  // white cards
+  static const Color surfaceContainerLow    = Color(0xFFEFF4FF);
+  static const Color surfaceContainerHigh   = Color(0xFFE5EEFF);
+  static const Color surfaceContainerHighest = Color(0xFFD4E4FC);
 
-  static const Color onSurface        = Color(0xFF1A1A1A);
-  static const Color onSurfaceVariant = Color(0xFF6B7280);
+  static const Color onSurface        = Color(0xFF0D1C2E);  // deep navy text
+  static const Color onSurfaceVariant = Color(0xFF43474E);
 
-  static const Color outline          = Color(0xFFD1D5DB);
-  static const Color outlineVariant   = Color(0xFFE5E7EB);
+  static const Color outline          = Color(0xFF74777F);
+  static const Color outlineVariant   = Color(0xFFC4C6CF);
 
-  static const Color primary          = Color(0xFF2D6A2D); // forest green
-  static const Color primaryContainer = Color(0xFFE8F5E9); // light green tint
+  static const Color primary          = Color(0xFF002045);  // deep royal navy
+  static const Color primaryContainer = Color(0xFF1A365D);
   static const Color onPrimary        = Color(0xFFFFFFFF);
-  static const Color onPrimaryContainer = Color(0xFF1B5E20);
+  static const Color onPrimaryContainer = Color(0xFF86A0CD);
 
-  static const Color error            = Color(0xFFDC2626);
-  static const Color errorContainer   = Color(0xFFFEE2E2);
+  static const Color secondary        = Color(0xFF0A6C44);  // success green
+  static const Color secondaryContainer = Color(0xFF9FF5C1);
+  static const Color onSecondary      = Color(0xFFFFFFFF);
+  static const Color onSecondaryContainer = Color(0xFF167249);
 
-  static const Color expense  = Color(0xFFDC2626);
-  static const Color income   = Color(0xFF16A34A);
-  static const Color investment = Color(0xFF2563EB);
+  static const Color error            = Color(0xFFBA1A1A);
+  static const Color errorContainer   = Color(0xFFFFDAD6);
+  static const Color onError          = Color(0xFFFFFFFF);
+
+  // Transaction type colors
+  static const Color expense  = Color(0xFFBA1A1A);
+  static const Color income   = Color(0xFF0A6C44);
+  static const Color investment = Color(0xFF1565C0);
   static const Color lend     = Color(0xFFD97706);
-  static const Color borrow   = Color(0xFF9333EA);
+  static const Color borrow   = Color(0xFF7C3AED);
 }
 
 // ─────────────────────────────────────────────
@@ -201,7 +207,7 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
-    final text = GoogleFonts.interTextTheme(base.textTheme);
+    final text = GoogleFonts.hankenGroteskTextTheme(base.textTheme);
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.surface,
@@ -242,7 +248,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.hankenGrotesk(
           color: AppColors.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -254,7 +260,7 @@ class AppTheme {
         color: AppColors.surfaceContainerLow,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
         ),
       ),
@@ -269,15 +275,15 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceContainerHigh,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.onSurface, width: 1),
         ),
         labelStyle: const TextStyle(color: AppColors.onSurfaceVariant),
@@ -291,12 +297,12 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceContainerHighest,
-        contentTextStyle: GoogleFonts.inter(color: AppColors.onSurface),
+        contentTextStyle: GoogleFonts.hankenGrotesk(color: AppColors.onSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -308,8 +314,8 @@ class AppTheme {
         backgroundColor: AppColors.surfaceContainerHigh,
         selectedColor: AppColors.primary,
         secondarySelectedColor: AppColors.primary,
-        labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-        secondaryLabelStyle: GoogleFonts.inter(
+        labelStyle: GoogleFonts.hankenGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: GoogleFonts.hankenGrotesk(
           fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onPrimary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,
@@ -321,7 +327,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
-    final text = GoogleFonts.interTextTheme(base.textTheme);
+    final text = GoogleFonts.hankenGroteskTextTheme(base.textTheme);
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColorsLight.surface,
@@ -335,17 +341,22 @@ class AppTheme {
         primaryContainer: AppColorsLight.primaryContainer,
         onPrimary: AppColorsLight.onPrimary,
         onPrimaryContainer: AppColorsLight.onPrimaryContainer,
+        secondary: AppColorsLight.secondary,
+        secondaryContainer: AppColorsLight.secondaryContainer,
+        onSecondary: AppColorsLight.onSecondary,
+        onSecondaryContainer: AppColorsLight.onSecondaryContainer,
         surface: AppColorsLight.surfaceContainer,
         onSurface: AppColorsLight.onSurface,
         onSurfaceVariant: AppColorsLight.onSurfaceVariant,
         error: AppColorsLight.error,
         errorContainer: AppColorsLight.errorContainer,
+        onError: AppColorsLight.onError,
         outline: AppColorsLight.outline,
         outlineVariant: AppColorsLight.outlineVariant,
         inverseSurface: AppColors.surface,
         onInverseSurface: AppColors.onSurface,
         inversePrimary: AppColorsLight.primary,
-        surfaceContainerLowest: Color(0xFFFAFAFA),
+        surfaceContainerLowest: Color(0xFFFAFAFF),
         surfaceContainerLow: AppColorsLight.surfaceContainerLow,
         surfaceContainer: AppColorsLight.surfaceContainer,
         surfaceContainerHigh: AppColorsLight.surfaceContainerHigh,
@@ -355,7 +366,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.hankenGrotesk(
           color: AppColorsLight.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -368,7 +379,7 @@ class AppTheme {
         elevation: 0,
         shadowColor: const Color(0x0F000000),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: AppColorsLight.outlineVariant, width: 0.5),
         ),
       ),
@@ -383,15 +394,15 @@ class AppTheme {
         filled: true,
         fillColor: AppColorsLight.surfaceContainerHigh,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColorsLight.outlineVariant, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColorsLight.onSurface, width: 1),
         ),
         labelStyle: const TextStyle(color: AppColorsLight.onSurfaceVariant),
@@ -405,12 +416,12 @@ class AppTheme {
           backgroundColor: AppColorsLight.primary,
           foregroundColor: AppColorsLight.onPrimary,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColorsLight.surfaceContainerHighest,
-        contentTextStyle: GoogleFonts.inter(color: AppColorsLight.onSurface),
+        contentTextStyle: GoogleFonts.hankenGrotesk(color: AppColorsLight.onSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -422,8 +433,8 @@ class AppTheme {
         backgroundColor: AppColorsLight.surfaceContainerHigh,
         selectedColor: AppColorsLight.primary,
         secondarySelectedColor: AppColorsLight.primary,
-        labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-        secondaryLabelStyle: GoogleFonts.inter(
+        labelStyle: GoogleFonts.hankenGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: GoogleFonts.hankenGrotesk(
           fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,

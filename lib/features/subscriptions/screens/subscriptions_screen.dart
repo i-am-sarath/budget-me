@@ -31,7 +31,7 @@ class SubscriptionsScreen extends ConsumerWidget {
             titleSpacing: 20,
             title: Text(
               'Subscriptions',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -196,7 +196,7 @@ class _TotalCard extends StatelessWidget {
         children: [
           Text(
             'Monthly spend',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.surface.withOpacity(0.6),
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -206,7 +206,7 @@ class _TotalCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             currency.format(monthlyTotal),
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.surface,
               fontSize: 34,
               fontWeight: FontWeight.w800,
@@ -216,7 +216,7 @@ class _TotalCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '$count active subscription${count != 1 ? 's' : ''}',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.surface.withOpacity(0.5),
               fontSize: 13,
             ),
@@ -298,7 +298,7 @@ class _SubTile extends StatelessWidget {
                 children: [
                   Text(
                     sub.name,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -307,7 +307,7 @@ class _SubTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     '${sub.billingCycle.label} · ${sub.category.label}',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurfaceVariant,
                       fontSize: 11,
                     ),
@@ -321,7 +321,7 @@ class _SubTile extends StatelessWidget {
               children: [
                 Text(
                   currency.format(sub.amount),
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurface,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -346,7 +346,7 @@ class _SubTile extends StatelessWidget {
                           : sub.isDueToday
                               ? 'Pay today'
                               : 'Due in ${daysLeft}d',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: urgencyColor,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -375,7 +375,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.hankenGrotesk(
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -411,7 +411,7 @@ class _EmptyState extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           'No subscriptions yet',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -421,7 +421,7 @@ class _EmptyState extends StatelessWidget {
         Text(
           'Track Netflix, Hotstar, electricity bills\nand all your recurring payments.',
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurfaceVariant,
             fontSize: 13,
             height: 1.5,
@@ -438,7 +438,7 @@ class _EmptyState extends StatelessWidget {
             ),
             child: Text(
               'Add subscription',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.surface,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -540,7 +540,7 @@ class _AddSubscriptionSheetState
             const SizedBox(height: 20),
             Text(
               'Add Subscription',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -551,7 +551,7 @@ class _AddSubscriptionSheetState
 
             // Quick presets
             Text('Quick add',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -581,7 +581,7 @@ class _AddSubscriptionSheetState
                       ),
                       child: Text(
                         p.$1,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -597,7 +597,7 @@ class _AddSubscriptionSheetState
             // Name
             TextField(
               controller: _nameCtrl,
-              style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+              style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Name',
                 prefixIcon:
@@ -611,7 +611,7 @@ class _AddSubscriptionSheetState
               controller: _amountCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+              style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Amount',
                 prefixIcon:
@@ -622,7 +622,7 @@ class _AddSubscriptionSheetState
 
             // Category
             Text('Category',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -654,7 +654,7 @@ class _AddSubscriptionSheetState
                         const SizedBox(width: 5),
                         Text(
                           cat.label,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                             color: selected ? tc.surface : tc.onSurfaceVariant,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -670,7 +670,7 @@ class _AddSubscriptionSheetState
 
             // Billing cycle
             Text('Billing cycle',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -695,7 +695,7 @@ class _AddSubscriptionSheetState
                       child: Text(
                         c.label,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color:
                               selected ? tc.surface : tc.onSurfaceVariant,
                           fontSize: 10,
@@ -735,7 +735,7 @@ class _AddSubscriptionSheetState
                     const SizedBox(width: 10),
                     Text(
                       'Next due: ${DateFormat('d MMM yyyy').format(_nextDue)}',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface, fontSize: 13),
                     ),
                   ],
@@ -752,7 +752,7 @@ class _AddSubscriptionSheetState
                 onPressed: _submit,
                 child: Text(
                   'Save Subscription',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                       fontWeight: FontWeight.w700, fontSize: 15),
                 ),
               ),

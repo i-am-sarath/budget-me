@@ -252,7 +252,7 @@ class _ProcessingView extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           status,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -261,7 +261,7 @@ class _ProcessingView extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           'This usually takes a few seconds',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurfaceVariant,
             fontSize: 12,
           ),
@@ -285,7 +285,7 @@ class _ProcessingView extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       'TRANSCRIBED',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurfaceVariant,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -297,7 +297,7 @@ class _ProcessingView extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   '"$transcript"',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurface,
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
@@ -347,7 +347,7 @@ class _ReRecordingView extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'Recording... tap to stop',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: Colors.red,
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -361,7 +361,7 @@ class _ReRecordingView extends StatelessWidget {
             onPressed: onStop,
             icon: const Icon(Icons.stop_rounded),
             label: Text('Stop & Process',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -407,7 +407,7 @@ class _ErrorView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text('Processing failed',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontSize: 18,
                 fontWeight: FontWeight.w700)),
@@ -416,7 +416,7 @@ class _ErrorView extends StatelessWidget {
           error.length > 140 ? '${error.substring(0, 140)}...' : error,
           textAlign: TextAlign.center,
           style:
-              GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 12, height: 1.4),
+              GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant, fontSize: 12, height: 1.4),
         ),
         const SizedBox(height: 24),
         _Btn(
@@ -522,7 +522,7 @@ class _ResultView extends StatelessWidget {
                 children: [
                   Text(
                     '${transactions.length} transaction${transactions.length == 1 ? '' : 's'} found',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w700),
@@ -530,7 +530,7 @@ class _ResultView extends StatelessWidget {
                   if (transcript.isNotEmpty)
                     Text(
                       '"$transcript"',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurfaceVariant,
                           fontSize: 11,
                           fontStyle: FontStyle.italic),
@@ -582,14 +582,14 @@ class _ResultView extends StatelessWidget {
                         children: [
                           Text(
                             tx.note.isNotEmpty ? tx.note : tx.category,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.hankenGrotesk(
                                 color: tc.onSurface, fontWeight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.hankenGrotesk(
                                 color: tc.onSurfaceVariant, fontSize: 11),
                           ),
                         ],
@@ -597,7 +597,7 @@ class _ResultView extends StatelessWidget {
                     ),
                     Text(
                       currency.format(tx.amount),
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: color, fontWeight: FontWeight.w700, fontSize: 16),
                     ),
                   ],
@@ -639,7 +639,7 @@ class _ResultView extends StatelessWidget {
                 onPressed: onRespeak,
                 icon: const Icon(Icons.mic_rounded, size: 16),
                 label: Text('Re-speak',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: tc.onSurface,
                   side: BorderSide(color: tc.outlineVariant),
@@ -661,7 +661,7 @@ class _ResultView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(100)),
                 ),
                 child:
-                    Text('Cancel', style: GoogleFonts.inter()),
+                    Text('Cancel', style: GoogleFonts.hankenGrotesk()),
               ),
             ),
           ],
@@ -700,7 +700,7 @@ class _AccountPicker extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               'Pick account',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -742,7 +742,7 @@ class _AccountPicker extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           a.name,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                             color: isSelected
                                 ? tc.surface
                                 : tc.onSurfaceVariant,
@@ -796,7 +796,7 @@ class _LinkedAccountTag extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               accountName,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -837,7 +837,7 @@ class _Btn extends StatelessWidget {
           ? ElevatedButton(
               onPressed: onTap,
               child: Text(label,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                  style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
             )
           : OutlinedButton(
               onPressed: onTap,
@@ -847,7 +847,7 @@ class _Btn extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(100)),
               ),
-              child: Text(label, style: GoogleFonts.inter()),
+              child: Text(label, style: GoogleFonts.hankenGrotesk()),
             ),
     );
   }

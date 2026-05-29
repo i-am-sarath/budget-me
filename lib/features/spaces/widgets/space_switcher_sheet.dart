@@ -61,7 +61,7 @@ class _SpaceSwitcherSheetState extends ConsumerState<SpaceSwitcherSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Delete "${space.name}"?',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+            style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
         content: const Text(
             'All transactions, accounts, and subscriptions in this space will be permanently deleted.'),
         actions: [
@@ -127,7 +127,7 @@ class _SpaceSwitcherSheetState extends ConsumerState<SpaceSwitcherSheet> {
             child: Row(
               children: [
                 Text('Your Spaces',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -255,14 +255,14 @@ class _SpaceTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(space.name,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       )),
                   if (isActive)
                     Text('Active',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.primary,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -331,7 +331,7 @@ class _AddSpaceButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               isPro ? 'Create New Space' : 'Create New Space  •  Pro',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.primary,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -380,7 +380,7 @@ class _CreateSpaceForm extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('New Space',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -427,11 +427,11 @@ class _CreateSpaceForm extends StatelessWidget {
             controller: nameCtrl,
             autofocus: true,
             inputFormatters: [LengthLimitingTextInputFormatter(24)],
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               hintText: 'Space name',
-              hintStyle: GoogleFonts.inter(color: tc.onSurfaceVariant),
+              hintStyle: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant),
               filled: true,
               fillColor: tc.surface,
               border: OutlineInputBorder(
@@ -484,7 +484,7 @@ class _CreateSpaceForm extends StatelessWidget {
                 child: TextButton(
                   onPressed: onCancel,
                   child: Text('Cancel',
-                      style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+                      style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -500,7 +500,7 @@ class _CreateSpaceForm extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text('Create',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                      style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

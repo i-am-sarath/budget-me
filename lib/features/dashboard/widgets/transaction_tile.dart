@@ -85,7 +85,7 @@ class TransactionTile extends ConsumerWidget {
                         : transaction.category,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
@@ -96,7 +96,7 @@ class TransactionTile extends ConsumerWidget {
                     children: [
                       Text(
                         transaction.category,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurfaceVariant,
                           fontSize: 11,
                         ),
@@ -105,7 +105,7 @@ class TransactionTile extends ConsumerWidget {
                           transaction.accountName!.isNotEmpty) ...[
                         Text(
                           ' · ${transaction.accountName}',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurfaceVariant,
                             fontSize: 11,
                           ),
@@ -115,7 +115,7 @@ class TransactionTile extends ConsumerWidget {
                           transaction.payee!.isNotEmpty) ...[
                         Text(
                           ' · ${transaction.payee}',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurfaceVariant,
                             fontSize: 11,
                           ),
@@ -133,7 +133,7 @@ class TransactionTile extends ConsumerWidget {
               children: [
                 Text(
                   '$prefix${currency.format(transaction.amount)}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: typeColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
@@ -142,7 +142,7 @@ class TransactionTile extends ConsumerWidget {
                 const SizedBox(height: 3),
                 Text(
                   _formatDate(transaction.date),
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 10,
                   ),

@@ -143,7 +143,7 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
                     : tc.onSurfaceVariant.withOpacity(0.6),
@@ -424,7 +424,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         const SizedBox(width: 10),
         Text(
           DateFormat('MMM yyyy').format(_selectedMonth),
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -486,7 +486,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               ),
               child: Text(
                 f.$2,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: isActive ? tc.surface : tc.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -526,7 +526,7 @@ class _MoreMenuItem extends StatelessWidget {
       ),
       title: Text(
         label,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.hankenGrotesk(
           color: tc.onSurface,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -584,7 +584,7 @@ class _AccountMiniCard extends StatelessWidget {
                 child: Text(
                   account.name,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -600,7 +600,7 @@ class _AccountMiniCard extends StatelessWidget {
                 _isLiability
                     ? '−${currency.format(displayBalance)}'
                     : currency.format(displayBalance),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: balanceColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -609,7 +609,7 @@ class _AccountMiniCard extends StatelessWidget {
               if (_isLiability)
                 Text(
                   'owed',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.expense.withOpacity(0.7),
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
@@ -652,7 +652,7 @@ class _AddAccountMiniCard extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               'Add',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -676,7 +676,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.hankenGrotesk(
           color: AppThemeColors.of(context).onSurfaceVariant,
           fontSize: 10,
           fontWeight: FontWeight.w800,
@@ -744,7 +744,7 @@ class _EmptyTransactions extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No logs yet',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -753,7 +753,7 @@ class _EmptyTransactions extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'Tap the mic or manual to start tracking',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 12,
               ),
@@ -812,14 +812,14 @@ class _BudgetCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('MONTHLY BUDGET',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurfaceVariant,
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2)),
                     const SizedBox(height: 4),
                     Text(currency.format(budget.monthlyBudget),
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                             color: tc.onSurface,
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -844,7 +844,7 @@ class _BudgetCard extends StatelessWidget {
                       : isOnTrack
                           ? '✓ On track'
                           : 'Watch out',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: isOver
                         ? tc.expense
                         : isOnTrack
@@ -874,7 +874,7 @@ class _BudgetCard extends StatelessWidget {
             children: [
               Text(
                 'Spent: ${currency.format(spent)}',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600),
@@ -883,7 +883,7 @@ class _BudgetCard extends StatelessWidget {
                 isOver
                     ? 'Over by ${currency.format(-remaining)}'
                     : '${currency.format(remaining)} left',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: isOver ? tc.expense : tc.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: isOver ? FontWeight.w800 : FontWeight.w600,
@@ -924,7 +924,7 @@ class _SpaceHeaderTitle extends ConsumerWidget {
         children: [
           Text(
             'Budget Me',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.onSurface,
               fontWeight: FontWeight.w900,
               fontSize: 24,
@@ -951,7 +951,7 @@ class _SpaceHeaderTitle extends ConsumerWidget {
                   const SizedBox(width: 4),
                   Text(
                     activeSpace.name,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: Color(activeSpace.colorValue),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

@@ -176,7 +176,7 @@ class _BentoItem extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.onSurfaceVariant,
               fontSize: 10,
               fontWeight: FontWeight.w600,
@@ -186,7 +186,7 @@ class _BentoItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             _compactFormat(amount, currency),
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -199,7 +199,7 @@ class _BentoItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               sublabel!,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant.withOpacity(0.6),
                 fontSize: 9,
                 fontWeight: FontWeight.w500,

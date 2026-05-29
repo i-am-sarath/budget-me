@@ -184,7 +184,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Monthly limit reached',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurface,
             fontWeight: FontWeight.w700,
           ),
@@ -205,7 +205,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
                   label: Text('Watch ad for +5 logs',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                      style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w600)),
                   onPressed: () {
                     Navigator.pop(ctx);
                     _watchAdForBonusLogs();
@@ -219,7 +219,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Maybe later',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+                style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -227,7 +227,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
               showPaywall(context);
             },
             child: Text('Upgrade to Pro',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+                style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -371,7 +371,7 @@ class _ManualEntryPill extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'Manual',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -433,7 +433,7 @@ class _RecordingInfoPill extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   'Release to cancel',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: Colors.red,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -450,7 +450,7 @@ class _RecordingInfoPill extends StatelessWidget {
                 const SizedBox(width: 2),
                 Text(
                   'Slide to cancel',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant
                         .withOpacity(0.35 + cancelProgress * 0.65),
                     fontSize: 12,
@@ -469,7 +469,7 @@ class _RecordingInfoPill extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   _time,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

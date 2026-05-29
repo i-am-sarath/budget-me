@@ -220,24 +220,24 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Delete this transaction?',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
               color: tc.onSurface, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'The linked account balance will be reversed.',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
               color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('Cancel',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+                style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('Delete',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.expense, fontWeight: FontWeight.w700)),
           ),
         ],
@@ -294,7 +294,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                     widget.prefill != null
                         ? 'Edit transaction'
                         : 'New transaction',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -319,7 +319,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                             const SizedBox(width: 4),
                             Text(
                               'Delete',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.hankenGrotesk(
                                 color: tc.expense,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -392,7 +392,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                   onPressed: _submit,
                   child: Text(
                     widget.prefill != null ? 'Update Transaction' : 'Save Transaction',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                         fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                 ),
@@ -446,7 +446,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 Text(
                   label,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: isSelected ? accent : tc.onSurfaceVariant,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -496,7 +496,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         children: [
           Text(
             currency.currency.symbol,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hankenGrotesk(
               color: tc.onSurfaceVariant,
               fontSize: 26,
               fontWeight: FontWeight.w700,
@@ -508,7 +508,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               autofocus: widget.prefill == null,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: tc.onSurface,
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
@@ -533,7 +533,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
   Widget _buildLabel(String label, AppThemeColors tc) => Text(
         label,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.hankenGrotesk(
           color: tc.onSurfaceVariant,
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -567,7 +567,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 const SizedBox(width: 5),
                 Text(
                   cat.$2,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: isSelected ? tc.surface : tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -589,7 +589,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   }) =>
       TextFormField(
         controller: controller,
-        style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+        style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: tc.onSurfaceVariant, size: 20),
@@ -600,7 +600,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     if (accounts.isEmpty) {
       return Text(
         'No accounts yet — add one in the Accounts tab',
-        style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 12),
+        style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant, fontSize: 12),
       );
     }
 
@@ -642,7 +642,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
             ],
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.hankenGrotesk(
                 color: isSelected ? tc.surface : tc.onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -679,7 +679,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
             const SizedBox(width: 12),
             Text(
               DateFormat('EEEE, MMM d, yyyy').format(_date),
-              style: GoogleFonts.inter(color: tc.onSurface, fontSize: 13),
+              style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 13),
             ),
           ],
         ),

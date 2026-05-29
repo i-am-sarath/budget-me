@@ -158,7 +158,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   const SizedBox(width: 12),
                   Text(
                     'Transfer Money',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: tc.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -182,7 +182,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   children: [
                     Text(
                       currency.currency.symbol,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                         color: tc.onSurfaceVariant,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -195,7 +195,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         autofocus: true,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface,
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
@@ -275,7 +275,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                     // Note
                     TextFormField(
                       controller: _noteCtrl,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.hankenGrotesk(
                           color: tc.onSurface, fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Note (optional)',
@@ -312,7 +312,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                             const SizedBox(width: 12),
                             Text(
                               DateFormat('EEEE, MMM d, yyyy').format(_date),
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.hankenGrotesk(
                                   color: tc.onSurface, fontSize: 13),
                             ),
                           ],
@@ -328,7 +328,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         onPressed: () => _submit(accounts),
                         child: Text(
                           'Transfer',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               fontWeight: FontWeight.w700, fontSize: 15),
                         ),
                       ),
@@ -372,7 +372,7 @@ class _AccountDropdown extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.hankenGrotesk(
             color: tc.onSurfaceVariant,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -395,7 +395,7 @@ class _AccountDropdown extends StatelessWidget {
                   : null,
               hint: Text(
                 'Select account',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant, fontSize: 14),
               ),
               isExpanded: true,
@@ -413,7 +413,7 @@ class _AccountDropdown extends StatelessWidget {
                       Expanded(
                         child: Text(
                           acc.name,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.onSurface,
                               fontSize: 14,
                               fontWeight: FontWeight.w600),

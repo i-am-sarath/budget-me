@@ -106,7 +106,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
               // Title
               Text(
                 _isEditing ? 'Edit Account' : 'Add Account',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -118,7 +118,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                 _isEditing
                     ? 'Update your account details below'
                     : 'Choose a type that fits your account',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.hankenGrotesk(
                     color: tc.onSurfaceVariant, fontSize: 12),
               ),
               const SizedBox(height: 20),
@@ -133,7 +133,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                 child: Text(
                   _type.hint,
                   key: ValueKey(_type),
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.hankenGrotesk(
                     color: _type.color,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -145,7 +145,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
               // Account name
               TextFormField(
                 controller: _nameCtrl,
-                style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+                style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Account name',
                   hintText: _type == AccountType.bank
@@ -168,7 +168,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                 controller: _balanceCtrl,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+                style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: _isEditing
                       ? 'Current balance'
@@ -188,7 +188,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                 TextFormField(
                   controller: _bankCtrl,
                   style:
-                      GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+                      GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
                   decoration: InputDecoration(
                     labelText: _type == AccountType.bank
                         ? 'Bank name (optional)'
@@ -215,7 +215,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                   keyboardType: TextInputType.number,
                   maxLength: 4,
                   style:
-                      GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+                      GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
                   decoration: InputDecoration(
                     labelText: 'Last 4 digits (optional)',
                     counterText: '',
@@ -244,7 +244,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                       Expanded(
                         child: Text(
                           'Enter the outstanding amount you owe. This will appear as debt in your net worth.',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.hankenGrotesk(
                               color: tc.expense,
                               fontSize: 11,
                               height: 1.4),
@@ -264,7 +264,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                   onPressed: _save,
                   child: Text(
                     _isEditing ? 'Save Changes' : 'Create Account',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                         fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                 ),
@@ -313,7 +313,7 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
                     size: 15),
                 const SizedBox(width: 6),
                 Text(t.label,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.hankenGrotesk(
                       color: isSelected ? t.color : tc.onSurfaceVariant,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
