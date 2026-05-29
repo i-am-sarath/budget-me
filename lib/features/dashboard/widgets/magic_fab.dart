@@ -7,6 +7,8 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/services/ad_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
+import 'package:agent_money/core/services/user_service.dart';
+import 'package:agent_money/features/auth/widgets/email_prompt_sheet.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
@@ -69,6 +71,12 @@ class _MagicFabState extends ConsumerState<MagicFab> {
     if (ApiConfig.proxyBaseUrl.isEmpty || ApiConfig.proxyClientSecret.isEmpty) {
       _showVoiceUnavailableSnackbar();
       return;
+    }
+    // Email registration gate
+    final user = ref.read(userProvider);
+    if (!user.isRegistered) {
+      final registered = await showEmailPrompt(context);
+      if (!registered || !mounted) return;
     }
     final subscription = ref.read(subscriptionProvider);
     if (!subscription.canUseVoice) {
@@ -186,8 +194,8 @@ class _MagicFabState extends ConsumerState<MagicFab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging, or watch an ad for +5 logs.',
-              style: GoogleFonts.inter(
+              'You\'ve used all ${SubscriptionState.freeVoiceLogLimit} voice logs this month.\n\nUpgrade to Pro for unlimited voice logging and an ad-free experience.',
+              style: GoogleFonts.hankenGrotesk(
                   color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
             ),
             if (isMobile) ...[
