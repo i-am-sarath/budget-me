@@ -1,0 +1,1 @@
+- Wrapping IconButtons in `Semantics` (with `label` and `button: true`) and adding `tooltip` properties improves accessibility for screen readers and overall UX.
