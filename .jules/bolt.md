@@ -1,0 +1,1 @@
+- Replaced multiple `.where().fold()` chains with a single-pass loop when calculating summary totals to improve list iteration performance.
