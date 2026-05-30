@@ -149,7 +149,7 @@ class _BentoItem extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: tc.surfaceContainer,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: tc.outlineVariant, width: 0.5),
         boxShadow: isLight
             ? [

@@ -242,8 +242,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 ],
                               ),
                             ),
-                            ...items.asMap().entries.map((e) {
-                              return GestureDetector(
+                            ...items.asMap().entries.expand((e) {
+                              final tile = GestureDetector(
                                 onTap: () {
                                   showModalBottomSheet(
                                     context: context,
@@ -260,6 +260,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                       delay: (e.key * 40).ms,
                                     ),
                               );
+                              final isLast = e.key == items.length - 1;
+                              return [
+                                tile,
+                                if (!isLast)
+                                  Divider(
+                                    indent: 62,
+                                    height: 1,
+                                    color: tc.outlineVariant.withOpacity(0.5),
+                                  ),
+                              ];
                             }),
                           ],
                         );

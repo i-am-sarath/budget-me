@@ -125,42 +125,42 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pillBg = isSelected
+        ? (isDark ? tc.primary.withOpacity(0.15) : tc.primaryContainer)
+        : Colors.transparent;
+    final itemColor = isSelected
+        ? (isDark ? tc.primary : Colors.white)
+        : tc.onSurfaceVariant.withOpacity(0.6);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.12)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: pillBg,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: itemColor, size: 22),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: GoogleFonts.hankenGrotesk(
+                  color: itemColor,
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : tc.onSurfaceVariant.withOpacity(0.6),
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.hankenGrotesk(
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : tc.onSurfaceVariant.withOpacity(0.6),
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -197,8 +197,8 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: tc.surface,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: tc.outlineVariant, width: 0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: tc.outlineVariant, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -380,27 +380,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                         filtered.where((t) => t.type == _filter).toList();
                   }
                   if (filtered.isEmpty) return _EmptyTransactions();
-                  return Column(
-                    children: filtered.asMap().entries.map((e) {
-                      return GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) =>
-                              ManualEntrySheet(prefill: e.value),
-                        ),
-                        child: TransactionTile(
-                          transaction: e.value,
-                          currency: currency,
-                        )
-                            .animate()
-                            .fadeIn(
-                                duration: 300.ms,
-                                delay: (e.key * 30).ms)
-                            .slideY(begin: 0.08, end: 0),
-                      );
-                    }).toList(),
+                  return _DateGroupedList(
+                    transactions: filtered,
+                    currency: currency,
+                    tc: tc,
+                    context: context,
                   );
                 },
               ),
@@ -509,6 +493,111 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   }
 }
 
+// ─────────────────────────────────────────────
+// Date-grouped transaction list
+// ─────────────────────────────────────────────
+
+class _DateGroupedList extends StatelessWidget {
+  final List<TransactionModel> transactions;
+  final CurrencyState currency;
+  final AppThemeColors tc;
+  final BuildContext context;
+
+  const _DateGroupedList({
+    required this.transactions,
+    required this.currency,
+    required this.tc,
+    required this.context,
+  });
+
+  @override
+  Widget build(BuildContext ctx) {
+    // Group by day key
+    final grouped = <String, List<TransactionModel>>{};
+    final keyOrder = <String>[];
+    for (final tx in transactions) {
+      final key = _dayKey(tx.date);
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+        keyOrder.add(key);
+      }
+      grouped[key]!.add(tx);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: keyOrder.map((key) {
+        final group = grouped[key]!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date header row
+            Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 4),
+              child: Row(
+                children: [
+                  Text(
+                    key,
+                    style: GoogleFonts.hankenGrotesk(
+                      color: tc.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Divider(
+                      height: 1,
+                      color: tc.outlineVariant.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Transactions with dividers
+            ...group.asMap().entries.map((e) {
+              final isLast = e.key == group.length - 1;
+              return Column(
+                children: [
+                  GestureDetector(
+                    onTap: () => showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => ManualEntrySheet(prefill: e.value),
+                    ),
+                    child: TransactionTile(
+                      transaction: e.value,
+                      currency: currency,
+                    ),
+                  ),
+                  if (!isLast)
+                    Divider(
+                      indent: 62,
+                      height: 1,
+                      color: tc.outlineVariant.withOpacity(0.5),
+                    ),
+                ],
+              );
+            }),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  String _dayKey(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(d).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    return DateFormat('EEE, d MMM').format(date);
+  }
+}
+
 class _MoreMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -573,12 +662,12 @@ class _AccountMiniCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _isLiability
               ? tc.expense.withOpacity(0.3)
               : tc.outlineVariant,
-          width: _isLiability ? 1 : 0.5,
+          width: _isLiability ? 1.5 : 1,
         ),
       ),
       child: Column(
@@ -647,10 +736,10 @@ class _AddAccountMiniCard extends ConsumerWidget {
         width: 80,
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: tc.outlineVariant,
-            width: 1.5,
+            width: 1,
             style: BorderStyle.solid,
           ),
         ),
@@ -723,7 +812,7 @@ class _TransactionsSkeleton extends StatelessWidget {
           height: 72,
           decoration: BoxDecoration(
             color: tc.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -805,10 +894,10 @@ class _BudgetCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isOver ? tc.expense.withOpacity(0.3) : tc.outlineVariant,
-          width: isOver ? 1.5 : 0.5,
+          width: isOver ? 1.5 : 1,
         ),
       ),
       child: Column(
