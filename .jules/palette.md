@@ -1,0 +1,1 @@
+- Added `Semantics` with a proper label and `button: true` along with a `tooltip` to `IconButton` widgets to improve accessibility and user experience.
