@@ -1,0 +1,1 @@
+- Instantiating `DateFormat` inside loops (e.g., in list iterations) is an expensive operation and can cause performance bottlenecks. Cache a single instance outside the loop to optimize performance.
