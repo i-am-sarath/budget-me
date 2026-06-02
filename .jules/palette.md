@@ -1,0 +1,1 @@
+- Ensure `IconButton` widgets include `tooltip` and are wrapped in `Semantics` with `button: true` and descriptive labels for accessibility.
