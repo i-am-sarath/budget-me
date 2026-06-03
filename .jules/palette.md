@@ -1,0 +1,1 @@
+- Wrap IconButtons with Semantics (label and button: true) and provide tooltips to ensure they are fully accessible to screen readers, especially when they only contain icons.
