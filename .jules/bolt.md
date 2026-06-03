@@ -1,0 +1,1 @@
+- Moved `DateFormat` instantiation outside the `_groupByDate` loop in `lib/features/history/history_screen.dart` to avoid expensive object creation on every loop iteration.
