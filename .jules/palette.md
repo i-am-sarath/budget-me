@@ -1,0 +1,1 @@
+- Added `Semantics` wrapper and `tooltip` property to `IconButton` widgets in `DashboardScreen` to improve accessibility.
