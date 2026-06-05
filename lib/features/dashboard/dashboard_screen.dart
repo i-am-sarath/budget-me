@@ -1,14 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
 import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
-import 'package:agent_money/features/dashboard/widgets/summary_card.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
 import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
 import 'package:agent_money/features/settings/settings_screen.dart';
@@ -16,11 +12,7 @@ import 'package:agent_money/features/transactions/models/transaction_model.dart'
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:agent_money/features/analytics/analytics_screen.dart';
-import 'package:agent_money/core/services/budget_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
-import 'package:agent_money/features/spaces/models/space_model.dart';
 import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
 import 'package:agent_money/features/categories/screens/category_budget_screen.dart';
@@ -153,7 +145,7 @@ class _NavItem extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 label,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: itemColor,
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
@@ -244,10 +236,8 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionListProvider);
     final currency = ref.watch(currencyProvider);
-    final accountsAsync = ref.watch(accountProvider);
     final themeMode = ref.watch(themeProvider);
     final tc = AppThemeColors.of(context);
-    final budget = ref.watch(budgetProvider);
 
     final isDark = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
@@ -284,75 +274,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // ─── Budget Progress (hero spot) ───────────
-              transactionsAsync.when(
-                loading: () => const _BalanceSkeleton(),
-                error: (_, __) => const SizedBox(),
-                data: (txs) {
-                  if (!budget.hasBudget) return const SizedBox();
-                  final now = DateTime.now();
-                  final spent = txs
-                      .where((t) =>
-                          t.type == TransactionType.expense &&
-                          t.date.month == now.month &&
-                          t.date.year == now.year)
-                      .fold(0.0, (s, t) => s + t.amount);
-                  return _BudgetCard(
-                    budget: budget,
-                    spent: spent,
-                    currency: currency,
-                  ).animate().fadeIn(duration: 350.ms);
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // ─── Quick Stats ───────────────────────────
-              transactionsAsync.when(
-                loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
-                data: (txs) => SummaryCard(
-                  transactions: txs,
-                  currency: currency,
-                ).animate().fadeIn(delay: 200.ms),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ─── Accounts Strip ────────────────────────
-              accountsAsync.when(
-                loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
-                data: (accounts) {
-                  if (accounts.isEmpty) return const SizedBox();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SectionHeader(label: 'ACCOUNTS'),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 90,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: accounts.length + 1,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (ctx, i) {
-                            if (i == accounts.length) {
-                              return _AddAccountMiniCard();
-                            }
-                            return _AccountMiniCard(
-                              account: accounts[i],
-                              currency: currency,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  );
-                },
-              ),
-
               // ─── Month Navigation ─────────────────────
               _buildMonthNav(tc),
               const SizedBox(height: 12),
@@ -417,7 +338,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         const SizedBox(width: 10),
         Text(
           DateFormat('MMM yyyy').format(_selectedMonth),
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
             color: tc.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -479,7 +400,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               ),
               child: Text(
                 f.$2,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: isActive ? tc.surface : tc.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -538,7 +459,7 @@ class _DateGroupedList extends StatelessWidget {
                 children: [
                   Text(
                     key,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: tc.onSurfaceVariant,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -624,7 +545,7 @@ class _MoreMenuItem extends StatelessWidget {
       ),
       title: Text(
         label,
-        style: GoogleFonts.hankenGrotesk(
+        style: AppFonts.sans(
           color: tc.onSurface,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -633,132 +554,6 @@ class _MoreMenuItem extends StatelessWidget {
       trailing:
           Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant, size: 20),
       onTap: onTap,
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Account Mini Cards
-// ─────────────────────────────────────────────
-
-class _AccountMiniCard extends StatelessWidget {
-  final AccountModel account;
-  final CurrencyState currency;
-
-  const _AccountMiniCard({required this.account, required this.currency});
-
-  bool get _isLiability =>
-      account.type == AccountType.loan ||
-      account.type == AccountType.creditCard;
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = AppThemeColors.of(context);
-    final balanceColor = _isLiability ? tc.expense : tc.onSurface;
-    final displayBalance = account.balance.abs();
-
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _isLiability
-              ? tc.expense.withOpacity(0.3)
-              : tc.outline,
-          width: _isLiability ? 1.5 : 1.0,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(account.displayIcon, color: account.type.color, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  account.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.hankenGrotesk(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _isLiability
-                    ? '−${currency.format(displayBalance)}'
-                    : currency.format(displayBalance),
-                style: GoogleFonts.hankenGrotesk(
-                  color: balanceColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              if (_isLiability)
-                Text(
-                  'owed',
-                  style: GoogleFonts.hankenGrotesk(
-                    color: tc.expense.withOpacity(0.7),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddAccountMiniCard extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tc = AppThemeColors.of(context);
-    return GestureDetector(
-      onTap: () => showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => AddAccountSheet(),
-      ),
-      child: Container(
-        width: 80,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: tc.outlineVariant,
-            width: 1,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_rounded, color: tc.onSurfaceVariant, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              'Add',
-              style: GoogleFonts.hankenGrotesk(
-                color: tc.onSurfaceVariant,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -774,28 +569,13 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.hankenGrotesk(
+        style: AppFonts.sans(
           color: AppThemeColors.of(context).onSurfaceVariant,
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.5,
         ),
       );
-}
-
-class _BalanceSkeleton extends StatelessWidget {
-  const _BalanceSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 160,
-      decoration: BoxDecoration(
-        color: AppThemeColors.of(context).surfaceContainerLow,
-        borderRadius: BorderRadius.circular(28),
-      ),
-    );
-  }
 }
 
 class _TransactionsSkeleton extends StatelessWidget {
@@ -842,7 +622,7 @@ class _EmptyTransactions extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No logs yet',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -851,145 +631,13 @@ class _EmptyTransactions extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'Tap the mic or manual to start tracking',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Budget Progress Card
-// ─────────────────────────────────────────────
-
-class _BudgetCard extends StatelessWidget {
-  final BudgetState budget;
-  final double spent;
-  final CurrencyState currency;
-
-  const _BudgetCard({
-    required this.budget,
-    required this.spent,
-    required this.currency,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = AppThemeColors.of(context);
-    final fraction = (spent / budget.monthlyBudget).clamp(0.0, 1.0);
-    final isOver = spent > budget.monthlyBudget;
-    final remaining = budget.monthlyBudget - spent;
-    final daysInMonth =
-        DateUtils.getDaysInMonth(DateTime.now().year, DateTime.now().month);
-    final dayOfMonth = DateTime.now().day;
-    final expectedFraction = dayOfMonth / daysInMonth;
-    final isOnTrack = fraction <= expectedFraction + 0.05;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isOver ? tc.expense.withOpacity(0.4) : tc.outline,
-          width: isOver ? 1.5 : 1.0,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('MONTHLY BUDGET',
-                        style: GoogleFonts.hankenGrotesk(
-                            color: tc.onSurfaceVariant,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2)),
-                    const SizedBox(height: 4),
-                    Text(currency.format(budget.monthlyBudget),
-                        style: GoogleFonts.hankenGrotesk(
-                            color: tc.onSurface,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5)),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isOver
-                      ? tc.expense.withOpacity(0.12)
-                      : isOnTrack
-                          ? tc.income.withOpacity(0.12)
-                          : tc.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Text(
-                  isOver
-                      ? '⚠ Over budget'
-                      : isOnTrack
-                          ? '✓ On track'
-                          : 'Watch out',
-                  style: GoogleFonts.hankenGrotesk(
-                    color: isOver
-                        ? tc.expense
-                        : isOnTrack
-                            ? tc.income
-                            : tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: LinearProgressIndicator(
-              value: fraction,
-              minHeight: 10,
-              backgroundColor: tc.surfaceContainerHigh,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                  isOver ? tc.expense : tc.onSurface),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Spent: ${currency.format(spent)}',
-                style: GoogleFonts.hankenGrotesk(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600),
-              ),
-              Text(
-                isOver
-                    ? 'Over by ${currency.format(-remaining)}'
-                    : '${currency.format(remaining)} left',
-                style: GoogleFonts.hankenGrotesk(
-                  color: isOver ? tc.expense : tc.onSurfaceVariant,
-                  fontSize: 11,
-                  fontWeight: isOver ? FontWeight.w800 : FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -1022,7 +670,7 @@ class _SpaceHeaderTitle extends ConsumerWidget {
         children: [
           Text(
             'Budget Me',
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontWeight: FontWeight.w900,
               fontSize: 24,
@@ -1049,7 +697,7 @@ class _SpaceHeaderTitle extends ConsumerWidget {
                   const SizedBox(width: 4),
                   Text(
                     activeSpace.name,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: Color(activeSpace.colorValue),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

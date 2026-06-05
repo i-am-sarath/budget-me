@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/features/categories/models/category_model.dart';
@@ -31,7 +31,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
         elevation: 0,
         title: Text(
           'Category Budgets',
-          style: GoogleFonts.inter(
+          style: AppFonts.sans(
             color: tc.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -70,6 +70,14 @@ class CategoryBudgetScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             children: [
+              // ── Monthly budget limit ───────────────────
+              const _MonthlyBudgetCard()
+                  .animate()
+                  .fadeIn(duration: 300.ms)
+                  .slideY(begin: 0.05, end: 0),
+
+              const SizedBox(height: 16),
+
               // ── Hero card ──────────────────────────────
               _HeroCard(
                 totalBudget: totalBudget,
@@ -110,7 +118,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: Text(
           'Add Category',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+          style: AppFonts.sans(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -172,7 +180,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                     children: [
                       Text(
                         cat.name,
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
@@ -180,7 +188,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                       ),
                       Text(
                         'Set monthly budget',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: tc.onSurfaceVariant,
                           fontSize: 13,
                         ),
@@ -199,20 +207,20 @@ class CategoryBudgetScreen extends ConsumerWidget {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
                 ],
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: tc.onSurface,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),
                 decoration: InputDecoration(
                   prefixText: '${currency.currency.symbol} ',
-                  prefixStyle: GoogleFonts.inter(
+                  prefixStyle: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                   ),
                   hintText: '0',
-                  hintStyle: GoogleFonts.inter(
+                  hintStyle: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 24,
                   ),
@@ -241,7 +249,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                        style: AppFonts.sans(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -266,7 +274,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                       ),
                       child: Text(
                         'Save',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                        style: AppFonts.sans(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -314,7 +322,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'New Category',
-            style: GoogleFonts.inter(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontWeight: FontWeight.w700,
             ),
@@ -327,7 +335,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                 // Emoji field
                 TextField(
                   controller: emojiController,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onSurface,
                     fontSize: 24,
                   ),
@@ -348,7 +356,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                 // Name field
                 TextField(
                   controller: nameController,
-                  style: GoogleFonts.inter(color: tc.onSurface),
+                  style: AppFonts.sans(color: tc.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Category name',
                     filled: true,
@@ -364,7 +372,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
                 // Color picker
                 Text(
                   'Color',
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -417,7 +425,7 @@ class CategoryBudgetScreen extends ConsumerWidget {
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant),
+                style: AppFonts.sans(color: tc.onSurfaceVariant),
               ),
             ),
             ElevatedButton(
@@ -447,11 +455,170 @@ class CategoryBudgetScreen extends ConsumerWidget {
               ),
               child: Text(
                 'Add',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                style: AppFonts.sans(fontWeight: FontWeight.w600),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Monthly Budget Limit Card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MonthlyBudgetCard extends ConsumerStatefulWidget {
+  const _MonthlyBudgetCard();
+
+  @override
+  ConsumerState<_MonthlyBudgetCard> createState() => _MonthlyBudgetCardState();
+}
+
+class _MonthlyBudgetCardState extends ConsumerState<_MonthlyBudgetCard> {
+  final _ctrl = TextEditingController();
+  bool _editing = false;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save(CurrencyState currency) async {
+    final val = double.tryParse(_ctrl.text.replaceAll(',', '')) ?? 0;
+    await ref.read(budgetProvider.notifier).updateBudget(val);
+    if (!mounted) return;
+    setState(() => _editing = false);
+    FocusScope.of(context).unfocus();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(val > 0
+            ? 'Budget set to ${currency.format(val)}'
+            : 'Budget cleared'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    final currency = ref.watch(currencyProvider);
+    final budget = ref.watch(budgetProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.savings_outlined, color: tc.primary, size: 18),
+              const SizedBox(width: 8),
+              Text('MONTHLY BUDGET',
+                  style: AppFonts.sans(
+                      color: tc.onSurfaceVariant,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2)),
+              const Spacer(),
+              if (!_editing)
+                GestureDetector(
+                  onTap: () {
+                    _ctrl.text = budget.monthlyBudget > 0
+                        ? budget.monthlyBudget.toStringAsFixed(0)
+                        : '';
+                    setState(() => _editing = true);
+                  },
+                  child: Text(budget.hasBudget ? 'Edit' : 'Set',
+                      style: AppFonts.sans(
+                          color: tc.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (!_editing)
+            Text(
+              budget.hasBudget
+                  ? currency.format(budget.monthlyBudget)
+                  : 'No budget set',
+              style: AppFonts.sans(
+                  color: budget.hasBudget ? tc.onSurface : tc.onSurfaceVariant,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5),
+            )
+          else
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: tc.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Center(
+                    child: Text(currency.currency.symbol,
+                        style: AppFonts.sans(
+                            color: tc.onSurface,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _ctrl,
+                    autofocus: true,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                    ],
+                    style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700),
+                    decoration: InputDecoration(
+                      hintText: 'Enter monthly budget',
+                      hintStyle: AppFonts.sans(
+                          color: tc.onSurfaceVariant, fontSize: 14),
+                      border: InputBorder.none,
+                      filled: false,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onSubmitted: (_) => _save(currency),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _save(currency),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: tc.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text('Save',
+                        style: AppFonts.sans(
+                            color: tc.onPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -504,7 +671,7 @@ class _HeroCard extends StatelessWidget {
             children: [
               Text(
                 'Monthly Budget',
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: tc.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -520,7 +687,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 child: Text(
                   '$daysLeft days left',
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onPrimaryContainer,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -537,7 +704,7 @@ class _HeroCard extends StatelessWidget {
             children: [
               Text(
                 currency.format(totalSpent),
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: overBudget ? tc.expense : tc.onSurface,
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -549,7 +716,7 @@ class _HeroCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 3),
                 child: Text(
                   'of ${currency.format(totalBudget)}',
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -581,7 +748,7 @@ class _HeroCard extends StatelessWidget {
                 overBudget
                     ? 'Over budget by ${currency.format(totalSpent - totalBudget)}'
                     : '${currency.format(remaining)} remaining',
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: overBudget ? tc.expense : tc.onSurfaceVariant,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -591,7 +758,7 @@ class _HeroCard extends StatelessWidget {
                 totalBudget > 0
                     ? '${(pct * 100).toStringAsFixed(0)}%'
                     : 'No budget set',
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: overBudget
                       ? tc.expense
                       : (pct > 0.9
@@ -697,7 +864,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                     children: [
                       Text(
                         category.name,
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -707,7 +874,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                         hasBudget
                             ? '$daysLeft days left'
                             : 'Tap to set budget',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: tc.onSurfaceVariant,
                           fontSize: 12,
                         ),
@@ -724,7 +891,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                       hasBudget
                           ? '${currency.format(spent)} / ${currency.format(category.budgetAmount)}'
                           : currency.format(spent),
-                      style: GoogleFonts.inter(
+                      style: AppFonts.sans(
                         color: overBudget ? tc.expense : tc.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -735,7 +902,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                         overBudget
                             ? 'Over!'
                             : '${(pct * 100).toStringAsFixed(0)}%',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: pctColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -764,7 +931,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                 overBudget
                     ? 'Over by ${currency.format(spent - category.budgetAmount)}'
                     : '${currency.format(remaining)} remaining',
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: overBudget ? tc.expense : tc.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,

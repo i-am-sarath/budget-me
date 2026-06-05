@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stellar Finance - Transactions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#223144",
+                    "on-primary": "#ffffff",
+                    "on-background": "#0d1c2e",
+                    "surface-variant": "#d4e4fc",
+                    "on-tertiary-fixed": "#2b1700",
+                    "primary-fixed-dim": "#adc7f7",
+                    "on-primary-container": "#86a0cd",
+                    "secondary": "#0a6c44",
+                    "tertiary-container": "#4f2e00",
+                    "surface-dim": "#ccdbf4",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#633f0f",
+                    "surface-tint": "#455f88",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#9ff5c1",
+                    "tertiary": "#321b00",
+                    "outline": "#74777f",
+                    "primary-container": "#1a365d",
+                    "tertiary-fixed-dim": "#f2bc82",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#001b3c",
+                    "surface-container": "#e5eeff",
+                    "on-secondary-fixed-variant": "#005231",
+                    "secondary-fixed-dim": "#83d8a6",
+                    "tertiary-fixed": "#ffddba",
+                    "primary-fixed": "#d6e3ff",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#43474e",
+                    "primary": "#002045",
+                    "surface": "#f8f9ff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#dce9ff",
+                    "on-tertiary-container": "#c6955e",
+                    "on-secondary-container": "#167249",
+                    "surface-bright": "#f8f9ff",
+                    "inverse-primary": "#adc7f7",
+                    "on-surface": "#0d1c2e",
+                    "outline-variant": "#c4c6cf",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed-variant": "#2d476f",
+                    "on-secondary-fixed": "#002111",
+                    "secondary-fixed": "#9ff5c1",
+                    "background": "#f8f9ff",
+                    "surface-container-highest": "#d4e4fc",
+                    "surface-container-low": "#eff4ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-desktop": "40px",
+                    "stack-sm": "8px",
+                    "margin-mobile": "16px",
+                    "unit": "8px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "container-max": "1200px",
+                    "stack-md": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Hanken Grotesk"],
+                    "label-md": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "title-md": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; background-color: #ffffff; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .transaction-row:last-child .divider { display: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-surface-variant flex justify-between items-center px-margin-mobile h-16 w-full docked full-width top-0 sticky z-40">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant bg-surface-container-high">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a young person with a friendly expression, set against a neutral, high-key white background. The lighting is soft and diffused, highlighting clear skin and a modern, minimalist aesthetic. This image is clean, sharp, and perfectly aligned with a premium corporate modernism style for a financial application user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiFq2gW39Lcn-mEY5jpsbOsUXKld_IbMw4wbpBdmJ7wqjqsut7JQmPQ0Qv_IdNXKJgkiV1QjYHM_TGCs0NNBZ8RopISG5AcVcvusHHZ8d16Z3ZJbNbaGzeSodqAL50zpIQupY47F0QKJtGocRy-OejwIq5SE4lKR80-Xlw-Y3nvxP3ofNtDPg8n8TdRYdc8YjMWLpLeC_RnFILoLofihAgKbJuh_MmSWXuB9MfqC55G1mUTp-lk5vW-yH5CF5jPBnTZgy_dQg_XnrJ"/>
+</div>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Financier</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg min-h-screen pb-32">
+<!-- Search & Filter Bar -->
+<section class="mb-stack-lg">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-white border border-outline-variant rounded-xl focus:border-primary focus:ring-0 font-body-md text-on-surface placeholder:text-outline transition-all duration-200" placeholder="Search transactions..." type="text"/>
+</div>
+</section>
+<!-- Transaction Log: Grouped by Date -->
+<div class="flex flex-col gap-stack-lg">
+<!-- Group: Today -->
+<section aria-labelledby="date-today">
+<div class="flex justify-between items-end mb-stack-md border-b border-surface-variant pb-2">
+<h2 class="font-title-md text-title-md text-on-surface" id="date-today">Today</h2>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Oct 24, 2023</span>
+</div>
+<div class="flex flex-col">
+<!-- Row 1 -->
+<div class="transaction-row flex items-center py-4 group cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg px-2 -mx-2">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<div class="ml-4 flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold">Whole Foods Market</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Groceries • 12:45 PM</p>
+</div>
+<span class="font-title-md text-title-md text-error">- $84.20</span>
+</div>
+</div>
+</div>
+<div class="divider border-b border-surface-variant/50 mx-14"></div>
+<!-- Row 2 -->
+<div class="transaction-row flex items-center py-4 group cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg px-2 -mx-2">
+<div class="w-12 h-12 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<div class="ml-4 flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold">Monthly Salary</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Income • 09:00 AM</p>
+</div>
+<span class="font-title-md text-title-md text-secondary">+ $4,250.00</span>
+</div>
+</div>
+</div>
+<div class="divider border-b border-surface-variant/50 mx-14"></div>
+<!-- Row 3 -->
+<div class="transaction-row flex items-center py-4 group cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg px-2 -mx-2">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined" data-icon="local_cafe">local_cafe</span>
+</div>
+<div class="ml-4 flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold">Blue Bottle Coffee</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Dining • 08:15 AM</p>
+</div>
+<span class="font-title-md text-title-md text-error">- $6.50</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Group: Yesterday -->
+<section aria-labelledby="date-yesterday">
+<div class="flex justify-between items-end mb-stack-md border-b border-surface-variant pb-2">
+<h2 class="font-title-md text-title-md text-on-surface" id="date-yesterday">Yesterday</h2>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Oct 23, 2023</span>
+</div>
+<div class="flex flex-col">
+<!-- Row 1 -->
+<div class="transaction-row flex items-center py-4 group cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg px-2 -mx-2">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined" data-icon="directions_car">directions_car</span>
+</div>
+<div class="ml-4 flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold">Uber Trip</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Transport • 11:30 PM</p>
+</div>
+<span class="font-title-md text-title-md text-error">- $32.15</span>
+</div>
+</div>
+</div>
+<div class="divider border-b border-surface-variant/50 mx-14"></div>
+<!-- Row 2 -->
+<div class="transaction-row flex items-center py-4 group cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg px-2 -mx-2">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined" data-icon="subscriptions">subscriptions</span>
+</div>
+<div class="ml-4 flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold">Netflix Subscription</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Entertainment • 02:00 PM</p>
+</div>
+<span class="font-title-md text-title-md text-error">- $15.99</span>
+</div>
+</div>
+</div>
+<div class="divider border-b border-surface-variant/50 mx-14"></div>
+<!-- Row 3 -->
+<div class="transaction-row flex items-center py-4 group cursor-pointer hover:bg-surface-container-low transition-colors rounded-lg px-2 -mx-2">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</div>
+<div class="ml-4 flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold">Equinox Gym</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Health • 07:00 AM</p>
+</div>
+<span class="font-title-md text-title-md text-error">- $220.00</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface pb-safe pt-2 h-20 border-t border-surface-variant shadow-lg md:hidden">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<!-- Budget -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Budget</span>
+</a>
+<!-- Stats -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-sm text-label-sm">Stats</span>
+</a>
+<!-- Accounts -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</a>
+</nav>
+<!-- Desktop Navigation (Responsive Pivot) -->
+<div class="hidden md:flex fixed top-0 left-0 h-full w-20 flex-col items-center py-8 bg-surface border-r border-surface-variant z-50">
+<div class="mb-12">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="token">token</span>
+</div>
+<div class="flex flex-col gap-8">
+<a class="p-3 bg-primary-container text-on-primary-container rounded-xl shadow-md" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+</a>
+<a class="p-3 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</a>
+<a class="p-3 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+</a>
+<a class="p-3 text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</a>
+</div>
+</div>
+<!-- Floating Action Button: Add Transaction (Contextual) -->
+<button class="fixed right-6 bottom-24 md:bottom-10 bg-primary text-on-primary w-14 h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-105 active:scale-90 transition-all duration-200 z-40">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+<script>
+        // Micro-interaction for transaction rows
+        document.querySelectorAll('.transaction-row').forEach(row => {
+            row.addEventListener('click', () => {
+                row.classList.add('scale-[0.98]');
+                setTimeout(() => {
+                    row.classList.remove('scale-[0.98]');
+                }, 100);
+            });
+        });
+
+        // Simple scroll behavior to hide FAB on scroll down and show on scroll up (optional UX touch)
+        let lastScrollTop = 0;
+        const fab = document.querySelector('button.fixed');
+        window.addEventListener("scroll", function() {
+            let st = window.pageYOffset || document.documentElement.scrollTop;
+            if (st > lastScrollTop && st > 100) {
+                fab.style.transform = "translateY(150%)";
+                fab.style.opacity = "0";
+            } else {
+                fab.style.transform = "translateY(0)";
+                fab.style.opacity = "1";
+            }
+            lastScrollTop = st <= 0 ? 0 : st;
+        }, false);
+    </script>
+</body></html>

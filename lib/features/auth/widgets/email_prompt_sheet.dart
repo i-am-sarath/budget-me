@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/user_service.dart';
 
@@ -81,7 +80,7 @@ class _EmailPromptSheetState extends ConsumerState<EmailPromptSheet> {
             const SizedBox(height: 16),
             Text(
               'Enable Voice Logging',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -91,7 +90,7 @@ class _EmailPromptSheetState extends ConsumerState<EmailPromptSheet> {
             const SizedBox(height: 8),
             Text(
               'Enter your email to activate voice-powered transaction logging. Free users get 100 logs/month.',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurfaceVariant,
                 fontSize: 14,
                 height: 1.5,
@@ -102,7 +101,7 @@ class _EmailPromptSheetState extends ConsumerState<EmailPromptSheet> {
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
               autofocus: true,
-              style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 15),
+              style: AppFonts.sans(color: tc.onSurface, fontSize: 15),
               decoration: InputDecoration(
                 labelText: 'Email address',
                 prefixIcon: Icon(Icons.email_outlined, color: tc.onSurfaceVariant, size: 20),
@@ -151,7 +150,7 @@ class _EmailPromptSheetState extends ConsumerState<EmailPromptSheet> {
                       )
                     : Text(
                         'Get Started',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -164,7 +163,7 @@ class _EmailPromptSheetState extends ConsumerState<EmailPromptSheet> {
                 onPressed: () => Navigator.pop(context, false),
                 child: Text(
                   'Use Manual Entry Instead',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 13,
                   ),

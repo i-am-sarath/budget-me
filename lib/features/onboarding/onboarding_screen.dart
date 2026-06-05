@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +6,6 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/dashboard/dashboard_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -151,7 +150,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   onPressed: _next,
                   child: Text(
                     _page == 2 ? "Let's go!" : 'Continue',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                 ),
@@ -193,7 +192,7 @@ class _WelcomePage extends StatelessWidget {
           Text(
             'Budget Tracker',
             textAlign: TextAlign.center,
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontSize: 32,
               fontWeight: FontWeight.w800,
@@ -206,7 +205,7 @@ class _WelcomePage extends StatelessWidget {
           Text(
             'Know exactly where your money goes.\nTrack spending, set budgets,\nand build better financial habits.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurfaceVariant,
               fontSize: 15,
               height: 1.6,
@@ -249,7 +248,7 @@ class _FeatureChip extends StatelessWidget {
           border: Border.all(color: tc.outlineVariant, width: 0.5),
         ),
         child: Text(label,
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
                 color: tc.onSurface, fontSize: 12, fontWeight: FontWeight.w600)),
       );
 }
@@ -279,14 +278,14 @@ class _CountryPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Where are you based?',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                       color: tc.onSurface,
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5)),
               const SizedBox(height: 8),
               Text("We'll set your currency automatically.",
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                       color: tc.onSurfaceVariant, fontSize: 14)),
             ],
           ),
@@ -319,13 +318,13 @@ class _CountryPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(name,
-                                style: GoogleFonts.hankenGrotesk(
+                                style: AppFonts.sans(
                                     color: tc.onSurface,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14)),
                             Text(
                               '${currency.code} · ${currency.symbol} · ${currency.name}',
-                              style: GoogleFonts.hankenGrotesk(
+                              style: AppFonts.sans(
                                   color: tc.onSurfaceVariant, fontSize: 11),
                             ),
                           ],
@@ -381,7 +380,7 @@ class _BudgetPage extends StatelessWidget {
         children: [
           Text(
             'Set your monthly\nspending limit',
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontSize: 26,
               fontWeight: FontWeight.w800,
@@ -394,7 +393,7 @@ class _BudgetPage extends StatelessWidget {
 
           Text(
             'How much do you plan to spend each month? You can always change this in Settings.',
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
                 color: tc.onSurfaceVariant, fontSize: 14, height: 1.5),
           ).animate().fadeIn(delay: 80.ms),
 
@@ -412,7 +411,7 @@ class _BudgetPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(currency.symbol,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         color: tc.onSurfaceVariant,
                         fontSize: 28,
                         fontWeight: FontWeight.w700)),
@@ -422,13 +421,13 @@ class _BudgetPage extends StatelessWidget {
                     controller: controller,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     autofocus: false,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         color: tc.onSurface,
                         fontSize: 36,
                         fontWeight: FontWeight.w800),
                     decoration: InputDecoration(
                       hintText: '0',
-                      hintStyle: GoogleFonts.hankenGrotesk(
+                      hintStyle: AppFonts.sans(
                           color: tc.onSurfaceVariant,
                           fontSize: 36,
                           fontWeight: FontWeight.w800),
@@ -446,7 +445,7 @@ class _BudgetPage extends StatelessWidget {
 
           // Quick-set suggestions
           Text('QUICK SET',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                   color: tc.onSurfaceVariant,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -471,7 +470,7 @@ class _BudgetPage extends StatelessWidget {
                     border: Border.all(color: tc.outlineVariant, width: 0.5),
                   ),
                   child: Text('${currency.symbol}$s',
-                      style: GoogleFonts.hankenGrotesk(
+                      style: AppFonts.sans(
                           color: tc.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.w600)),
@@ -497,7 +496,7 @@ class _BudgetPage extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'You can skip this for now. Budget tracking is optional — the app works great without it.',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         color: tc.onSurfaceVariant, fontSize: 12, height: 1.5),
                   ),
                 ),

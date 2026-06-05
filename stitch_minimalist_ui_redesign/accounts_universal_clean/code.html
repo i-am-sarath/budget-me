@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financier - Your Accounts</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Custom Weight -->
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'Wght' 400, 'FILL' 0;
+        }
+    </style>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#223144",
+                        "on-primary": "#ffffff",
+                        "on-background": "#0d1c2e",
+                        "surface-variant": "#d4e4fc",
+                        "on-tertiary-fixed": "#2b1700",
+                        "primary-fixed-dim": "#adc7f7",
+                        "on-primary-container": "#86a0cd",
+                        "secondary": "#0a6c44",
+                        "tertiary-container": "#4f2e00",
+                        "surface-dim": "#ccdbf4",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#633f0f",
+                        "surface-tint": "#455f88",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#9ff5c1",
+                        "tertiary": "#321b00",
+                        "outline": "#74777f",
+                        "primary-container": "#1a365d",
+                        "tertiary-fixed-dim": "#f2bc82",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#001b3c",
+                        "surface-container": "#e5eeff",
+                        "on-secondary-fixed-variant": "#005231",
+                        "secondary-fixed-dim": "#83d8a6",
+                        "tertiary-fixed": "#ffddba",
+                        "primary-fixed": "#d6e3ff",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#43474e",
+                        "primary": "#002045",
+                        "surface": "#f8f9ff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#dce9ff",
+                        "on-tertiary-container": "#c6955e",
+                        "on-secondary-container": "#167249",
+                        "surface-bright": "#f8f9ff",
+                        "inverse-primary": "#adc7f7",
+                        "on-surface": "#0d1c2e",
+                        "outline-variant": "#c4c6cf",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#2d476f",
+                        "on-secondary-fixed": "#002111",
+                        "secondary-fixed": "#9ff5c1",
+                        "background": "#f8f9ff",
+                        "surface-container-highest": "#d4e4fc",
+                        "surface-container-low": "#eff4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "stack-lg": "32px",
+                        "container-max": "1200px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "title-md": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md selection:bg-surface-variant selection:text-primary">
+<!-- Header (TopAppBar) -->
+<header class="bg-surface border-b border-surface-variant fixed top-0 w-full z-[60] flex justify-between items-center px-margin-mobile h-16 md:px-margin-desktop">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a smiling young adult male in a minimalist office setting with soft natural light. The photograph has a high-key, modern aesthetic with a clean white background, reflecting a reliable and professional financial persona. The style is crisp and high-contrast, fitting a corporate modernist design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhPrptDmV-ouGjiPaM0LhWNl-ur7BSuLP1UHsvG2UwMFoW0R4TNz1Hr8QgEc_jqJXKtvf1VUZlAhcumYz-P3mj3qxnqrFdgE5Upo6iThSkk3WBkUj7TGSADHOPss7LwDN55QIox7H6441iMsESexVAupoF1gDFSGT5O_BvXUlXrqBvZ0dygH9i4HLUkS37d_vMlfgoj8qLDTXUmQHi6igeiMpTDlSC61hBvVjWqoqv40MIwbndtNoFc48fnLt03-43o-30HZSV-uhI"/>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Financier</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pt-24 pb-28 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto min-h-screen">
+<!-- Hero Section: Net Worth -->
+<section class="mb-stack-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+<div class="bg-surface border border-outline-variant shadow-[0px_4px_12px_rgba(0,0,0,0.05)] rounded-xl p-6 md:p-8 flex flex-col items-center text-center">
+<span class="font-label-md text-label-md text-on-surface-variant mb-2">Estimated Net Worth</span>
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-display-lg text-primary">$</span>
+<span class="font-display-lg text-display-lg text-primary tracking-tight">284,590</span>
+<span class="font-title-md text-title-md text-on-surface-variant">.42</span>
+</div>
+<div class="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+<span>+4.2% from last month</span>
+</div>
+</div>
+</section>
+<!-- Action Grid -->
+<section class="grid grid-cols-2 gap-stack-md mb-stack-lg">
+<button class="flex items-center justify-center gap-2 h-12 bg-primary text-on-primary rounded-xl font-label-md transition-transform active:scale-95 shadow-sm">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>Add Account</span>
+</button>
+<button class="flex items-center justify-center gap-2 h-12 bg-surface border border-primary text-primary rounded-xl font-label-md transition-transform active:scale-95 shadow-sm">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span>Transfer</span>
+</button>
+</section>
+<!-- Accounts Grid -->
+<section class="space-y-stack-md">
+<h2 class="font-title-md text-title-md text-on-surface px-1">Financial Sources</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Checking -->
+<div class="bg-surface border border-outline-variant shadow-[0px_4px_12px_rgba(0,0,0,0.05)] rounded-xl p-5 hover:border-primary-container transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Checking Account</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Chase Bank • ...4829</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-primary">$12,450.00</p>
+<p class="font-label-sm text-label-sm text-secondary">Available balance</p>
+</div>
+</div>
+<!-- Savings -->
+<div class="bg-surface border border-outline-variant shadow-[0px_4px_12px_rgba(0,0,0,0.05)] rounded-xl p-5 hover:border-primary-container transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="savings">savings</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Emergency Fund</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ally Financial • ...9901</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-primary">$45,000.00</p>
+<div class="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full w-[90%] rounded-full"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">90% of goal ($50k)</p>
+</div>
+</div>
+<!-- Investment -->
+<div class="bg-surface border border-outline-variant shadow-[0px_4px_12px_rgba(0,0,0,0.05)] rounded-xl p-5 hover:border-primary-container transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Brokerage Portofolio</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Vanguard • ...1122</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-primary">$218,340.42</p>
+<p class="font-label-sm text-label-sm text-secondary">Market Value (+12.4%)</p>
+</div>
+</div>
+<!-- Crypto -->
+<div class="bg-surface border border-outline-variant shadow-[0px_4px_12px_rgba(0,0,0,0.05)] rounded-xl p-5 hover:border-primary-container transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="currency_bitcoin">currency_bitcoin</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Crypto Wallet</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ledger Nano X</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</div>
+<div class="text-right">
+<p class="font-title-md text-title-md text-primary">$8,800.00</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">0.14 BTC • 2.1 ETH</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Chart Section (Bento Style) -->
+<section class="mt-stack-lg">
+<div class="bg-surface border border-outline-variant rounded-xl p-6 shadow-[0px_4px_12px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-title-md text-title-md text-on-surface">Asset Allocation</h2>
+<button class="text-primary font-label-md">Details</button>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-8">
+<div class="relative w-40 h-40 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-primary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="75, 100" stroke-width="3"></path>
+<path class="text-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="15, 100" stroke-dashoffset="-75" stroke-width="3"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="transparent" stroke="currentColor" stroke-dasharray="10, 100" stroke-dashoffset="-90" stroke-width="3"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Stocks</span>
+<span class="font-label-md text-label-md text-primary">75%</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 flex-1">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary-container"></div>
+<span class="font-label-sm text-label-sm">Stocks (75%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="font-label-sm text-label-sm">Cash (15%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="font-label-sm text-label-sm">Crypto (3%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+<span class="font-label-sm text-label-sm">Other (7%)</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface pb-safe pt-2 h-20 border-t border-surface-variant md:px-margin-desktop">
+<!-- Home -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</div>
+<!-- Budget -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Budget</span>
+</div>
+<!-- Stats -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-sm text-label-sm">Stats</span>
+</div>
+<!-- Accounts (Active) -->
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="account_balance" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for balance hover effects
+        document.querySelectorAll('.hover\\:border-primary-container').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-md');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-md');
+            });
+        });
+    </script>
+</body></html>

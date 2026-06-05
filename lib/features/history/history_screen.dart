@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:agent_money/core/theme.dart';
@@ -7,7 +7,6 @@ import 'package:agent_money/features/transactions/models/transaction_model.dart'
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
@@ -83,7 +82,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 title: Row(
                   children: [
                     Text('History',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -101,7 +100,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('MMM yyyy').format(_selectedMonth),
-                          style: GoogleFonts.hankenGrotesk(
+                          style: AppFonts.sans(
                             color: tc.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -142,11 +141,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            style: GoogleFonts.hankenGrotesk(
+                            style: AppFonts.sans(
                                 color: tc.onSurface, fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Search transactions...',
-                              hintStyle: GoogleFonts.hankenGrotesk(
+                              hintStyle: AppFonts.sans(
                                   color: tc.onSurfaceVariant),
                               prefixIcon: Icon(Icons.search_rounded,
                                   color: tc.onSurfaceVariant, size: 20),
@@ -191,7 +190,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             color: tc.onSurfaceVariant, size: 48),
                         const SizedBox(height: 12),
                         Text('No transactions found',
-                            style: GoogleFonts.hankenGrotesk(
+                            style: AppFonts.sans(
                               color: tc.onSurfaceVariant,
                               fontSize: 16,
                             )),
@@ -216,7 +215,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 children: [
                                   Text(
                                     _formatGroupDate(dateKey),
-                                    style: GoogleFonts.hankenGrotesk(
+                                    style: AppFonts.sans(
                                       color: tc.onSurfaceVariant,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -233,7 +232,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     _groupTotal(items, currency),
-                                    style: GoogleFonts.hankenGrotesk(
+                                    style: AppFonts.sans(
                                       color: tc.onSurfaceVariant,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -346,7 +345,7 @@ class _FilterChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
             color: isActive ? tc.surface : tc.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w600,

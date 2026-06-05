@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -8,7 +8,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/services/overlay_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
@@ -16,7 +15,6 @@ import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -27,7 +25,6 @@ class SettingsScreen extends ConsumerWidget {
     final subscription = ref.watch(subscriptionProvider);
     final themeMode = ref.watch(themeProvider);
     final tc = AppThemeColors.of(context);
-    final budget = ref.watch(budgetProvider);
 
     return Scaffold(
       backgroundColor: tc.surface,
@@ -42,7 +39,7 @@ class SettingsScreen extends ConsumerWidget {
             titleSpacing: 20,
             title: Text(
               'Settings',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurface,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -67,14 +64,6 @@ class SettingsScreen extends ConsumerWidget {
                 _ThemeCard(themeMode: themeMode)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 50.ms),
-                const SizedBox(height: 28),
-
-                // Budget
-                _SectionLabel('MONTHLY BUDGET'),
-                const SizedBox(height: 10),
-                _BudgetSettingsCard(budget: budget)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 80.ms),
                 const SizedBox(height: 28),
 
                 // Currency
@@ -145,7 +134,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.hankenGrotesk(
+        style: AppFonts.sans(
           color: AppThemeColors.of(context).onSurfaceVariant,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -203,7 +192,7 @@ class _SubscriptionCard extends ConsumerWidget {
               children: [
                 Text(
                   isPro ? 'Budget Me Pro' : 'Free Plan',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: isPro ? tc.surface : tc.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -213,7 +202,7 @@ class _SubscriptionCard extends ConsumerWidget {
                   isPro
                       ? 'Unlimited · Cloud sync active'
                       : '${SubscriptionState.freeVoiceLogLimit} voice logs/month · Local only',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: isPro
                         ? tc.surface.withOpacity(0.6)
                         : tc.onSurfaceVariant,
@@ -235,7 +224,7 @@ class _SubscriptionCard extends ConsumerWidget {
                 ),
                 child: Text(
                   'Upgrade',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: tc.surface,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -297,7 +286,7 @@ class _ThemeCard extends ConsumerWidget {
                     const SizedBox(height: 5),
                     Text(
                       m.$2,
-                      style: GoogleFonts.hankenGrotesk(
+                      style: AppFonts.sans(
                         color: isSelected ? tc.surface : tc.onSurfaceVariant,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -346,13 +335,13 @@ class _CurrencySection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(currency.currency.name,
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         )),
                     Text(currency.currency.code,
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                           color: tc.onSurfaceVariant,
                           fontSize: 11,
                         )),
@@ -361,7 +350,7 @@ class _CurrencySection extends ConsumerWidget {
               ),
               Text(
                 currency.currency.symbol,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: tc.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -401,7 +390,7 @@ class _CurrencySection extends ConsumerWidget {
                     const SizedBox(width: 6),
                     Text(
                       c.code,
-                      style: GoogleFonts.hankenGrotesk(
+                      style: AppFonts.sans(
                         color: isSelected ? tc.surface : tc.onSurfaceVariant,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -417,7 +406,7 @@ class _CurrencySection extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Rates updated ${_fmtDate(currency.lastUpdated!)}',
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurfaceVariant,
               fontSize: 10,
             ),
@@ -469,7 +458,7 @@ class _VoiceCard extends StatelessWidget {
                 isPro
                     ? 'Unlimited voice logs'
                     : 'This month: $used / $max',
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: tc.onSurface,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -495,7 +484,7 @@ class _VoiceCard extends StatelessWidget {
               subscription.canUseVoice
                   ? '${subscription.voiceLogsRemaining} voice logs remaining this month'
                   : 'Limit reached. Resets next month.',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: subscription.canUseVoice
                     ? tc.onSurfaceVariant
                     : tc.expense,
@@ -574,7 +563,7 @@ class _AboutRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontWeight: FontWeight.w500,
               fontSize: 14,
@@ -584,7 +573,7 @@ class _AboutRow extends StatelessWidget {
           if (value != null)
             Text(
               value!,
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurfaceVariant,
                 fontSize: 13,
               ),
@@ -595,136 +584,6 @@ class _AboutRow extends StatelessWidget {
         ],
       ),
     ));
-  }
-}
-
-// ─────────────────────────────────────────────
-// Budget Settings Card
-// ─────────────────────────────────────────────
-
-class _BudgetSettingsCard extends ConsumerStatefulWidget {
-  final BudgetState budget;
-  const _BudgetSettingsCard({required this.budget});
-
-  @override
-  ConsumerState<_BudgetSettingsCard> createState() =>
-      _BudgetSettingsCardState();
-}
-
-class _BudgetSettingsCardState extends ConsumerState<_BudgetSettingsCard> {
-  late final TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(
-      text: widget.budget.monthlyBudget > 0
-          ? widget.budget.monthlyBudget.toStringAsFixed(0)
-          : '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = AppThemeColors.of(context);
-    final currency = ref.watch(currencyProvider);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: tc.outlineVariant, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.budget.hasBudget
-                ? 'Current limit: ${currency.format(widget.budget.monthlyBudget)}'
-                : 'No budget set yet',
-            style: GoogleFonts.hankenGrotesk(
-                color: tc.onSurfaceVariant,
-                fontSize: 12,
-                fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: tc.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(currency.currency.symbol,
-                      style: GoogleFonts.hankenGrotesk(
-                          color: tc.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: GoogleFonts.hankenGrotesk(
-                      color: tc.onSurface,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700),
-                  decoration: InputDecoration(
-                    hintText: 'Enter monthly budget',
-                    hintStyle: GoogleFonts.hankenGrotesk(
-                        color: tc.onSurfaceVariant, fontSize: 14),
-                    border: InputBorder.none,
-                    filled: false,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () async {
-                  final val = double.tryParse(_ctrl.text) ?? 0;
-                  await ref.read(budgetProvider.notifier).updateBudget(val);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(val > 0
-                            ? 'Budget set to ${currency.format(val)}'
-                            : 'Budget cleared'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: tc.onSurface,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text('Save',
-                      style: GoogleFonts.hankenGrotesk(
-                          color: tc.surface,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -853,12 +712,12 @@ class _SettingsTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                             color: tc.onSurface,
                             fontWeight: FontWeight.w600,
                             fontSize: 14)),
                     Text(sub,
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                             color: tc.onSurfaceVariant, fontSize: 11)),
                   ],
                 ),
@@ -909,12 +768,12 @@ class _ResetDataCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Reset All Data',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                             color: tc.expense,
                             fontWeight: FontWeight.w600,
                             fontSize: 14)),
                     Text('Delete all transactions, accounts & recurring rules',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                             color: tc.onSurfaceVariant, fontSize: 11)),
                   ],
                 ),
@@ -938,19 +797,19 @@ class _ResetDataCard extends ConsumerWidget {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Reset all data?',
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
               color: tc.onSurface, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'This will permanently delete all your transactions, accounts, and recurring rules. This cannot be undone.',
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
               color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
-                style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant)),
+                style: AppFonts.sans(color: tc.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -962,7 +821,7 @@ class _ResetDataCard extends ConsumerWidget {
               await _doReset(context, ref);
             },
             child: Text('Reset Everything',
-                style: GoogleFonts.hankenGrotesk(fontWeight: FontWeight.w700)),
+                style: AppFonts.sans(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -1033,14 +892,14 @@ class _OverlayToggleCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Floating quick-log bubble',
-                      style: GoogleFonts.inter(
+                      style: AppFonts.sans(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w700,
                           fontSize: 14)),
                   const SizedBox(height: 2),
                   Text(
                     'Show a draggable button over other apps for instant logging',
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                         color: tc.onSurfaceVariant, fontSize: 11, height: 1.4),
                   ),
                 ],

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +7,6 @@ import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/recurring/models/recurring_model.dart';
 import 'package:agent_money/features/recurring/repositories/recurring_repository.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class RecurringScreen extends ConsumerWidget {
@@ -32,7 +31,7 @@ class RecurringScreen extends ConsumerWidget {
             titleSpacing: 20,
             title: Text(
               'Recurring',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurface,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -233,10 +232,10 @@ class _RecurringTile extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
               title: Text('Delete "${rule.title}"?',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                       color: dtc.onSurface, fontWeight: FontWeight.w700)),
               content: Text('This recurring rule will be permanently removed.',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                       color: dtc.onSurfaceVariant,
                       fontSize: 13,
                       height: 1.5)),
@@ -244,12 +243,12 @@ class _RecurringTile extends StatelessWidget {
                 TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
                     child: Text('Cancel',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                             color: dtc.onSurfaceVariant))),
                 TextButton(
                     onPressed: () => Navigator.pop(ctx, true),
                     child: Text('Delete',
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                             color: dtc.expense,
                             fontWeight: FontWeight.w700))),
               ],
@@ -293,7 +292,7 @@ class _RecurringTile extends StatelessWidget {
                 children: [
                   Text(
                     rule.title,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: rule.isActive ? tc.onSurface : tc.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -302,7 +301,7 @@ class _RecurringTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     '${rule.frequency.label} · ${rule.type.label}',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: tc.onSurfaceVariant,
                       fontSize: 11,
                     ),
@@ -310,7 +309,7 @@ class _RecurringTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     'Next: ${DateFormat('d MMM').format(rule.nextRunDate)}',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: isDue ? tc.income : tc.onSurfaceVariant,
                       fontSize: 11,
                       fontWeight: isDue ? FontWeight.w700 : FontWeight.w400,
@@ -325,7 +324,7 @@ class _RecurringTile extends StatelessWidget {
               children: [
                 Text(
                   currency.format(rule.amount),
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: rule.isActive ? typeColor : tc.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
@@ -346,7 +345,7 @@ class _RecurringTile extends StatelessWidget {
                           ),
                           child: Text(
                             'Run',
-                            style: GoogleFonts.hankenGrotesk(
+                            style: AppFonts.sans(
                               color: tc.income,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -425,7 +424,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.hankenGrotesk(
+        style: AppFonts.sans(
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -461,7 +460,7 @@ class _EmptyState extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           'No recurring rules',
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
             color: tc.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -471,7 +470,7 @@ class _EmptyState extends StatelessWidget {
         Text(
           'Set up DigiGold daily buys, SIP investments,\nsalary income, or any repeating transaction.',
           textAlign: TextAlign.center,
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
             color: tc.onSurfaceVariant,
             fontSize: 13,
             height: 1.5,
@@ -489,7 +488,7 @@ class _EmptyState extends StatelessWidget {
             ),
             child: Text(
               'Add recurring rule',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.surface,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -619,7 +618,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
             const SizedBox(height: 20),
             Text(
               _isEditing ? 'Edit Recurring Rule' : 'Add Recurring Rule',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -630,7 +629,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
 
             // Presets
             Text('Quick add',
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -659,7 +658,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
                             color: tc.outlineVariant, width: 0.5),
                       ),
                       child: Text(p.$1,
-                          style: GoogleFonts.hankenGrotesk(
+                          style: AppFonts.sans(
                               color: tc.onSurface,
                               fontSize: 12,
                               fontWeight: FontWeight.w600)),
@@ -673,7 +672,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
             // Title
             TextField(
               controller: _titleCtrl,
-              style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
+              style: AppFonts.sans(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Title',
                 prefixIcon: Icon(Icons.repeat_rounded,
@@ -687,7 +686,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
               controller: _amountCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.hankenGrotesk(color: tc.onSurface, fontSize: 14),
+              style: AppFonts.sans(color: tc.onSurface, fontSize: 14),
               decoration: InputDecoration(
                 labelText: 'Amount',
                 prefixIcon: Icon(Icons.attach_money_rounded,
@@ -698,7 +697,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
 
             // Transaction type
             Text('Type',
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -727,7 +726,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
                         child: Text(
                           t.label,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.hankenGrotesk(
+                          style: AppFonts.sans(
                             color:
                                 sel ? tc.surface : tc.onSurfaceVariant,
                             fontSize: 10,
@@ -744,7 +743,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
 
             // Frequency
             Text('Frequency',
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -766,7 +765,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
                       borderRadius: BorderRadius.circular(100),
                     ),
                     child: Text(f.label,
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                           color: sel ? tc.surface : tc.onSurfaceVariant,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -804,7 +803,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
                     const SizedBox(width: 10),
                     Text(
                       'Start: ${DateFormat('d MMM yyyy').format(_startDate)}',
-                      style: GoogleFonts.hankenGrotesk(
+                      style: AppFonts.sans(
                           color: tc.onSurface, fontSize: 13),
                     ),
                   ],
@@ -819,7 +818,7 @@ class _AddRecurringSheetState extends ConsumerState<_AddRecurringSheet> {
               child: ElevatedButton(
                 onPressed: _submit,
                 child: Text(_isEditing ? 'Update Rule' : 'Save Rule',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         fontWeight: FontWeight.w700, fontSize: 15)),
               ),
             ),

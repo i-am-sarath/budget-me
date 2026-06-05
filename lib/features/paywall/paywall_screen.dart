@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -6,7 +6,6 @@ import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   final bool isSheet;
@@ -67,7 +66,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
                 Text(
                   'Budget Tracker Pro',
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: tc.onSurface,
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -80,7 +79,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 Text(
                   'Voice-log without limits.\nSync everywhere. Never lose a transaction.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 14,
                     height: 1.5,
@@ -123,7 +122,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                       sub.isLoading ? null : () => _handleRestore(sub),
                   child: Text(
                     'Restore purchases',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: tc.onSurfaceVariant,
                       fontSize: 13,
                     ),
@@ -133,7 +132,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 Text(
                   'Cancel anytime · Secure payment via Google / Apple',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.hankenGrotesk(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 10,
                   ),
@@ -214,18 +213,18 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'In-app purchases',
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
               color: tc.onSurface, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'Store payments are not yet configured for this build. Pro features will be available when the app is published.',
-          style: GoogleFonts.hankenGrotesk(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+          style: AppFonts.sans(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('OK',
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                     color: tc.onSurface, fontWeight: FontWeight.w600)),
           ),
         ],
@@ -275,12 +274,12 @@ class _FeatureRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         color: tc.onSurface,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 Text(sub,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                         color: tc.onSurfaceVariant, fontSize: 11)),
               ],
             ),
@@ -408,7 +407,7 @@ class _PlanOption extends StatelessWidget {
                   ),
                   child: Text(
                     badge!,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: isSelected ? tc.surface : tc.onSurfaceVariant,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -419,7 +418,7 @@ class _PlanOption extends StatelessWidget {
                 const SizedBox(height: 22),
               Text(
                 label,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: isSelected ? tc.surface : tc.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -428,7 +427,7 @@ class _PlanOption extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 price,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: isSelected ? tc.surface : tc.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -437,7 +436,7 @@ class _PlanOption extends StatelessWidget {
               Text(
                 subLabel,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   color: isSelected
                       ? tc.surface.withOpacity(0.7)
                       : tc.onSurfaceVariant,
@@ -488,7 +487,7 @@ class _PurchaseButton extends StatelessWidget {
               )
             : Text(
                 label,
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),

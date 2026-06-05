@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SummaryCard extends StatelessWidget {
   final List<TransactionModel> transactions;
@@ -176,7 +175,7 @@ class _BentoItem extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             label,
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurfaceVariant,
               fontSize: 10,
               fontWeight: FontWeight.w600,
@@ -186,7 +185,7 @@ class _BentoItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             _compactFormat(amount, currency),
-            style: GoogleFonts.hankenGrotesk(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -199,7 +198,7 @@ class _BentoItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               sublabel!,
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: tc.onSurfaceVariant.withOpacity(0.6),
                 fontSize: 9,
                 fontWeight: FontWeight.w500,

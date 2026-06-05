@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class TransactionTile extends ConsumerWidget {
   final TransactionModel transaction;
@@ -78,7 +77,7 @@ class TransactionTile extends ConsumerWidget {
                         : transaction.category,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: tc.onSurface,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -89,7 +88,7 @@ class TransactionTile extends ConsumerWidget {
                     _subtitle(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: tc.onSurfaceVariant,
                       fontSize: 12,
                     ),
@@ -101,7 +100,7 @@ class TransactionTile extends ConsumerWidget {
             // Amount right-aligned, color-coded
             Text(
               '$prefix${currency.format(transaction.amount)}',
-              style: GoogleFonts.hankenGrotesk(
+              style: AppFonts.sans(
                 color: typeColor,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,

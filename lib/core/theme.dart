@@ -5,6 +5,43 @@ import 'package:google_fonts/google_fonts.dart';
 // Stellar Finance / Financier Design System
 // ─────────────────────────────────────────────
 
+/// Single switch point for the app's typeface. Change `sans` here to
+/// restyle the entire app's typography in one place.
+class AppFonts {
+  AppFonts._();
+
+  /// The app's primary typeface. Plus Jakarta Sans — a modern, geometric
+  /// sans with a premium, friendly feel well-suited to FinTech.
+  /// Has the same call signature as any `GoogleFonts.xxx(...)`.
+  static const sans = GoogleFonts.plusJakartaSans;
+
+  /// Apply the primary typeface to a full [TextTheme].
+  static TextTheme textTheme(TextTheme base) =>
+      GoogleFonts.plusJakartaSansTextTheme(base);
+}
+
+/// Corner-radius scale. Use these instead of hardcoded values so the app
+/// keeps a consistent, intentional roundness.
+class AppRadius {
+  AppRadius._();
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 28;
+  static const double pill = 999;
+}
+
+/// 8px spacing grid. Prefer these over ad-hoc gaps for consistent rhythm.
+class AppSpacing {
+  AppSpacing._();
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;
+  static const double xl = 32;
+}
+
 class AppColors {
   // ── Dark Mode (true black base) ──────────────────────────
   static const Color surface          = Color(0xFF0A0A0A); // near-black
@@ -207,7 +244,7 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
-    final text = GoogleFonts.hankenGroteskTextTheme(base.textTheme);
+    final text = AppFonts.textTheme(base.textTheme);
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.surface,
@@ -248,7 +285,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.hankenGrotesk(
+        titleTextStyle: AppFonts.sans(
           color: AppColors.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -260,7 +297,7 @@ class AppTheme {
         color: AppColors.surfaceContainerLow,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           side: const BorderSide(color: AppColors.outline, width: 1.0),
         ),
       ),
@@ -302,7 +339,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceContainerHighest,
-        contentTextStyle: GoogleFonts.hankenGrotesk(color: AppColors.onSurface),
+        contentTextStyle: AppFonts.sans(color: AppColors.onSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -314,8 +351,8 @@ class AppTheme {
         backgroundColor: AppColors.surfaceContainerHigh,
         selectedColor: AppColors.primary,
         secondarySelectedColor: AppColors.primary,
-        labelStyle: GoogleFonts.hankenGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
-        secondaryLabelStyle: GoogleFonts.hankenGrotesk(
+        labelStyle: AppFonts.sans(fontSize: 12, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: AppFonts.sans(
           fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onPrimary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,
@@ -327,7 +364,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
-    final text = GoogleFonts.hankenGroteskTextTheme(base.textTheme);
+    final text = AppFonts.textTheme(base.textTheme);
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColorsLight.surface,
@@ -366,7 +403,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.hankenGrotesk(
+        titleTextStyle: AppFonts.sans(
           color: AppColorsLight.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -379,7 +416,7 @@ class AppTheme {
         elevation: 0,
         shadowColor: const Color(0x0F000000),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           side: const BorderSide(color: AppColorsLight.outline, width: 1.0),
         ),
       ),
@@ -421,7 +458,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColorsLight.surfaceContainerHighest,
-        contentTextStyle: GoogleFonts.hankenGrotesk(color: AppColorsLight.onSurface),
+        contentTextStyle: AppFonts.sans(color: AppColorsLight.onSurface),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -433,8 +470,8 @@ class AppTheme {
         backgroundColor: AppColorsLight.surfaceContainerHigh,
         selectedColor: AppColorsLight.primary,
         secondarySelectedColor: AppColorsLight.primary,
-        labelStyle: GoogleFonts.hankenGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
-        secondaryLabelStyle: GoogleFonts.hankenGrotesk(
+        labelStyle: AppFonts.sans(fontSize: 12, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: AppFonts.sans(
           fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,

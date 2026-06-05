@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
@@ -7,7 +7,6 @@ import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class TransferSheet extends ConsumerStatefulWidget {
@@ -158,7 +157,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   const SizedBox(width: 12),
                   Text(
                     'Transfer Money',
-                    style: GoogleFonts.hankenGrotesk(
+                    style: AppFonts.sans(
                       color: tc.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -182,7 +181,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   children: [
                     Text(
                       currency.currency.symbol,
-                      style: GoogleFonts.hankenGrotesk(
+                      style: AppFonts.sans(
                         color: tc.onSurfaceVariant,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -195,7 +194,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         autofocus: true,
-                        style: GoogleFonts.hankenGrotesk(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
@@ -275,7 +274,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                     // Note
                     TextFormField(
                       controller: _noteCtrl,
-                      style: GoogleFonts.hankenGrotesk(
+                      style: AppFonts.sans(
                           color: tc.onSurface, fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Note (optional)',
@@ -312,7 +311,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                             const SizedBox(width: 12),
                             Text(
                               DateFormat('EEEE, MMM d, yyyy').format(_date),
-                              style: GoogleFonts.hankenGrotesk(
+                              style: AppFonts.sans(
                                   color: tc.onSurface, fontSize: 13),
                             ),
                           ],
@@ -328,7 +327,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         onPressed: () => _submit(accounts),
                         child: Text(
                           'Transfer',
-                          style: GoogleFonts.hankenGrotesk(
+                          style: AppFonts.sans(
                               fontWeight: FontWeight.w700, fontSize: 15),
                         ),
                       ),
@@ -372,7 +371,7 @@ class _AccountDropdown extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.hankenGrotesk(
+          style: AppFonts.sans(
             color: tc.onSurfaceVariant,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -395,7 +394,7 @@ class _AccountDropdown extends StatelessWidget {
                   : null,
               hint: Text(
                 'Select account',
-                style: GoogleFonts.hankenGrotesk(
+                style: AppFonts.sans(
                     color: tc.onSurfaceVariant, fontSize: 14),
               ),
               isExpanded: true,
@@ -413,7 +412,7 @@ class _AccountDropdown extends StatelessWidget {
                       Expanded(
                         child: Text(
                           acc.name,
-                          style: GoogleFonts.hankenGrotesk(
+                          style: AppFonts.sans(
                               color: tc.onSurface,
                               fontSize: 14,
                               fontWeight: FontWeight.w600),
