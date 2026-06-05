@@ -1,0 +1,1 @@
+- Cached DateFormat instance outside the loop in `_groupByDate` (history screen) to avoid expensive instantiations during list iteration, improving rendering speed.
