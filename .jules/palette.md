@@ -1,0 +1,1 @@
+- Wrapped multiple `IconButton`s with `Semantics(label: ..., button: true)` and added `tooltip`s to improve accessibility in the dashboard, subscriptions, recurring transactions, and history screens.
