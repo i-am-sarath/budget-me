@@ -1,0 +1,1 @@
+- Enforced positive input validation (amount > 0) in transaction manual entry forms to prevent negative balance exploits.
