@@ -1,0 +1,1 @@
+- Strict positive value validation (> 0) should be enforced on transaction amounts to prevent negative balance exploits.
