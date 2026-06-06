@@ -1,0 +1,1 @@
+- Refactored multiple `.where().fold()` chains in `SummaryCard` calculations into a single pass `for` loop to achieve O(N) performance, preventing redundant list iterations.
