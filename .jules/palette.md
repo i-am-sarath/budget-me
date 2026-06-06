@@ -1,0 +1,1 @@
+Always wrap decorative/actionable `IconButton` widgets with `Semantics` (including `label` and `button: true`) and provide a `tooltip` to ensure proper accessibility for screen readers and usability for hover states.
