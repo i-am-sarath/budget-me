@@ -1,0 +1,1 @@
+- In the Flutter app, wrap IconButtons with Semantics(label: "...", button: true) and set the tooltip property to improve accessibility.
