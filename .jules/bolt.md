@@ -1,0 +1,1 @@
+- Cached `DateFormat` instance outside of loops to prevent performance bottlenecks caused by expensive instantiations for each item.
