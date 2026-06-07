@@ -1,0 +1,1 @@
+- Strict input validation added to transaction amounts to prevent negative balance exploits.
