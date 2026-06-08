@@ -1,0 +1,1 @@
+- Always wrap `IconButton` widgets in a `Semantics` widget with a descriptive `label` and `button: true`, and add a `tooltip` property to the `IconButton` to improve accessibility and provide micro-UX feedback.
