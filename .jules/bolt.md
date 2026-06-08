@@ -1,0 +1,1 @@
+- Replaced repeated `.where().fold()` chains with a single-pass loop to avoid redundant list traversals and improve performance.
