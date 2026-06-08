@@ -1,0 +1,1 @@
+- Added input validation for transaction amounts to ensure parsed > 0, preventing negative balance exploits.
