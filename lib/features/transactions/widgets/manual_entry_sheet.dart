@@ -186,6 +186,12 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     if (_formKey.currentState!.validate()) {
       HapticFeedback.mediumImpact();
       final amount = double.tryParse(_amountController.text) ?? 0;
+
+      // ✅ Security: Enforce positive amount to prevent negative balance exploits
+      if (amount <= 0) {
+        throw ArgumentError('Invalid amount');
+      }
+
       final transaction = TransactionModel(
         id: widget.prefill?.id,
         amount: amount,
@@ -518,7 +524,8 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Enter amount';
-                if (double.tryParse(v) == null) return 'Invalid amount';
+                final parsed = double.tryParse(v);
+                if (parsed == null || parsed <= 0) return 'Invalid amount';
                 return null;
               },
             ),
