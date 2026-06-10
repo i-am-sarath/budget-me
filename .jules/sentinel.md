@@ -1,0 +1,1 @@
+- Transactions: Strictly enforce transaction amounts to be greater than zero (`> 0`) in validators and upon submission, and throw `ArgumentError` when violated to prevent negative balance exploits.
