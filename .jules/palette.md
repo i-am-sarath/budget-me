@@ -1,0 +1,1 @@
+- Always use `Semantics` widget with descriptive `label` and set `button: true`, and add a `tooltip` property to `IconButton` widgets to ensure they are accessible.
