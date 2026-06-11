@@ -1,0 +1,1 @@
+- Discovered missing transaction amount validation which could allow negative amounts and zero values; added strict validation to enforce amount > 0 to prevent negative balance exploits and invalid ledger entries.
