@@ -1,0 +1,1 @@
+- Always wrap IconButtons in Semantics with a descriptive label and button: true, and add a tooltip property to the IconButton itself for better accessibility.
