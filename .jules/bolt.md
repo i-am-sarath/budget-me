@@ -1,0 +1,1 @@
+- Caching DateFormat outside of loops prevents performance bottlenecks during list iterations.
