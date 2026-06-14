@@ -4,10 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/services/consent_service.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/backup_service.dart';
 import 'package:agent_money/core/services/budget_service.dart';
+import 'package:agent_money/core/services/cloud_service.dart';
 import 'package:agent_money/core/services/overlay_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
@@ -16,11 +21,22 @@ import 'package:agent_money/features/onboarding/onboarding_screen.dart';
 import 'package:agent_money/features/overlay/overlay_widget.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
+import 'package:agent_money/features/transactions/widgets/voice_capture_sheet.dart';
 import 'package:record/record.dart';
+
+/// App Group shared between the app and the iOS WidgetKit extension, and the
+/// host string used by the home-screen quick-add widget's deep link
+/// (`budgetme://voice`).
+const String kHomeWidgetAppGroup = 'group.com.budgetme.budgettracker';
 
 /// Global navigator key — needed so the overlay IPC listener can push the
 /// quick-entry sheet from anywhere without a BuildContext.
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Global messenger key so background flows (voice auto-save) can show
+/// snackbars/undo regardless of which screen is mounted.
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 /// Second Flutter entry point — runs inside the system overlay window.
 /// Must be top-level and annotated with `vm:entry-point` so tree-shaking
@@ -58,9 +74,23 @@ void main() async {
     // RC key not configured yet — app continues without subscription features
   }
 
-  // Initialize AdMob (mobile only)
+  // Initialize Supabase for cloud groups (no-op if keys aren't configured)
+  try {
+    await CloudService.init();
+  } catch (_) {
+    // Cloud sync optional — app continues as a local-only tracker
+  }
+
+  // Initialize AdMob (mobile only). Gather UMP consent first so EEA/UK users
+  // see the consent form before any ad request (Google ads policy).
   if (Platform.isAndroid || Platform.isIOS) {
+    await ConsentService.gatherConsent();
     await MobileAds.instance.initialize();
+    // Required on iOS so the app and the WidgetKit extension share storage.
+    // Harmless on Android.
+    try {
+      await HomeWidget.setAppGroupId(kHomeWidgetAppGroup);
+    } catch (_) {}
   }
 
   // Fire-and-forget defensive backup. Rate-limited to once per 24h.
@@ -72,7 +102,24 @@ void main() async {
   // No-op on iOS / if permission was revoked.
   unawaited(OverlayService.restoreIfEnabled());
 
-  runApp(const ProviderScope(child: BudgetTrackerApp()));
+  // Initialise crash reporting if a DSN was provided at build time, otherwise
+  // run the app directly. Sentry's appRunner installs an error-capturing zone.
+  if (ApiConfig.crashReportingEnabled) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = ApiConfig.sentryDsn;
+        options.tracesSampleRate = 0.2;
+        const isRelease = bool.fromEnvironment('dart.vm.product');
+        options.debug = !isRelease;
+        // Don't ship PII — financial app, keep reports minimal.
+        options.sendDefaultPii = false;
+      },
+      appRunner: () =>
+          runApp(const ProviderScope(child: BudgetTrackerApp())),
+    );
+  } else {
+    runApp(const ProviderScope(child: BudgetTrackerApp()));
+  }
 }
 
 class BudgetTrackerApp extends ConsumerStatefulWidget {
@@ -94,6 +141,66 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
     //   - 'open_quick_entry' (legacy)             → manual entry sheet
     if (Platform.isAndroid) {
       _overlaySub = OverlayService.events.listen(_handleOverlayEvent);
+    }
+
+    // Home-screen quick-add widget: tapping it deep-links to budgetme://voice.
+    if (Platform.isAndroid || Platform.isIOS) {
+      _initHomeWidgetLaunch();
+    }
+  }
+
+  StreamSubscription<Uri?>? _widgetSub;
+
+  /// Handle launches that originate from the home-screen widget — both a cold
+  /// start (app was not running) and a warm tap (app already alive).
+  void _initHomeWidgetLaunch() {
+    // Warm taps arrive on this stream.
+    _widgetSub = HomeWidget.widgetClicked.listen(_handleWidgetUri);
+    // Cold start: the launch URI is available once after startup.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final uri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+        _handleWidgetUri(uri);
+      } catch (_) {}
+    });
+  }
+
+  bool _handlingWidgetLaunch = false;
+
+  void _handleWidgetUri(Uri? uri) {
+    if (uri == null) return;
+    // budgetme://voice  (host == 'voice')
+    if (uri.host != 'voice' && uri.path != '/voice') return;
+    // ignore: discarded_futures
+    _openVoiceWhenReady();
+  }
+
+  /// Open the voice recorder, waiting for the app to be ready first.
+  ///
+  /// On a cold start (the common case for a widget tap — the app wasn't
+  /// running) the deep link arrives before the navigator/dashboard is mounted.
+  /// Showing the sheet then either targets a null context or lands on the
+  /// splash and gets torn down when the [AnimatedSwitcher] swaps in the
+  /// dashboard. So we poll briefly until both a navigator context exists and
+  /// onboarding is complete, then show it.
+  Future<void> _openVoiceWhenReady() async {
+    if (_handlingWidgetLaunch) return;
+    _handlingWidgetLaunch = true;
+    try {
+      for (var i = 0; i < 50; i++) {
+        if (!mounted) return;
+        final ctx = rootNavigatorKey.currentContext;
+        final ready = ctx != null && ref.read(budgetProvider).onboardingDone;
+        if (ready) {
+          // ctx is freshly read from the global navigator key on this line.
+          // ignore: use_build_context_synchronously
+          await showVoiceCapture(ctx);
+          return;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+    } finally {
+      _handlingWidgetLaunch = false;
     }
   }
 
@@ -147,6 +254,7 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
   @override
   void dispose() {
     _overlaySub?.cancel();
+    _widgetSub?.cancel();
     super.dispose();
   }
 
@@ -157,6 +265,7 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
     return MaterialApp(
       title: 'Budget Me',
       navigatorKey: rootNavigatorKey,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

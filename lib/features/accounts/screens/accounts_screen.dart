@@ -9,6 +9,10 @@ import 'package:agent_money/features/accounts/repositories/account_repository.da
 import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
 import 'package:agent_money/features/accounts/widgets/transfer_sheet.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
+import 'package:intl/intl.dart';
 
 class AccountsScreen extends ConsumerStatefulWidget {
   const AccountsScreen({super.key});
@@ -69,6 +73,85 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
     ).then((_) {
       ref.read(accountProvider.notifier).loadAccounts();
     });
+  }
+
+  void _showAccountDetail(AccountModel account) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AccountDetailSheet(
+        account: account,
+        onEdit: () => _showAddSheet(account),
+        onTransfer: () => _showTransferSheet(account),
+        onAdjust: () => _showAdjustBalance(account),
+        onDelete: () => _confirmDelete(account),
+      ),
+    ).then((_) => ref.read(accountProvider.notifier).loadAccounts());
+  }
+
+  /// Quick "set the real balance" correction — writes the new balance directly
+  /// without creating a transaction. Useful when the tracked balance drifts.
+  void _showAdjustBalance(AccountModel account) {
+    final tc = AppThemeColors.of(context);
+    final controller =
+        TextEditingController(text: account.balance.toStringAsFixed(2));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: tc.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Correct balance',
+            style: AppFonts.sans(
+                color: tc.onSurface, fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                'Set the actual balance of "${account.name}". This updates the account directly and does not add a transaction.',
+                style: AppFonts.sans(
+                    color: tc.onSurfaceVariant, fontSize: 13, height: 1.5)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true, signed: true),
+              style: AppFonts.sans(
+                  color: tc.onSurface,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700),
+              decoration: InputDecoration(
+                prefixText: '${account.currencyCode}  ',
+                prefixStyle: AppFonts.sans(
+                    color: tc.onSurfaceVariant, fontWeight: FontWeight.w600),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel',
+                  style: AppFonts.sans(color: tc.onSurfaceVariant))),
+          ElevatedButton(
+            onPressed: () {
+              final value = double.tryParse(controller.text.trim());
+              if (value == null) return;
+              ref
+                  .read(accountProvider.notifier)
+                  .updateAccount(account.copyWith(balance: value));
+              Navigator.pop(ctx);
+            },
+            child: Text('Save',
+                style: AppFonts.sans(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _confirmDelete(AccountModel account) {
@@ -235,6 +318,17 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                         .animate()
                         .fadeIn(delay: 120.ms),
 
+                    const SizedBox(height: 12),
+
+                    // Recurring payments (rent, SIP, subscriptions…)
+                    _RecurringTile(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RecurringScreen()),
+                      ),
+                    ).animate().fadeIn(delay: 160.ms),
+
                     const SizedBox(height: 24),
 
                     // Assets section
@@ -247,8 +341,14 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                             (e) => _AccountCard(
                               account: e.value,
                               currency: currency,
+                              share: totalAssets > 0
+                                  ? e.value.balance / totalAssets
+                                  : 0,
+                              shareLabel: 'of assets',
+                              onOpen: () => _showAccountDetail(e.value),
                               onEdit: () => _showAddSheet(e.value),
                               onDelete: () => _confirmDelete(e.value),
+                              onAdjust: () => _showAdjustBalance(e.value),
                               onTransfer: () =>
                                   _showTransferSheet(e.value),
                             )
@@ -269,8 +369,14 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                             (e) => _AccountCard(
                               account: e.value,
                               currency: currency,
+                              share: totalDebt > 0
+                                  ? e.value.balance / totalDebt
+                                  : 0,
+                              shareLabel: 'of debt',
+                              onOpen: () => _showAccountDetail(e.value),
                               onEdit: () => _showAddSheet(e.value),
                               onDelete: () => _confirmDelete(e.value),
+                              onAdjust: () => _showAdjustBalance(e.value),
                               onTransfer: () =>
                                   _showTransferSheet(e.value),
                               isLiability: true,
@@ -443,17 +549,25 @@ class _MiniStat extends StatelessWidget {
 class _AccountCard extends StatelessWidget {
   final AccountModel account;
   final CurrencyState currency;
+  final double share; // 0..1 portion of total assets / debt
+  final String shareLabel;
+  final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onTransfer;
+  final VoidCallback onAdjust;
   final bool isLiability;
 
   const _AccountCard({
     required this.account,
     required this.currency,
+    required this.share,
+    required this.shareLabel,
+    required this.onOpen,
     required this.onEdit,
     required this.onDelete,
     required this.onTransfer,
+    required this.onAdjust,
     this.isLiability = false,
   });
 
@@ -462,6 +576,7 @@ class _AccountCard extends StatelessWidget {
     final tc = AppThemeColors.of(context);
 
     return GestureDetector(
+      onTap: onOpen,
       onLongPress: () => _showMenu(context, tc),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -509,6 +624,34 @@ class _AccountCard extends StatelessWidget {
                     style: AppFonts.sans(
                         color: tc.onSurfaceVariant, fontSize: 11),
                   ),
+                  if (share > 0) ...[
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 56,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: LinearProgressIndicator(
+                              value: share.clamp(0.0, 1.0),
+                              minHeight: 3,
+                              backgroundColor: tc.surfaceContainerHigh,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  isLiability ? tc.expense : tc.income),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          '${(share * 100).round()}% $shareLabel',
+                          style: AppFonts.sans(
+                              color: tc.onSurfaceVariant,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -615,6 +758,17 @@ class _AccountCard extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 onEdit();
+              },
+            ),
+            Divider(height: 1, color: tc.outlineVariant),
+            _MenuOption(
+              icon: Icons.tune_rounded,
+              label: 'Correct balance',
+              color: tc.onSurface,
+              tc: tc,
+              onTap: () {
+                Navigator.pop(context);
+                onAdjust();
               },
             ),
             Divider(height: 1, color: tc.outlineVariant),
@@ -734,6 +888,59 @@ class _AddTransactionCta extends StatelessWidget {
   }
 }
 
+// ─── Recurring payments tile ─────────────────────────────────
+class _RecurringTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _RecurringTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: tc.primary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Icon(Icons.repeat_rounded, color: tc.primary, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Recurring payments',
+                      style: AppFonts.sans(
+                          color: tc.onSurface,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15)),
+                  Text('Rent, SIP, subscriptions on autopilot',
+                      style: AppFonts.sans(
+                          color: tc.onSurfaceVariant, fontSize: 11)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                color: tc.onSurfaceVariant, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Transfer CTA ────────────────────────────────────────────
 class _TransferCta extends StatelessWidget {
   final VoidCallback onTap;
@@ -783,6 +990,313 @@ class _TransferCta extends StatelessWidget {
                 color: tc.onSurfaceVariant, size: 18),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Account Detail Sheet ─────────────────────────────────────
+// Tap an account card → balance, share, quick actions, recent activity.
+class _AccountDetailSheet extends ConsumerStatefulWidget {
+  final AccountModel account;
+  final VoidCallback onEdit;
+  final VoidCallback onTransfer;
+  final VoidCallback onAdjust;
+  final VoidCallback onDelete;
+
+  const _AccountDetailSheet({
+    required this.account,
+    required this.onEdit,
+    required this.onTransfer,
+    required this.onAdjust,
+    required this.onDelete,
+  });
+
+  @override
+  ConsumerState<_AccountDetailSheet> createState() =>
+      _AccountDetailSheetState();
+}
+
+class _AccountDetailSheetState extends ConsumerState<_AccountDetailSheet> {
+  late Future<List<TransactionModel>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = TransactionRepository().getByAccount(widget.account.id);
+  }
+
+  bool get _isLiability =>
+      widget.account.type == AccountType.loan ||
+      widget.account.type == AccountType.creditCard;
+
+  void _close(VoidCallback action) {
+    Navigator.pop(context);
+    action();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    final currency = ref.watch(currencyProvider);
+    final account = widget.account;
+
+    return Container(
+      margin: const EdgeInsets.all(12),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
+      decoration: BoxDecoration(
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 8),
+            child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: tc.outlineVariant,
+                    borderRadius: BorderRadius.circular(100))),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: account.type.color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(account.type.icon,
+                      color: account.type.color, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(account.name,
+                          style: AppFonts.sans(
+                              color: tc.onSurface,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800)),
+                      Text(
+                        account.bankName.isNotEmpty
+                            ? account.bankName
+                            : account.type.label,
+                        style: AppFonts.sans(
+                            color: tc.onSurfaceVariant, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Balance
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              children: [
+                Text(currency.format(account.balance),
+                    style: AppFonts.sans(
+                        color: _isLiability ? tc.expense : tc.onSurface,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1)),
+                const SizedBox(height: 2),
+                Text(_isLiability ? 'Outstanding' : 'Available balance',
+                    style: AppFonts.sans(
+                        color: tc.onSurfaceVariant, fontSize: 12)),
+              ],
+            ),
+          ),
+          // Quick actions
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _QuickAction(
+                    icon: Icons.tune_rounded,
+                    label: 'Balance',
+                    tc: tc,
+                    onTap: () => _close(widget.onAdjust)),
+                _QuickAction(
+                    icon: Icons.swap_horiz_rounded,
+                    label: 'Transfer',
+                    tc: tc,
+                    onTap: () => _close(widget.onTransfer)),
+                _QuickAction(
+                    icon: Icons.edit_outlined,
+                    label: 'Edit',
+                    tc: tc,
+                    onTap: () => _close(widget.onEdit)),
+                _QuickAction(
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Delete',
+                    tc: tc,
+                    color: tc.expense,
+                    onTap: () => _close(widget.onDelete)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Divider(height: 1, color: tc.outlineVariant),
+          // Recent activity
+          Flexible(
+            child: FutureBuilder<List<TransactionModel>>(
+              future: _future,
+              builder: (context, snap) {
+                if (snap.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.all(28),
+                    child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                }
+                final txs = (snap.data ?? [])
+                  ..sort((a, b) => b.date.compareTo(a.date));
+                if (txs.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+                    child: Center(
+                      child: Text('No activity on this account yet',
+                          style: AppFonts.sans(
+                              color: tc.onSurfaceVariant, fontSize: 13)),
+                    ),
+                  );
+                }
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  shrinkWrap: true,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('RECENT ACTIVITY',
+                              style: AppFonts.sans(
+                                  color: tc.onSurfaceVariant,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2)),
+                          Text('${txs.length} total',
+                              style: AppFonts.sans(
+                                  color: tc.onSurfaceVariant, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    ...txs.take(15).map(
+                        (t) => _ActivityRow(tx: t, currency: currency, tc: tc)),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final AppThemeColors tc;
+  final Color? color;
+  final VoidCallback onTap;
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.tc,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? tc.onSurface;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: tc.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: tc.outlineVariant, width: 0.5),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: c, size: 20),
+              const SizedBox(height: 6),
+              Text(label,
+                  style: AppFonts.sans(
+                      color: c, fontSize: 11, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityRow extends StatelessWidget {
+  final TransactionModel tx;
+  final CurrencyState currency;
+  final AppThemeColors tc;
+  const _ActivityRow(
+      {required this.tx, required this.currency, required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPositive = tx.balanceDelta >= 0;
+    final title = tx.note.isNotEmpty
+        ? tx.note
+        : (tx.payee?.isNotEmpty == true ? tx.payee! : tx.category);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text('${tx.category}  ·  ${DateFormat('d MMM').format(tx.date)}',
+                    style: AppFonts.sans(
+                        color: tc.onSurfaceVariant, fontSize: 11)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${isPositive ? '+' : '-'}${currency.format(tx.amount)}',
+            style: AppFonts.sans(
+                color: isPositive ? tc.income : tc.expense,
+                fontSize: 13,
+                fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }

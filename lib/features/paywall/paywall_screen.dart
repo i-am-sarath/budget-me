@@ -77,7 +77,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 const SizedBox(height: 6),
 
                 Text(
-                  'Voice-log without limits.\nSync everywhere. Never lose a transaction.',
+                  'Auto-sync to your Google Sheet.\nVoice without limits, Spaces, and exports.',
                   textAlign: TextAlign.center,
                   style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
@@ -130,7 +130,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 ).animate().fadeIn(delay: 520.ms),
 
                 Text(
-                  'Cancel anytime · Secure payment via Google / Apple',
+                  '14-day free trial · Cancel anytime · Secure payment via Google / Apple',
                   textAlign: TextAlign.center,
                   style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
@@ -238,11 +238,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 // ─────────────────────────────────────────────
 
 const _features = [
-  (Icons.mic_rounded, 'Unlimited voice logs', 'No 1/day limit'),
-  (Icons.cloud_sync_rounded, 'Cloud sync', 'Access on any device'),
-  (Icons.receipt_long_rounded, 'Full transaction history', 'View & export all records'),
-  (Icons.trending_up_rounded, 'Investment tracking', 'Portfolio insights'),
-  (Icons.repeat_rounded, 'Unlimited recurring rules', 'DigiGold, SIP and more'),
+  (Icons.table_chart_rounded, 'Google Sheets auto-sync', 'Every entry lands in your own sheet'),
+  (Icons.workspaces_rounded, 'Spaces', 'Group a trip or outing & see its total'),
+  (Icons.mic_rounded, 'Unlimited voice logs', 'No monthly cap'),
+  (Icons.repeat_rounded, 'Recurring auto-entries', 'Rent, SIP, subscriptions on autopilot'),
+  (Icons.cloud_done_rounded, 'Multi-device backup & export', 'Restore anywhere · CSV export'),
 ];
 
 class _FeatureRow extends StatelessWidget {
@@ -329,10 +329,10 @@ class _PlanToggle extends StatelessWidget {
           ),
           _PlanOption(
             label: 'Annual',
-            price: _price(sub.annualPackage, '\$29.99'),
+            price: _price(sub.annualPackage, '\$23.99'),
             subLabel: _annualPerMonth(sub.annualPackage).isNotEmpty
-                ? '${_annualPerMonth(sub.annualPackage)} · Save 37%'
-                : '/year · Save 37%',
+                ? '${_annualPerMonth(sub.annualPackage)} · Save 50%'
+                : '/year · Save 50%',
             isSelected: isAnnual,
             onTap: () => onChanged(true),
             badge: 'Best Value',

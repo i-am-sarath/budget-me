@@ -2,13 +2,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
 import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
-import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
 import 'package:agent_money/features/settings/settings_screen.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:agent_money/features/analytics/analytics_screen.dart';
@@ -16,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
 import 'package:agent_money/features/categories/screens/category_budget_screen.dart';
+import 'package:agent_money/features/groups/screens/groups_screen.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -33,6 +33,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     CategoryBudgetScreen(),
     AnalyticsScreen(),
     AccountsScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -56,7 +57,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         child: SafeArea(
           child: SizedBox(
-            height: 64,
+            height: 68,
             child: Row(
               children: [
                 _NavItem(
@@ -86,6 +87,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   isSelected: _navIndex == 3,
                   tc: tc,
                   onTap: () => setState(() => _navIndex = 3),
+                ),
+                _NavItem(
+                  icon: Icons.settings_rounded,
+                  label: 'Settings',
+                  isSelected: _navIndex == 4,
+                  tc: tc,
+                  onTap: () => setState(() => _navIndex = 4),
                 ),
               ],
             ),
@@ -181,67 +189,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     });
   }
 
-  void _showMoreMenu(BuildContext context, AppThemeColors tc) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: tc.surface,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: tc.outline, width: 1.0),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: tc.outlineVariant,
-                borderRadius: BorderRadius.circular(100),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _MoreMenuItem(
-              icon: Icons.repeat_rounded,
-              label: 'Recurring Payments',
-              tc: tc,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const RecurringScreen()));
-              },
-            ),
-            _MoreMenuItem(
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              tc: tc,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionListProvider);
     final currency = ref.watch(currencyProvider);
-    final themeMode = ref.watch(themeProvider);
+    final voiceProcessing = ref.watch(voiceLogProvider).isProcessing;
     final tc = AppThemeColors.of(context);
-
-    final isDark = themeMode == ThemeMode.dark ||
-        (themeMode == ThemeMode.system &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -255,16 +208,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           title: _SpaceHeaderTitle(tc: tc),
           actions: [
             IconButton(
-              onPressed: () => ref.read(themeProvider.notifier).toggle(),
-              icon: Icon(
-                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                color: tc.onSurface,
-                size: 20,
+              tooltip: 'Groups',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const GroupsScreen()),
               ),
-            ),
-            IconButton(
-              onPressed: () => _showMoreMenu(context, tc),
-              icon: Icon(Icons.more_horiz_rounded, color: tc.onSurface),
+              icon: Icon(Icons.groups_rounded, color: tc.onSurface),
             ),
             const SizedBox(width: 8),
           ],
@@ -281,6 +230,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               // ─── Filter Chips ──────────────────────────
               _buildFilterChips(tc),
               const SizedBox(height: 14),
+
+              // ─── Voice auto-save in progress ───────────
+              if (voiceProcessing) ...[
+                _VoiceLoggingRow(tc: tc),
+                const SizedBox(height: 10),
+              ],
 
               // ─── Transactions for selected month ───────
               transactionsAsync.when(
@@ -300,7 +255,13 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     filtered =
                         filtered.where((t) => t.type == _filter).toList();
                   }
-                  if (filtered.isEmpty) return _EmptyTransactions();
+                  // While a voice log is processing, don't show the empty state
+                  // under the shimmer row — it'll fill in a second.
+                  if (filtered.isEmpty) {
+                    return voiceProcessing
+                        ? const SizedBox.shrink()
+                        : _EmptyTransactions();
+                  }
                   return _DateGroupedList(
                     transactions: filtered,
                     currency: currency,
@@ -519,45 +480,6 @@ class _DateGroupedList extends StatelessWidget {
   }
 }
 
-class _MoreMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final AppThemeColors tc;
-  final VoidCallback onTap;
-
-  const _MoreMenuItem({
-    required this.icon,
-    required this.label,
-    required this.tc,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: tc.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: tc.onSurface, size: 20),
-      ),
-      title: Text(
-        label,
-        style: AppFonts.sans(
-          color: tc.onSurface,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      trailing:
-          Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant, size: 20),
-      onTap: onTap,
-    );
-  }
-}
-
 // ─────────────────────────────────────────────
 // Utils
 // ─────────────────────────────────────────────
@@ -576,6 +498,63 @@ class _SectionHeader extends StatelessWidget {
           letterSpacing: 1.5,
         ),
       );
+}
+
+/// Shimmer-style row shown at the top of the list while a voice log is being
+/// transcribed + parsed in the background (the auto-save flow).
+class _VoiceLoggingRow extends StatelessWidget {
+  final AppThemeColors tc;
+  const _VoiceLoggingRow({required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.4,
+              valueColor: AlwaysStoppedAnimation<Color>(tc.onSurface),
+              backgroundColor: tc.outlineVariant,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Logging your transaction…',
+                  style: AppFonts.sans(
+                    color: tc.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Transcribing and saving',
+                  style: AppFonts.sans(
+                    color: tc.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.mic_rounded, color: tc.onSurfaceVariant, size: 18),
+        ],
+      ),
+    );
+  }
 }
 
 class _TransactionsSkeleton extends StatelessWidget {

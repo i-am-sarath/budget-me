@@ -10,11 +10,15 @@ import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/core/services/overlay_service.dart';
+import 'package:agent_money/core/services/sheets_sync_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
+import 'package:agent_money/features/auth/widgets/account_sheet.dart';
+import 'package:agent_money/core/services/auth_service.dart';
+import 'package:agent_money/features/groups/providers/groups_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -58,6 +62,14 @@ class SettingsScreen extends ConsumerWidget {
                     .slideY(begin: 0.12, end: 0),
                 const SizedBox(height: 28),
 
+                // Account (sign in / sign up / log out)
+                _SectionLabel('ACCOUNT'),
+                const SizedBox(height: 10),
+                const _AuthCard()
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 30.ms),
+                const SizedBox(height: 28),
+
                 // Appearance
                 _SectionLabel('APPEARANCE'),
                 const SizedBox(height: 10),
@@ -92,6 +104,14 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(height: 28),
                 ],
 
+                // Google Sheets one-way sync (opt-in, privacy-first)
+                _SectionLabel('GOOGLE SHEETS'),
+                const SizedBox(height: 10),
+                _SheetsSyncCard()
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 185.ms),
+                const SizedBox(height: 28),
+
                 // About
                 _SectionLabel('ABOUT'),
                 const SizedBox(height: 10),
@@ -107,6 +127,16 @@ class SettingsScreen extends ConsumerWidget {
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 220.ms),
                 const SizedBox(height: 28),
+
+                // Account (cloud sign-in) — only when cloud sync is configured.
+                if (ref.watch(cloudEnabledProvider)) ...[
+                  _SectionLabel('ACCOUNT'),
+                  const SizedBox(height: 10),
+                  _AccountCard()
+                      .animate()
+                      .fadeIn(duration: 350.ms, delay: 240.ms),
+                  const SizedBox(height: 28),
+                ],
 
                 // Danger zone
                 _SectionLabel('DANGER ZONE'),
@@ -141,6 +171,341 @@ class _SectionLabel extends StatelessWidget {
           letterSpacing: 1.5,
         ),
       );
+}
+
+// ─────────────────────────────────────────────
+// Account Card (sign in / sign up / log out)
+// ─────────────────────────────────────────────
+
+class _AuthCard extends ConsumerWidget {
+  const _AuthCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+    final account = ref.watch(authProvider);
+
+    if (account.signedIn) {
+      final name = account.displayName;
+      final email = account.email ?? '';
+      final initial =
+          (name.isNotEmpty ? name.characters.first : '?').toUpperCase();
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: tc.primary.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                initial,
+                style: AppFonts.sans(
+                    color: tc.primary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15),
+                  ),
+                  if (email.isNotEmpty)
+                    Text(
+                      email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.sans(
+                          color: tc.onSurfaceVariant, fontSize: 12),
+                    ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () => _confirmLogout(context, ref),
+              style: TextButton.styleFrom(foregroundColor: tc.error),
+              child: Text('Log out',
+                  style: AppFonts.sans(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Signed out → invite to sign in / sign up.
+    return GestureDetector(
+      onTap: () => requireAccount(
+        context,
+        ref,
+        reason: 'Sign in to sync across devices, log by voice, and connect '
+            'Google Sheets.',
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: tc.primary.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.person_outline_rounded,
+                  color: tc.primary, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Sign in or sign up',
+                      style: AppFonts.sans(
+                          color: tc.onSurface,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15)),
+                  Text('For voice logging, Sheets & multi-device sync',
+                      style: AppFonts.sans(
+                          color: tc.onSurfaceVariant, fontSize: 12)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                color: tc.onSurfaceVariant, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final tc = AppThemeColors.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: tc.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Log out?',
+            style:
+                AppFonts.sans(color: tc.onSurface, fontWeight: FontWeight.w700)),
+        content: Text(
+          'You can keep using manual entry, but voice, Sheets sync and '
+          'multi-device sync will be turned off until you sign back in.',
+          style: AppFonts.sans(
+              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel',
+                style: AppFonts.sans(color: tc.onSurfaceVariant)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: tc.error),
+            child: Text('Log out',
+                style: AppFonts.sans(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(authProvider.notifier).signOut();
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// Google Sheets sync Card
+// ─────────────────────────────────────────────
+
+class _SheetsSyncCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+    final sync = ref.watch(sheetsSyncProvider);
+    const sheetsGreen = Color(0xFF188038);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: sheetsGreen.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.table_chart_rounded,
+                    color: sheetsGreen, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sync.connected ? 'Connected' : 'Sync to Google Sheets',
+                      style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      sync.connected
+                          ? (sync.email ?? 'Your sheet is up to date')
+                          : 'Mirror every transaction to your own sheet',
+                      style: AppFonts.sans(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Private by design — we can only see the one sheet we create for you, '
+            'nothing else in your Drive.',
+            style: AppFonts.sans(
+              color: tc.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (sync.connected) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: sync.url == null
+                        ? null
+                        : () => launchUrl(Uri.parse(sync.url!),
+                            mode: LaunchMode.externalApplication),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: Text('Open sheet',
+                        style: AppFonts.sans(fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: tc.outlineVariant),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextButton(
+                    onPressed: sync.isBusy
+                        ? null
+                        : () => ref.read(sheetsSyncProvider.notifier).disconnect(),
+                    child: Text('Disconnect',
+                        style: AppFonts.sans(
+                            color: tc.onSurfaceVariant,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ] else
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: sync.isBusy
+                    ? null
+                    : () async {
+                        // Sheets sync requires a signed-in account…
+                        final hasAccount = await requireAccount(
+                          context,
+                          ref,
+                          reason:
+                              'Sign in to connect Google Sheets and auto-sync your transactions.',
+                        );
+                        if (!hasAccount || !context.mounted) return;
+                        // …and is a Pro feature (with a 14-day trial). Send
+                        // non-Pro users to the paywall first.
+                        if (!ref.read(subscriptionProvider).isPro) {
+                          await showPaywall(context);
+                          if (!context.mounted ||
+                              !ref.read(subscriptionProvider).isPro) {
+                            return;
+                          }
+                        }
+                        final err = await ref
+                            .read(sheetsSyncProvider.notifier)
+                            .connect();
+                        if (err != null && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(err)),
+                          );
+                        }
+                      },
+                icon: sync.isBusy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.link_rounded, size: 18),
+                label: Text(
+                  sync.isBusy ? 'Connecting…' : 'Connect Google Sheets',
+                  style: AppFonts.sans(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tc.onSurface,
+                  foregroundColor: tc.surface,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -200,8 +565,8 @@ class _SubscriptionCard extends ConsumerWidget {
                 ),
                 Text(
                   isPro
-                      ? 'Unlimited · Cloud sync active'
-                      : '${SubscriptionState.freeVoiceLogLimit} voice logs/month · Local only',
+                      ? 'Unlimited voice logs · All features unlocked'
+                      : '${SubscriptionState.freeVoiceLogLimit} voice logs/month',
                   style: AppFonts.sans(
                     color: isPro
                         ? tc.surface.withOpacity(0.6)
@@ -926,6 +1291,191 @@ class _OverlayToggleCard extends ConsumerWidget {
       }
     } else {
       await notifier.turnOff();
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// Account Card (cloud sign-in / sign-out / delete account)
+// ─────────────────────────────────────────────
+
+class _AccountCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = AppThemeColors.of(context);
+    final auth = ref.watch(cloudAuthProvider);
+
+    if (!auth.isSignedIn) {
+      return Container(
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: _SettingsTile(
+          icon: Icons.login_rounded,
+          label: 'Sign in',
+          sub: 'Sign in to share spending with groups',
+          tc: tc,
+          onTap: () => ref.read(cloudAuthProvider.notifier).signIn(),
+        ),
+      );
+    }
+
+    final email = auth.user?.email ?? 'Signed in';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Column(
+        children: [
+          // Signed-in identity
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: tc.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.person_rounded, color: tc.onSurface, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Signed in',
+                          style: AppFonts.sans(
+                              color: tc.onSurfaceVariant, fontSize: 11)),
+                      Text(email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppFonts.sans(
+                              color: tc.onSurface,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: tc.outlineVariant),
+          _SettingsTile(
+            icon: Icons.logout_rounded,
+            label: 'Sign out',
+            sub: 'Sign out on this device',
+            tc: tc,
+            onTap: () => ref.read(cloudAuthProvider.notifier).signOut(),
+          ),
+          Divider(height: 1, color: tc.outlineVariant),
+          // Delete account — required by Google Play account-deletion policy.
+          InkWell(
+            onTap: () => _confirmDelete(context, ref, tc),
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: tc.expense.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.person_off_rounded,
+                        color: tc.expense, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Delete Account',
+                            style: AppFonts.sans(
+                                color: tc.expense,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14)),
+                        Text('Permanently delete your account & cloud data',
+                            style: AppFonts.sans(
+                                color: tc.onSurfaceVariant, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded,
+                      color: tc.expense.withOpacity(0.6), size: 18),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, AppThemeColors tc) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: tc.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Delete your account?',
+            style:
+                AppFonts.sans(color: tc.onSurface, fontWeight: FontWeight.w700)),
+        content: Text(
+          'This permanently deletes your account and all your shared group data '
+          'from the cloud. Groups you created will be removed for everyone. '
+          'This cannot be undone.\n\nYour on-device transactions stay on this '
+          'phone — use "Reset All Data" to remove those too.',
+          style:
+              AppFonts.sans(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child:
+                Text('Cancel', style: AppFonts.sans(color: tc.onSurfaceVariant)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: tc.expense,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _doDelete(context, ref);
+            },
+            child: Text('Delete Account',
+                style: AppFonts.sans(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _doDelete(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(cloudAuthProvider.notifier).deleteAccount();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your account has been deleted.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),
+        );
+      }
     }
   }
 }

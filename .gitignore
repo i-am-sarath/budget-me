@@ -49,4 +49,8 @@ app.*.map.json
 
 # Local build secrets — never commit
 dart_defines.env
+dart_defines.json
 *.env
+android/key.properties
+*.keystore
+*.jks

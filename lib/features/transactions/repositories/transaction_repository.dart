@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
+import 'package:agent_money/core/services/sheets_sync_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/spaces/repositories/space_repository.dart';
@@ -55,6 +56,11 @@ class TransactionNotifier
       }
 
       await _repository.addTransaction(tx, _spaceId);
+
+      // One-way mirror to the user's Google Sheet (no-op unless connected).
+      // Fire-and-forget: never let a sync hiccup affect the local save.
+      // ignore: discarded_futures
+      SheetsSyncService.instance.appendTransaction(tx);
 
       // Adjust linked account balance
       if (tx.accountId != null && tx.accountId!.isNotEmpty) {

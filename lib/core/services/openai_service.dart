@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/services/cloud_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 
 /// User-facing exception for voice-log failures.
@@ -39,10 +40,26 @@ class OpenAIService {
     return 'anon-${Platform.operatingSystem}';
   }
 
-  Map<String, String> _baseHeaders(String userId) => {
-        'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
-        'X-User-Id': userId,
-      };
+  /// The signed-in user's Supabase access token, when available. The worker
+  /// verifies this to key rate limiting on a tamper-proof identity (the
+  /// X-User-Id header alone is client-controlled and spoofable).
+  String? _accessToken() {
+    try {
+      if (!CloudService.isReady) return null;
+      return CloudService.client.auth.currentSession?.accessToken;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, String> _baseHeaders(String userId) {
+    final token = _accessToken();
+    return {
+      'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
+      'X-User-Id': userId,
+      if (token != null && token.isNotEmpty) 'X-User-Token': token,
+    };
+  }
 
   // ─────────────────────────────────────────────
   // Step 1: Transcribe audio (proxied → Whisper)

@@ -26,6 +26,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
   TransactionType _type = TransactionType.expense;
   String _category = 'General';
+  bool _categoryTouched = false; // user manually picked → stop auto-suggesting
   AccountModel? _selectedAccount;
   DateTime _date = DateTime.now();
   List<(String, String)>? _dbExpenseCategoriesCache;
@@ -371,6 +372,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                   label: _payeeLabel,
                   icon: Icons.person_outline_rounded,
                   tc: tc,
+                  onChanged: (_) => _maybeAutoPickCategory(),
                 ),
                 const SizedBox(height: 14),
               ],
@@ -381,6 +383,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 label: 'Note (optional)',
                 icon: Icons.edit_outlined,
                 tc: tc,
+                onChanged: (_) => _maybeAutoPickCategory(),
               ),
               const SizedBox(height: 14),
 
@@ -565,7 +568,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       children: _currentCategories(dbExpense).map((cat) {
         final isSelected = _category == cat.$2;
         return GestureDetector(
-          onTap: () => setState(() => _category = cat.$2),
+          onTap: () => setState(() {
+            _category = cat.$2;
+            _categoryTouched = true;
+          }),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -603,15 +609,65 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     required String label,
     required IconData icon,
     required AppThemeColors tc,
+    ValueChanged<String>? onChanged,
   }) =>
       TextFormField(
         controller: controller,
+        onChanged: onChanged,
         style: AppFonts.sans(color: tc.onSurface, fontSize: 14),
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: tc.onSurfaceVariant, size: 20),
         ),
       );
+
+  // ── Auto-category ────────────────────────────────────────
+  // Guess the category from what the user typed (note/payee) so they don't
+  // have to pick it by hand. Only runs for expenses and only until the user
+  // taps a category themselves (then [_categoryTouched] stops it).
+  static const Map<String, List<String>> _categoryKeywords = {
+    'Food': ['swiggy', 'zomato', 'restaurant', 'cafe', 'coffee', 'lunch',
+      'dinner', 'breakfast', 'pizza', 'burger', 'food', 'canteen', 'snack',
+      'tea', 'biryani', 'dominos', 'kfc', 'mcd', 'starbucks', 'grocery',
+      'groceries', 'bigbasket', 'blinkit', 'zepto', 'milk', 'vegetables'],
+    'Transport': ['uber', 'ola', 'rapido', 'auto', 'cab', 'taxi', 'petrol',
+      'diesel', 'fuel', 'metro', 'bus', 'train', 'parking', 'toll', 'flight',
+      'irctc', 'fastag'],
+    'Shopping': ['amazon', 'flipkart', 'myntra', 'ajio', 'shopping', 'clothes',
+      'shoes', 'mall', 'meesho', 'nykaa', 'electronics'],
+    'Bills': ['electricity', 'water bill', 'gas bill', 'recharge', 'mobile',
+      'broadband', 'wifi', 'internet', 'dth', 'bill', 'postpaid', 'jio',
+      'airtel', 'vi ', 'bsnl'],
+    'Entertainment': ['netflix', 'spotify', 'prime', 'hotstar', 'movie',
+      'cinema', 'pvr', 'inox', 'game', 'youtube', 'subscription', 'concert'],
+    'Health': ['pharmacy', 'medical', 'medicine', 'hospital', 'doctor',
+      'clinic', 'apollo', 'gym', 'fitness', 'pharmeasy', '1mg'],
+    'Rent': ['rent', 'maintenance', 'society'],
+    'Travel': ['hotel', 'oyo', 'airbnb', 'trip', 'travel', 'makemytrip',
+      'goibibo', 'booking', 'resort', 'vacation'],
+    'Education': ['course', 'tuition', 'school', 'college', 'fees', 'udemy',
+      'coursera', 'books', 'exam', 'class'],
+  };
+
+  String? _guessCategory(String text) {
+    final t = text.toLowerCase();
+    if (t.trim().isEmpty) return null;
+    for (final entry in _categoryKeywords.entries) {
+      for (final kw in entry.value) {
+        if (t.contains(kw)) return entry.key;
+      }
+    }
+    return null;
+  }
+
+  void _maybeAutoPickCategory() {
+    if (_categoryTouched || _type != TransactionType.expense) return;
+    final guess =
+        _guessCategory('${_noteController.text} ${_payeeController.text}');
+    if (guess != null && guess != _category) {
+      setState(() => _category = guess);
+    }
+  }
 
   Widget _buildAccountSelector(List<AccountModel> accounts, AppThemeColors tc) {
     if (accounts.isEmpty) {

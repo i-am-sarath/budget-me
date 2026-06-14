@@ -7,11 +7,10 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/services/ad_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/core/services/user_service.dart';
-import 'package:agent_money/features/auth/widgets/email_prompt_sheet.dart';
+import 'package:agent_money/features/auth/widgets/account_sheet.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
+import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -25,10 +24,16 @@ class MagicFab extends ConsumerStatefulWidget {
 
 class _MagicFabState extends ConsumerState<MagicFab> {
   bool _isRecording = false;
+  bool _starting = false; // async start (gates/permission) in flight
+  bool _stopRequested = false; // user released before start finished
   double _dragOffset = 0.0;
   Timer? _recordingTimer;
   int _recordingSeconds = 0;
   final _audioRecorder = AudioRecorder();
+
+  // Live mic level (0..1) for the WhatsApp-style waveform while recording.
+  StreamSubscription<Amplitude>? _ampSub;
+  double _amp = 0;
 
   static const double _cancelThreshold = -80.0;
   bool get _isCancelling => _dragOffset < _cancelThreshold;
@@ -36,49 +41,70 @@ class _MagicFabState extends ConsumerState<MagicFab> {
   @override
   void dispose() {
     _recordingTimer?.cancel();
+    _ampSub?.cancel();
     _audioRecorder.dispose();
     super.dispose();
   }
 
   // ── Gesture handlers ──────────────────────────────────────
+  // Raw pointer events (not Tap + HorizontalDrag recognizers) so press/release
+  // are a single source of truth. This avoids the race where a quick release
+  // landed before the async start finished and left recording running forever.
 
-  void _onTapDown(TapDownDetails _) => _initiateRecording();
-
-  void _onTapUp(TapUpDetails _) {
-    if (_isRecording) _stopRecording();
+  void _onPointerDown(PointerDownEvent _) {
+    _dragOffset = 0;
+    _initiateRecording();
   }
 
-  void _onHorizontalDragUpdate(DragUpdateDetails d) {
+  void _onPointerMove(PointerMoveEvent e) {
     if (!_isRecording) return;
     setState(() {
-      _dragOffset = (_dragOffset + d.delta.dx).clamp(-200.0, 0.0);
+      _dragOffset = (_dragOffset + e.delta.dx).clamp(-200.0, 0.0);
     });
   }
 
-  void _onHorizontalDragEnd(DragEndDetails _) {
-    if (!_isRecording) return;
-    if (_isCancelling) {
-      _cancelRecording();
-    } else {
-      _stopRecording();
+  void _onPointerUp(PointerUpEvent _) => _handleRelease(forceCancel: false);
+
+  void _onPointerCancel(PointerCancelEvent _) =>
+      _handleRelease(forceCancel: true);
+
+  void _handleRelease({required bool forceCancel}) {
+    if (_isRecording) {
+      if (forceCancel || _isCancelling) {
+        _cancelRecording();
+      } else {
+        _stopRecording();
+      }
+    } else if (_starting) {
+      // Released while the async start was still running — make sure the
+      // recording that's about to begin is torn down immediately.
+      _stopRequested = true;
     }
   }
 
   // ── Recording logic ──────────────────────────────────────
 
   Future<void> _initiateRecording() async {
+    _starting = true;
+    _stopRequested = false;
     if (ApiConfig.proxyBaseUrl.isEmpty || ApiConfig.proxyClientSecret.isEmpty) {
+      _starting = false;
       _showVoiceUnavailableSnackbar();
       return;
     }
-    // Email registration gate
-    final user = ref.read(userProvider);
-    if (!user.isRegistered) {
-      final registered = await showEmailPrompt(context);
-      if (!registered || !mounted) return;
+    // Account gate — voice requires a signed-in account (manual entry doesn't).
+    final hasAccount = await requireAccount(
+      context,
+      ref,
+      reason: 'Sign in to log transactions by voice.',
+    );
+    if (!hasAccount || !mounted) {
+      _starting = false;
+      return;
     }
     final subscription = ref.read(subscriptionProvider);
     if (!subscription.canUseVoice) {
+      _starting = false;
       _showVoiceLimitDialog(subscription);
       return;
     }
@@ -87,6 +113,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
 
   Future<void> _startRecording() async {
     if (!await _audioRecorder.hasPermission()) {
+      _starting = false;
       _showPermissionSnackbar();
       return;
     }
@@ -100,36 +127,63 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       const RecordConfig(encoder: AudioEncoder.aacLc),
       path: audioPath,
     );
+    _starting = false;
+
+    // If the user already let go while we were starting, tear it down now
+    // instead of leaving an orphaned recording running.
+    if (_stopRequested) {
+      _stopRequested = false;
+      await _cancelRecording();
+      return;
+    }
+
     setState(() {
       _isRecording = true;
       _recordingSeconds = 0;
       _dragOffset = 0;
+      _amp = 0;
     });
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _recordingSeconds++);
+    });
+    // Drive the live waveform from the mic amplitude.
+    _ampSub = _audioRecorder
+        .onAmplitudeChanged(const Duration(milliseconds: 90))
+        .listen((amp) {
+      // `current` is dB, ~-45 (quiet) to 0 (loud). Normalize to 0..1.
+      final norm = ((amp.current + 45) / 45).clamp(0.0, 1.0);
+      if (mounted) setState(() => _amp = norm);
     });
   }
 
   Future<void> _stopRecording() async {
     _recordingTimer?.cancel();
+    _ampSub?.cancel();
     HapticFeedback.lightImpact();
     final path = await _audioRecorder.stop();
     setState(() {
       _isRecording = false;
       _dragOffset = 0;
+      _amp = 0;
     });
-    if (path != null && mounted) {
-      _showProcessingSheet(File(path));
+    if (path != null) {
+      // Auto-save flow: process in the background and drop the result straight
+      // into the transaction list (no blocking "Listening…" sheet). The list
+      // shows a shimmer row while this runs; an Undo snackbar follows.
+      // ignore: discarded_futures
+      ref.read(voiceLogProvider.notifier).processAndSave(File(path));
     }
   }
 
   Future<void> _cancelRecording() async {
     _recordingTimer?.cancel();
+    _ampSub?.cancel();
     HapticFeedback.mediumImpact();
     final path = await _audioRecorder.stop();
     setState(() {
       _isRecording = false;
       _dragOffset = 0;
+      _amp = 0;
     });
     if (path != null) {
       final file = File(path);
@@ -138,15 +192,6 @@ class _MagicFabState extends ConsumerState<MagicFab> {
   }
 
   // ── Sheets ───────────────────────────────────────────────
-
-  void _showProcessingSheet(File audioFile) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => ProcessingSheet(audioFile: audioFile),
-    );
-  }
 
   void _showManualEntry() {
     showModalBottomSheet(
@@ -298,12 +343,11 @@ class _MagicFabState extends ConsumerState<MagicFab> {
           const SizedBox(width: 16),
 
           // Right: Mic button — hold to record, slide left to cancel
-          GestureDetector(
-            onTapDown: _onTapDown,
-            onTapUp: _onTapUp,
-            onTapCancel: () {},
-            onHorizontalDragUpdate: _onHorizontalDragUpdate,
-            onHorizontalDragEnd: _onHorizontalDragEnd,
+          Listener(
+            onPointerDown: _onPointerDown,
+            onPointerMove: _onPointerMove,
+            onPointerUp: _onPointerUp,
+            onPointerCancel: _onPointerCancel,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,

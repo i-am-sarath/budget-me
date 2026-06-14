@@ -145,6 +145,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: const Duration(seconds: 2),
         content: Text(
           '${_transactions.length} transaction${_transactions.length == 1 ? '' : 's'} saved',
         ),
