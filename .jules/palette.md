@@ -1,0 +1,1 @@
+- Added Semantics wrappers and tooltips to Dashboard IconButtons for improved accessibility
