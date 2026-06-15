@@ -1,0 +1,1 @@
+- Sentinel: Added missing input validation to prevent negative balance exploits
