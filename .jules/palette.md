@@ -1,0 +1,1 @@
+- Wrapped IconButton in Semantics with labels and added tooltips for accessibility in lib/features/dashboard/dashboard_screen.dart
