@@ -1,0 +1,1 @@
+- Cached DateFormat instance outside of list iterations to prevent repetitive, expensive instantiations.
