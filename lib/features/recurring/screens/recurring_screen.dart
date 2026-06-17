@@ -41,6 +41,7 @@ class RecurringScreen extends ConsumerWidget {
             ),
             actions: [
               IconButton(
+                tooltip: 'Add recurring transaction',
                 icon: Icon(Icons.add_rounded, color: tc.onSurface),
                 onPressed: () => _showAddSheet(context, ref),
               ),
