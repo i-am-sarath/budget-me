@@ -1,0 +1,1 @@
+- Cache DateFormat outside loops to prevent performance bottlenecks.
