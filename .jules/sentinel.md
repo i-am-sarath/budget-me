@@ -1,0 +1,1 @@
+- Enforce parsed > 0 in transaction amount validators to prevent negative balance exploits.

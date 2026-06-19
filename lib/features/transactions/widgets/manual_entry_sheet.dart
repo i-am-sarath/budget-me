@@ -518,7 +518,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Enter amount';
-                if (double.tryParse(v) == null) return 'Invalid amount';
+                final parsed = double.tryParse(v);
+                // 🛡️ Ensure amount > 0 to prevent negative balance exploits
+                if (parsed == null || parsed <= 0) return 'Invalid amount';
                 return null;
               },
             ),
