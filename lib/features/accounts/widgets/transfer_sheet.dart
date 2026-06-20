@@ -60,6 +60,10 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
 
     HapticFeedback.mediumImpact();
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
+
+    // Sentinel Security Fix: Enforce positive amounts to prevent negative balance exploits
+    if (amount <= 0) return;
+
     final note = _noteCtrl.text.trim();
     final displayNote = note.isNotEmpty ? note : 'Transfer';
 
@@ -83,7 +87,9 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     // For normal accounts: income → balanceDelta is +amount (adds funds)
     final credit = TransactionModel(
       amount: amount,
-      type: isLoanRepayment ? TransactionType.borrowReturn : TransactionType.income,
+      type: isLoanRepayment
+          ? TransactionType.borrowReturn
+          : TransactionType.income,
       category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
       note: '$displayNote ← ${_from!.name}',
       accountId: _to!.id,
@@ -108,7 +114,11 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-          top: 24, left: 24, right: 24, bottom: bottomPad + 32),
+        top: 24,
+        left: 24,
+        right: 24,
+        bottom: bottomPad + 32,
+      ),
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -144,8 +154,11 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                       color: tc.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.swap_horiz_rounded,
-                        color: tc.onSurface, size: 18),
+                    child: Icon(
+                      Icons.swap_horiz_rounded,
+                      color: tc.onSurface,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -168,8 +181,10 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: tc.outlineVariant, width: 0.5),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Text(
@@ -185,7 +200,8 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                       child: TextFormField(
                         controller: _amountCtrl,
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         autofocus: true,
                         style: GoogleFonts.inter(
                           color: tc.onSurface,
@@ -245,10 +261,15 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                             color: tc.surfaceContainerHigh,
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: tc.outlineVariant, width: 0.5),
+                              color: tc.outlineVariant,
+                              width: 0.5,
+                            ),
                           ),
-                          child: Icon(Icons.swap_vert_rounded,
-                              color: tc.onSurface, size: 18),
+                          child: Icon(
+                            Icons.swap_vert_rounded,
+                            color: tc.onSurface,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
@@ -268,11 +289,16 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                     TextFormField(
                       controller: _noteCtrl,
                       style: GoogleFonts.inter(
-                          color: tc.onSurface, fontSize: 14),
+                        color: tc.onSurface,
+                        fontSize: 14,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Note (optional)',
-                        prefixIcon: Icon(Icons.edit_outlined,
-                            color: tc.onSurfaceVariant, size: 20),
+                        prefixIcon: Icon(
+                          Icons.edit_outlined,
+                          color: tc.onSurfaceVariant,
+                          size: 20,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -290,22 +316,31 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: tc.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(14),
-                          border:
-                              Border.all(color: tc.outlineVariant, width: 0.5),
+                          border: Border.all(
+                            color: tc.outlineVariant,
+                            width: 0.5,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_month_outlined,
-                                color: tc.onSurfaceVariant, size: 18),
+                            Icon(
+                              Icons.calendar_month_outlined,
+                              color: tc.onSurfaceVariant,
+                              size: 18,
+                            ),
                             const SizedBox(width: 12),
                             Text(
                               DateFormat('EEEE, MMM d, yyyy').format(_date),
                               style: GoogleFonts.inter(
-                                  color: tc.onSurface, fontSize: 13),
+                                color: tc.onSurface,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -321,7 +356,9 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         child: Text(
                           'Transfer',
                           style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w700, fontSize: 15),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -356,8 +393,9 @@ class _AccountDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filtered =
-        accounts.where((a) => exclude == null || a.id != exclude!.id).toList();
+    final filtered = accounts
+        .where((a) => exclude == null || a.id != exclude!.id)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,34 +419,39 @@ class _AccountDropdown extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<AccountModel>(
-              value: selected != null &&
-                      filtered.any((a) => a.id == selected!.id)
+              value:
+                  selected != null && filtered.any((a) => a.id == selected!.id)
                   ? selected
                   : null,
               hint: Text(
                 'Select account',
                 style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant, fontSize: 14),
+                  color: tc.onSurfaceVariant,
+                  fontSize: 14,
+                ),
               ),
               isExpanded: true,
               dropdownColor: tc.surfaceContainerHigh,
-              icon: Icon(Icons.keyboard_arrow_down_rounded,
-                  color: tc.onSurfaceVariant, size: 20),
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: tc.onSurfaceVariant,
+                size: 20,
+              ),
               items: filtered.map((acc) {
                 return DropdownMenuItem<AccountModel>(
                   value: acc,
                   child: Row(
                     children: [
-                      Icon(acc.displayIcon,
-                          color: tc.onSurface, size: 16),
+                      Icon(acc.displayIcon, color: tc.onSurface, size: 16),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           acc.name,
                           style: GoogleFonts.inter(
-                              color: tc.onSurface,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600),
+                            color: tc.onSurface,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
