@@ -242,6 +242,10 @@ class _SectionTitle extends StatelessWidget {
 class _BarChartCard extends StatelessWidget {
   final List<TransactionModel> transactions;
   final CurrencyState currency;
+
+  // Cache DateFormat for performance
+  static final _dateFormat = DateFormat('d/M');
+
   const _BarChartCard({required this.transactions, required this.currency});
 
   @override
@@ -292,7 +296,7 @@ class _BarChartCard extends StatelessWidget {
                     final daysAgo = 13 - val.toInt();
                     if (daysAgo % 4 != 0) return const SizedBox.shrink();
                     final date = now.subtract(Duration(days: daysAgo));
-                    return Text(DateFormat('d/M').format(date),
+                    return Text(_dateFormat.format(date),
                         style: GoogleFonts.inter(
                             color: tc.onSurfaceVariant, fontSize: 9));
                   },
@@ -481,6 +485,10 @@ class _PieSection extends StatelessWidget {
 class _LineChartCard extends StatelessWidget {
   final List<TransactionModel> transactions;
   final CurrencyState currency;
+
+  // Cache DateFormat for performance
+  static final _dateFormat = DateFormat('d/M');
+
   const _LineChartCard({required this.transactions, required this.currency});
 
   @override
@@ -544,7 +552,7 @@ class _LineChartCard extends StatelessWidget {
                       final weeksAgo = weeks - 1 - val.toInt();
                       if (weeksAgo % 2 != 0) return const SizedBox.shrink();
                       final date = now.subtract(Duration(days: weeksAgo * 7));
-                      return Text(DateFormat('d/M').format(date),
+                      return Text(_dateFormat.format(date),
                           style: GoogleFonts.inter(
                               color: tc.onSurfaceVariant, fontSize: 9));
                     },
