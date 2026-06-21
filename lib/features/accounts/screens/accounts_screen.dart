@@ -75,6 +75,25 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
     });
   }
 
+  /// Settle a debt/receivable: opens the entry sheet on the matching flow
+  /// with the account pre-selected (Repaid for loans, Got Back for receivables).
+  void _showSettleSheet(AccountModel account) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ManualEntrySheet(
+        presetType: account.type.isReceivable
+            ? TransactionType.lendReturn
+            : TransactionType.borrowReturn,
+        settleTarget: account,
+      ),
+    ).then((_) {
+      ref.read(accountProvider.notifier).loadAccounts();
+    });
+  }
+
   void _showAccountDetail(AccountModel account) {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
@@ -87,6 +106,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
         onTransfer: () => _showTransferSheet(account),
         onAdjust: () => _showAdjustBalance(account),
         onDelete: () => _confirmDelete(account),
+        onSettle: () => _showSettleSheet(account),
       ),
     ).then((_) => ref.read(accountProvider.notifier).loadAccounts());
   }
@@ -284,16 +304,20 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                 );
               }
 
-              // Separate assets from liabilities
-              final assets = accounts.where((a) =>
-                  a.type != AccountType.loan &&
-                  a.type != AccountType.creditCard);
-              final liabilities = accounts.where((a) =>
-                  a.type == AccountType.loan ||
-                  a.type == AccountType.creditCard);
+              // Separate spendable assets, receivables (owed to you), and debts
+              final assets = accounts
+                  .where((a) => !a.type.isLiability && !a.type.isReceivable)
+                  .toList();
+              final receivables =
+                  accounts.where((a) => a.type.isReceivable).toList();
+              final liabilities =
+                  accounts.where((a) => a.type.isLiability).toList();
 
-              final totalAssets =
+              final totalSpendable =
                   assets.fold(0.0, (s, a) => s + a.balance);
+              final totalReceivable =
+                  receivables.fold(0.0, (s, a) => s + a.balance);
+              final totalAssets = totalSpendable + totalReceivable;
               final totalDebt =
                   liabilities.fold(0.0, (s, a) => s + a.balance);
 
@@ -337,7 +361,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                           label: 'ACCOUNTS',
                           count: assets.length),
                       const SizedBox(height: 10),
-                      ...assets.toList().asMap().entries.map(
+                      ...assets.asMap().entries.map(
                             (e) => _AccountCard(
                               account: e.value,
                               currency: currency,
@@ -358,6 +382,35 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                           ),
                     ],
 
+                    // Receivables — money owed to you (from the Lend flow)
+                    if (receivables.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      _SectionHeader(
+                          label: 'OWED TO YOU',
+                          count: receivables.length),
+                      const SizedBox(height: 10),
+                      ...receivables.asMap().entries.map(
+                            (e) => _AccountCard(
+                              account: e.value,
+                              currency: currency,
+                              share: totalReceivable > 0
+                                  ? e.value.balance / totalReceivable
+                                  : 0,
+                              shareLabel: 'of receivables',
+                              onOpen: () => _showAccountDetail(e.value),
+                              onEdit: () => _showAddSheet(e.value),
+                              onDelete: () => _confirmDelete(e.value),
+                              onAdjust: () => _showAdjustBalance(e.value),
+                              onTransfer: () =>
+                                  _showTransferSheet(e.value),
+                              onSettle: () => _showSettleSheet(e.value),
+                            )
+                                .animate()
+                                .fadeIn(delay: (e.key * 50).ms)
+                                .slideX(begin: 0.05),
+                          ),
+                    ],
+
                     // Liabilities section
                     if (liabilities.isNotEmpty) ...[
                       const SizedBox(height: 20),
@@ -365,7 +418,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                           label: 'LOANS & CREDIT',
                           count: liabilities.length),
                       const SizedBox(height: 10),
-                      ...liabilities.toList().asMap().entries.map(
+                      ...liabilities.asMap().entries.map(
                             (e) => _AccountCard(
                               account: e.value,
                               currency: currency,
@@ -379,6 +432,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen>
                               onAdjust: () => _showAdjustBalance(e.value),
                               onTransfer: () =>
                                   _showTransferSheet(e.value),
+                              onSettle: () => _showSettleSheet(e.value),
                               isLiability: true,
                             )
                                 .animate()
@@ -556,6 +610,7 @@ class _AccountCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onTransfer;
   final VoidCallback onAdjust;
+  final VoidCallback? onSettle;
   final bool isLiability;
 
   const _AccountCard({
@@ -568,6 +623,7 @@ class _AccountCard extends StatelessWidget {
     required this.onDelete,
     required this.onTransfer,
     required this.onAdjust,
+    this.onSettle,
     this.isLiability = false,
   });
 
@@ -669,7 +725,11 @@ class _AccountCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  isLiability ? 'owed' : 'available',
+                  isLiability
+                      ? 'owed'
+                      : account.type.isReceivable
+                          ? 'owed to you'
+                          : 'available',
                   style: AppFonts.sans(
                       color: tc.onSurfaceVariant, fontSize: 10),
                 ),
@@ -771,6 +831,23 @@ class _AccountCard extends StatelessWidget {
                 onAdjust();
               },
             ),
+            if (onSettle != null) ...[
+              Divider(height: 1, color: tc.outlineVariant),
+              _MenuOption(
+                icon: account.type.isReceivable
+                    ? Icons.south_west_rounded
+                    : Icons.north_east_rounded,
+                label: account.type.isReceivable
+                    ? 'Record payment received'
+                    : 'Repay this loan',
+                color: tc.onSurface,
+                tc: tc,
+                onTap: () {
+                  Navigator.pop(context);
+                  onSettle!();
+                },
+              ),
+            ],
             Divider(height: 1, color: tc.outlineVariant),
             _MenuOption(
               icon: Icons.swap_horiz_rounded,
@@ -1003,6 +1080,7 @@ class _AccountDetailSheet extends ConsumerStatefulWidget {
   final VoidCallback onTransfer;
   final VoidCallback onAdjust;
   final VoidCallback onDelete;
+  final VoidCallback onSettle;
 
   const _AccountDetailSheet({
     required this.account,
@@ -1010,6 +1088,7 @@ class _AccountDetailSheet extends ConsumerStatefulWidget {
     required this.onTransfer,
     required this.onAdjust,
     required this.onDelete,
+    required this.onSettle,
   });
 
   @override
@@ -1026,9 +1105,9 @@ class _AccountDetailSheetState extends ConsumerState<_AccountDetailSheet> {
     _future = TransactionRepository().getByAccount(widget.account.id);
   }
 
-  bool get _isLiability =>
-      widget.account.type == AccountType.loan ||
-      widget.account.type == AccountType.creditCard;
+  bool get _isLiability => widget.account.type.isLiability;
+  bool get _isReceivable => widget.account.type.isReceivable;
+  bool get _isTracker => _isLiability || _isReceivable;
 
   void _close(VoidCallback action) {
     Navigator.pop(context);
@@ -1109,12 +1188,21 @@ class _AccountDetailSheetState extends ConsumerState<_AccountDetailSheet> {
               children: [
                 Text(currency.format(account.balance),
                     style: AppFonts.sans(
-                        color: _isLiability ? tc.expense : tc.onSurface,
+                        color: _isLiability
+                            ? tc.expense
+                            : _isReceivable
+                                ? tc.income
+                                : tc.onSurface,
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -1)),
                 const SizedBox(height: 2),
-                Text(_isLiability ? 'Outstanding' : 'Available balance',
+                Text(
+                    _isLiability
+                        ? 'Outstanding'
+                        : _isReceivable
+                            ? 'Owed to you'
+                            : 'Available balance',
                     style: AppFonts.sans(
                         color: tc.onSurfaceVariant, fontSize: 12)),
               ],
@@ -1130,11 +1218,20 @@ class _AccountDetailSheetState extends ConsumerState<_AccountDetailSheet> {
                     label: 'Balance',
                     tc: tc,
                     onTap: () => _close(widget.onAdjust)),
-                _QuickAction(
-                    icon: Icons.swap_horiz_rounded,
-                    label: 'Transfer',
-                    tc: tc,
-                    onTap: () => _close(widget.onTransfer)),
+                if (_isTracker)
+                  _QuickAction(
+                      icon: _isReceivable
+                          ? Icons.south_west_rounded
+                          : Icons.north_east_rounded,
+                      label: _isReceivable ? 'Collect' : 'Repay',
+                      tc: tc,
+                      onTap: () => _close(widget.onSettle))
+                else
+                  _QuickAction(
+                      icon: Icons.swap_horiz_rounded,
+                      label: 'Transfer',
+                      tc: tc,
+                      onTap: () => _close(widget.onTransfer)),
                 _QuickAction(
                     icon: Icons.edit_outlined,
                     label: 'Edit',

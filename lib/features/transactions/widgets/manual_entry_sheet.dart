@@ -12,7 +12,20 @@ import 'package:intl/intl.dart';
 
 class ManualEntrySheet extends ConsumerStatefulWidget {
   final TransactionModel? prefill;
-  const ManualEntrySheet({super.key, this.prefill});
+
+  /// Open the sheet on a specific type (e.g. launch straight into "Repaid").
+  final TransactionType? presetType;
+
+  /// For settle flows (Repaid / Got Back): the debt or receivable account
+  /// to settle, pre-selected (e.g. tapping "Repay" on a loan card).
+  final AccountModel? settleTarget;
+
+  const ManualEntrySheet({
+    super.key,
+    this.prefill,
+    this.presetType,
+    this.settleTarget,
+  });
 
   @override
   ConsumerState<ManualEntrySheet> createState() => _ManualEntrySheetState();
@@ -28,6 +41,8 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   String _category = 'General';
   bool _categoryTouched = false; // user manually picked → stop auto-suggesting
   AccountModel? _selectedAccount;
+  AccountModel? _settleTarget; // debt/receivable to settle (Repaid / Got Back)
+  bool _amountAutoFilled = false; // amount was filled from the settle target
   DateTime _date = DateTime.now();
   List<(String, String)>? _dbExpenseCategoriesCache;
 
@@ -122,6 +137,21 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       _category = p.category;
       _date = p.date;
     }
+    if (widget.presetType != null) {
+      _type = widget.presetType!;
+      final cats = _categories[_type];
+      if (cats != null && cats.isNotEmpty &&
+          !cats.any((c) => c.$2 == _category)) {
+        _category = cats.first.$2;
+      }
+    }
+    if (widget.settleTarget != null) {
+      _settleTarget = widget.settleTarget;
+      if (_amountController.text.isEmpty) {
+        _amountController.text = widget.settleTarget!.balance.toStringAsFixed(2);
+        _amountAutoFilled = true;
+      }
+    }
   }
 
   bool _accountInitialized = false;
@@ -139,9 +169,20 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       _selectedAccount =
           accounts.where((a) => a.id == prefillAccountId).firstOrNull;
     } else if (widget.prefill == null) {
-      _selectedAccount = accounts.first;
+      // Debt flows fund from a real cash/bank account, never from a
+      // loan/receivable tracking account.
+      if (_isDebtType) {
+        _selectedAccount = _spendable(accounts).firstOrNull;
+      } else {
+        _selectedAccount = accounts.first;
+      }
     }
   }
+
+  /// Real spendable accounts (excludes loan/credit-card/receivable trackers).
+  List<AccountModel> _spendable(List<AccountModel> accounts) => accounts
+      .where((a) => !a.type.isLiability && !a.type.isReceivable)
+      .toList();
 
   @override
   void dispose() {
@@ -170,52 +211,198 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     });
   }
 
-  bool get _showPayeeField =>
-      _type == TransactionType.lend ||
-      _type == TransactionType.borrow ||
+  /// Opening a new debt: you lend money out, or you borrow money in.
+  bool get _isOpenDebtType =>
+      _type == TransactionType.lend || _type == TransactionType.borrow;
+
+  /// Settling an existing debt: someone pays you back, or you repay a loan.
+  bool get _isSettleType =>
       _type == TransactionType.lendReturn ||
       _type == TransactionType.borrowReturn;
+
+  bool get _isDebtType => _isOpenDebtType || _isSettleType;
+
+  /// Tracker-account type matching the current settle flow.
+  AccountType get _settleTrackerType =>
+      _type == TransactionType.lendReturn
+          ? AccountType.receivable
+          : AccountType.loan; // borrowReturn settles loans / credit cards
+
+  /// Show the free-text person field when opening a new lend/borrow, or when
+  /// editing any legacy debt transaction (which stored the person as payee).
+  bool get _showPayeeField =>
+      _isOpenDebtType || (widget.prefill != null && _isDebtType);
+
+  /// Show the outstanding-debt picker only for a brand-new settle entry.
+  bool get _showSettlePicker => _isSettleType && widget.prefill == null;
 
   String get _payeeLabel {
     switch (_type) {
       case TransactionType.lend:
         return 'Who did you lend to?';
-      case TransactionType.lendReturn:
-        return 'Who returned the money?';
       case TransactionType.borrow:
         return 'Who did you borrow from?';
-      case TransactionType.borrowReturn:
-        return 'Who did you repay?';
       default:
         return 'Person / organisation';
     }
   }
 
+  /// Label for the user's own cash/bank account in debt flows.
+  String get _accountLabel {
+    switch (_type) {
+      case TransactionType.borrow:
+        return 'Deposit into (your account)';
+      case TransactionType.lend:
+        return 'Paid from (your account)';
+      case TransactionType.borrowReturn:
+        return 'Pay from (your account)';
+      case TransactionType.lendReturn:
+        return 'Received into (your account)';
+      default:
+        return 'Account';
+    }
+  }
+
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      HapticFeedback.mediumImpact();
-      final amount = double.tryParse(_amountController.text) ?? 0;
-      final transaction = TransactionModel(
-        id: widget.prefill?.id,
+    if (!_formKey.currentState!.validate()) return;
+
+    // Debt flows (lend / borrow / repaid / got back) create a tracking account
+    // plus an optional cash leg — handled separately. Editing an existing
+    // transaction keeps the simple single-entry path.
+    if (_isDebtType && widget.prefill == null) {
+      _submitDebt();
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    final transaction = TransactionModel(
+      id: widget.prefill?.id,
+      amount: amount,
+      type: _type,
+      category: _category,
+      note: _noteController.text,
+      payee: _payeeController.text.isEmpty ? null : _payeeController.text,
+      accountId: _selectedAccount?.id,
+      accountName: _selectedAccount?.name,
+      date: _date,
+    );
+
+    if (widget.prefill != null) {
+      ref
+          .read(transactionListProvider.notifier)
+          .updateTransaction(widget.prefill!, transaction);
+    } else {
+      ref.read(transactionListProvider.notifier).addTransaction(transaction);
+    }
+    Navigator.pop(context);
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _submitDebt() async {
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    if (amount <= 0) {
+      _snack('Enter a valid amount');
+      return;
+    }
+
+    final txn = ref.read(transactionListProvider.notifier);
+    final accounts = ref.read(accountProvider.notifier);
+    final userAcct = _selectedAccount; // own cash/bank — optional cash leg
+    final note = _noteController.text.trim();
+    HapticFeedback.mediumImpact();
+
+    if (_isOpenDebtType) {
+      final person = _payeeController.text.trim();
+      if (person.isEmpty) {
+        _snack(_type == TransactionType.borrow
+            ? 'Enter who you borrowed from'
+            : 'Enter who you lent to');
+        return;
+      }
+      final isBorrow = _type == TransactionType.borrow;
+      // Find-or-create the debt (loan) / receivable account for this person.
+      final tracker = await accounts.ensureTrackerAccount(
+        name: person,
+        type: isBorrow ? AccountType.loan : AccountType.receivable,
+      );
+      final defaultNote = isBorrow ? 'Borrowed from $person' : 'Lent to $person';
+      // Debt-side: raises the outstanding balance on the tracker account.
+      await txn.addTransaction(TransactionModel(
         amount: amount,
         type: _type,
         category: _category,
-        note: _noteController.text,
-        payee: _payeeController.text.isEmpty ? null : _payeeController.text,
-        accountId: _selectedAccount?.id,
-        accountName: _selectedAccount?.name,
+        note: note.isNotEmpty ? note : defaultNote,
+        payee: person,
+        accountId: tracker.id,
+        accountName: tracker.name,
         date: _date,
-      );
-
-      if (widget.prefill != null) {
-        ref
-            .read(transactionListProvider.notifier)
-            .updateTransaction(widget.prefill!, transaction);
-      } else {
-        ref.read(transactionListProvider.notifier).addTransaction(transaction);
+      ));
+      // Cash-side (optional): the money actually moving in/out of your account.
+      if (userAcct != null) {
+        await txn.addTransaction(TransactionModel(
+          amount: amount,
+          type: isBorrow
+              ? TransactionType.transferIn
+              : TransactionType.transferOut,
+          category: isBorrow ? 'Borrowed' : 'Lent',
+          note: defaultNote,
+          accountId: userAcct.id,
+          accountName: userAcct.name,
+          date: _date,
+        ));
       }
-      Navigator.pop(context);
+    } else {
+      // Settle an existing debt / receivable.
+      final target = _settleTarget;
+      if (target == null) {
+        _snack(_type == TransactionType.borrowReturn
+            ? 'Select which loan you repaid'
+            : 'Select who paid you back');
+        return;
+      }
+      final isRepay = _type == TransactionType.borrowReturn;
+      // Never settle more than what's outstanding.
+      final pay = amount > target.balance ? target.balance : amount;
+      await txn.addTransaction(TransactionModel(
+        amount: pay,
+        type: _type,
+        category: _category,
+        note: note.isNotEmpty ? note : '${isRepay ? 'Repaid' : 'Got back'} · ${target.name}',
+        payee: target.name,
+        accountId: target.id,
+        accountName: target.name,
+        date: _date,
+      ));
+      if (userAcct != null) {
+        await txn.addTransaction(TransactionModel(
+          amount: pay,
+          type: isRepay
+              ? TransactionType.transferOut
+              : TransactionType.transferIn,
+          category: isRepay ? 'Loan Repayment' : 'Money Back',
+          note: '${isRepay ? 'Repaid' : 'Got back'} · ${target.name}',
+          accountId: userAcct.id,
+          accountName: userAcct.name,
+          date: _date,
+        ));
+      }
+      // Fully settled → close the tracking account.
+      final updated = accounts.accounts
+          .where((a) => a.id == target.id)
+          .firstOrNull;
+      if (updated != null && updated.balance <= 0.005) {
+        await accounts.deleteAccount(target.id);
+        _snack('${target.name} settled and closed');
+      }
     }
+
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _confirmDelete() async {
@@ -365,7 +552,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               _buildCategoryGrid(tc, dbExpenseCategories),
               const SizedBox(height: 14),
 
-              // Payee field for lend/borrow/returns
+              // Payee field for opening a new lend/borrow
               if (_showPayeeField) ...[
                 _buildTextField(
                   controller: _payeeController,
@@ -373,6 +560,22 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                   icon: Icons.person_outline_rounded,
                   tc: tc,
                   onChanged: (_) => _maybeAutoPickCategory(),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Settle-target picker for Repaid / Got Back
+              if (_showSettlePicker) ...[
+                _buildLabel(
+                    _type == TransactionType.borrowReturn
+                        ? 'Which loan are you repaying?'
+                        : 'Who is paying you back?',
+                    tc),
+                const SizedBox(height: 8),
+                accountsAsync.when(
+                  loading: () => const SizedBox(),
+                  error: (_, __) => const SizedBox(),
+                  data: (accounts) => _buildSettleTargetSelector(accounts, tc),
                 ),
                 const SizedBox(height: 14),
               ],
@@ -387,8 +590,8 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               ),
               const SizedBox(height: 14),
 
-              // Account selector
-              _buildLabel('Account', tc),
+              // Account selector (own cash/bank account)
+              _buildLabel(_isDebtType ? _accountLabel : 'Account', tc),
               const SizedBox(height: 8),
               accountsAsync.when(
                 loading: () => const SizedBox(),
@@ -670,7 +873,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   }
 
   Widget _buildAccountSelector(List<AccountModel> accounts, AppThemeColors tc) {
-    if (accounts.isEmpty) {
+    // Debt flows fund from spendable accounts only.
+    final options = _isDebtType ? _spendable(accounts) : accounts;
+    if (options.isEmpty) {
       return Text(
         'No accounts yet — add one in the Accounts tab',
         style: AppFonts.sans(color: tc.onSurfaceVariant, fontSize: 12),
@@ -682,8 +887,92 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       runSpacing: 8,
       children: [
         _accountChip(null, 'None', tc),
-        ...accounts.map((acc) => _accountChip(acc, acc.name, tc)),
+        ...options.map((acc) => _accountChip(acc, acc.name, tc)),
       ],
+    );
+  }
+
+  /// Picker over outstanding debts/receivables for the Repaid / Got Back flows.
+  Widget _buildSettleTargetSelector(
+      List<AccountModel> accounts, AppThemeColors tc) {
+    final targets = accounts
+        .where((a) => a.type == _settleTrackerType && a.balance > 0.005)
+        .toList();
+
+    if (targets.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: tc.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: tc.outlineVariant, width: 0.5),
+        ),
+        child: Text(
+          _type == TransactionType.borrowReturn
+              ? 'No outstanding loans to repay. Record a "Borrow" first.'
+              : 'No one owes you yet. Record a "Lend" first.',
+          style: AppFonts.sans(color: tc.onSurfaceVariant, fontSize: 12),
+        ),
+      );
+    }
+
+    final currency = ref.read(currencyProvider);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: targets.map((acc) {
+        final isSelected = _settleTarget?.id == acc.id;
+        return GestureDetector(
+          onTap: () => setState(() {
+            _settleTarget = acc;
+            // Default the amount to the full outstanding balance.
+            if (_amountController.text.isEmpty || _amountAutoFilled) {
+              _amountController.text = acc.balance.toStringAsFixed(2);
+              _amountAutoFilled = true;
+            }
+          }),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? tc.onSurface : tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(100),
+              border: Border.all(
+                color: isSelected ? Colors.transparent : tc.outlineVariant,
+                width: 0.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(acc.type.icon,
+                    size: 13,
+                    color: isSelected ? tc.surface : acc.type.color),
+                const SizedBox(width: 6),
+                Text(
+                  acc.name,
+                  style: AppFonts.sans(
+                    color: isSelected ? tc.surface : tc.onSurface,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  currency.format(acc.balance),
+                  style: AppFonts.sans(
+                    color: isSelected
+                        ? tc.surface.withOpacity(0.8)
+                        : tc.onSurfaceVariant,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 

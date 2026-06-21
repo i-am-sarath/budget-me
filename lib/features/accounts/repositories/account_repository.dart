@@ -48,6 +48,25 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
     await loadAccounts();
   }
 
+  /// Find an existing debt/receivable tracking account by [name] (case-insensitive)
+  /// and [type], or create a fresh one with a zero balance. Returns the account so
+  /// the caller can link transactions to it. Used by the Lend / Borrow flows.
+  Future<AccountModel> ensureTrackerAccount({
+    required String name,
+    required AccountType type,
+  }) async {
+    final trimmed = name.trim();
+    final lower = trimmed.toLowerCase();
+    for (final a in accounts) {
+      if (a.type == type && a.name.trim().toLowerCase() == lower) {
+        return a;
+      }
+    }
+    final account = AccountModel(name: trimmed, type: type, balance: 0);
+    await addAccount(account);
+    return account;
+  }
+
   List<AccountModel> get accounts => state.valueOrNull ?? [];
 }
 

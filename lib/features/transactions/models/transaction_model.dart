@@ -62,15 +62,23 @@ class TransactionModel {
         createdAt = createdAt ?? DateTime.now();
 
   // ── Balance effect ──────────────────────────────────────
+  //
+  // Debt/receivable tracking accounts hold an *outstanding* balance:
+  //   • borrow      → increases what you owe on a loan account
+  //   • borrowReturn→ decreases it (repayment)
+  //   • lend        → increases what's owed to you on a receivable account
+  //   • lendReturn  → decreases it (you got the money back)
+  // The matching effect on your own cash/bank account is recorded as a
+  // separate transferIn/transferOut transaction by the debt flow.
   double get balanceDelta {
     switch (type) {
       case TransactionType.income:
       case TransactionType.borrow:
-      case TransactionType.lendReturn:
+      case TransactionType.lend:
       case TransactionType.transferIn:   // funds arrive → positive
         return amount;
       case TransactionType.expense:
-      case TransactionType.lend:
+      case TransactionType.lendReturn:
       case TransactionType.investment:
       case TransactionType.borrowReturn:
       case TransactionType.transferOut:  // funds leave → negative

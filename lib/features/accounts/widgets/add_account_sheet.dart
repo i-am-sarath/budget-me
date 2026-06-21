@@ -279,7 +279,10 @@ class _AddAccountSheetState extends ConsumerState<AddAccountSheet> {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: AccountType.values.map((t) {
+      children: AccountType.values
+          // Receivables are auto-created by the Lend flow, not added by hand.
+          .where((t) => t != AccountType.receivable)
+          .map((t) {
         final isSelected = _type == t;
         return GestureDetector(
           onTap: () => setState(() {
