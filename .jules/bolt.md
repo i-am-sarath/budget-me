@@ -1,0 +1,1 @@
+Avoid instantiating DateFormat inside loops; cache a single instance outside the loop to prevent performance bottlenecks.
