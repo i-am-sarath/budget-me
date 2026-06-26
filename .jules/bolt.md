@@ -1,0 +1,1 @@
+- Cached DateFormat outside of loops and replaced chained .where() calls with a single-pass loop to reduce memory overhead and CPU cycles.
