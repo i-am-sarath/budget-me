@@ -1,0 +1,1 @@
+- Add explicit validation for amounts <= 0 in form validators to prevent negative transaction vulnerabilities.
