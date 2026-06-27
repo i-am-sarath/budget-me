@@ -1,0 +1,1 @@
+- Always use Semantics with descriptive labels and tooltips on IconButtons to improve accessibility for screen readers.
