@@ -1,0 +1,1 @@
+- Optimized chained .where() operations to single-pass loops and cached DateFormat outside loops to avoid instantiation overhead in `lib/features/history/history_screen.dart`
