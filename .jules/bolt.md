@@ -1,0 +1,1 @@
+In Dart, avoid instantiating DateFormat inside loops (e.g., in list iterations); cache a single instance outside the loop to prevent performance bottlenecks.
