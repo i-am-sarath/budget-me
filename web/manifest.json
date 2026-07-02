@@ -1,6 +1,6 @@
 {
-    "name": "Budget Me",
-    "short_name": "Budget Me",
+    "name": "Money Purse - Budget Tracker",
+    "short_name": "Money Purse",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

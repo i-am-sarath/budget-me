@@ -14,7 +14,7 @@
 #   8. npm run deploy
 #
 # Your worker URL will be printed (e.g. https://budgetme-proxy.<you>.workers.dev).
-# Put that URL + the CLIENT_SECRET into dart_defines.env as PROXY_BASE_URL and PROXY_CLIENT_SECRET.
+# Put that URL + the CLIENT_SECRET into dart_defines.json as PROXY_BASE_URL and PROXY_CLIENT_SECRET.
 
 name = "budgetme-proxy"
 main = "src/index.ts"
