@@ -22,13 +22,13 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <!-- The always-on quick-log overlay (flutter_overlay_window) runs as a
-         foreground service. These permissions are REQUIRED — without them the
-         overlay service cannot start (SecurityException on Android 9+) and the
-         bubble never appears. They do require a Foreground Service declaration
-         in the Play Console listing at submission time. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <!-- Foreground service DISABLED for now (revisit when the always-on overlay
+         is reworked). flutter_overlay_window injects these via manifest merge,
+         so tools:node="remove" strips them — this keeps the build free of a
+         Play Console Foreground Service declaration. The quick-log overlay
+         bubble is inactive as a result. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" tools:node="remove"/>
 
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
 
@@ -81,20 +81,14 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/budget_widget_info" />
         </receiver>
-        <!-- flutter_overlay_window's OverlayService is NOT declared in the
-             plugin's own manifest — the app must declare it, or startService()
-             throws and the overlay bubble never appears. It runs as a
-             "specialUse" foreground service; the <property> is required on
-             Android 14 (API 34+) to declare why. -->
+        <!-- OverlayService (flutter_overlay_window) removed for now along with
+             the foreground-service permissions above, so no specialUse FGS
+             reaches the merged manifest and Play needs no FGS declaration.
+             Re-declare this (with the FOREGROUND_SERVICE perms) when the
+             always-on quick-log overlay is reworked. -->
         <service
             android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse"
-            tools:node="merge">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Always-on quick-log voice recording bubble"/>
-        </service>
+            tools:node="remove"/>
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
