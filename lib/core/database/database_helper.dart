@@ -42,7 +42,7 @@ class DatabaseHelper {
     try {
       return await openDatabase(
         path,
-        version: 6, // v6: adds categories table with per-category budgets
+        version: 7, // v7: adds trips table + transactions.trip_id (travel tracking)
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
       );
@@ -91,6 +91,7 @@ class DatabaseHelper {
         payee TEXT DEFAULT '',
         account_id TEXT DEFAULT '',
         account_name TEXT DEFAULT '',
+        trip_id TEXT DEFAULT '',
         date TEXT NOT NULL,
         created_at TEXT NOT NULL,
         is_synced INTEGER DEFAULT 0
@@ -165,6 +166,22 @@ class DatabaseHelper {
         is_custom INTEGER NOT NULL DEFAULT 0,
         sort_order INTEGER NOT NULL DEFAULT 0,
         space_id TEXT NOT NULL DEFAULT 'personal',
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Trips table (travel spending tracking)
+    await db.execute('''
+      CREATE TABLE trips (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '✈️',
+        color_value INTEGER NOT NULL DEFAULT 0,
+        budget REAL NOT NULL DEFAULT 0,
+        currency_code TEXT DEFAULT 'USD',
+        start_date TEXT DEFAULT '',
+        end_date TEXT DEFAULT '',
+        is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
       )
     ''');
@@ -294,6 +311,29 @@ class DatabaseHelper {
         ''');
       } catch (_) {}
     }
+    if (oldVersion < 7) {
+      // Travel tracking: tag transactions to a trip, and a trips table.
+      try {
+        await db.execute(
+            "ALTER TABLE transactions ADD COLUMN trip_id TEXT DEFAULT ''");
+      } catch (_) {}
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS trips (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            emoji TEXT NOT NULL DEFAULT '✈️',
+            color_value INTEGER NOT NULL DEFAULT 0,
+            budget REAL NOT NULL DEFAULT 0,
+            currency_code TEXT DEFAULT 'USD',
+            start_date TEXT DEFAULT '',
+            end_date TEXT DEFAULT '',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -371,9 +411,10 @@ class DatabaseHelper {
 
   Future<void> clearDataForSpace(String spaceId) async {
     final db = await database;
+    // NB: 'accounts' is intentionally omitted — accounts are shared across all
+    // spaces, so deleting one space must never remove them.
     for (final t in const [
       'transactions',
-      'accounts',
       'recurring_transactions',
       'subscriptions'
     ]) {

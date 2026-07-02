@@ -8,6 +8,8 @@ import 'package:agent_money/features/accounts/repositories/account_repository.da
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/categories/repositories/category_repository.dart';
+import 'package:agent_money/features/trips/models/trip_model.dart';
+import 'package:agent_money/features/trips/repositories/trip_repository.dart';
 import 'package:intl/intl.dart';
 
 class ManualEntrySheet extends ConsumerStatefulWidget {
@@ -43,6 +45,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   AccountModel? _selectedAccount;
   AccountModel? _settleTarget; // debt/receivable to settle (Repaid / Got Back)
   bool _amountAutoFilled = false; // amount was filled from the settle target
+  String? _selectedTripId; // optional Trip tag for expenses (travel tracking)
   DateTime _date = DateTime.now();
   List<(String, String)>? _dbExpenseCategoriesCache;
 
@@ -152,6 +155,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         _amountAutoFilled = true;
       }
     }
+    // Tag new expenses to the trip currently being tracked (if any).
+    _selectedTripId =
+        widget.prefill?.tripId ?? ref.read(activeTripIdProvider);
   }
 
   bool _accountInitialized = false;
@@ -233,8 +239,13 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   bool get _showPayeeField =>
       _isOpenDebtType || (widget.prefill != null && _isDebtType);
 
-  /// Show the outstanding-debt picker only for a brand-new settle entry.
-  bool get _showSettlePicker => _isSettleType && widget.prefill == null;
+  /// Show the outstanding-debt picker only for a brand-new settle entry that
+  /// wasn't launched against a specific debt/receivable (e.g. tapping "Repaid"
+  /// from the type bar). When a [settleTarget] is preset (the user tapped
+  /// "Repay" on a specific loan card) we skip the redundant picker so the
+  /// "Pay from (your account)" selector is the clear next choice.
+  bool get _showSettlePicker =>
+      _isSettleType && widget.prefill == null && widget.settleTarget == null;
 
   String get _payeeLabel {
     switch (_type) {
@@ -285,6 +296,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       payee: _payeeController.text.isEmpty ? null : _payeeController.text,
       accountId: _selectedAccount?.id,
       accountName: _selectedAccount?.name,
+      tripId: _type == TransactionType.expense ? _selectedTripId : null,
       date: _date,
     );
 
@@ -552,6 +564,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               _buildCategoryGrid(tc, dbExpenseCategories),
               const SizedBox(height: 14),
 
+              // Trip tag — expenses only, so travel spending lands on a trip.
+              if (_type == TransactionType.expense)
+                _buildTripSelector(tc),
+
               // Payee field for opening a new lend/borrow
               if (_showPayeeField) ...[
                 _buildTextField(
@@ -577,6 +593,12 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                   error: (_, __) => const SizedBox(),
                   data: (accounts) => _buildSettleTargetSelector(accounts, tc),
                 ),
+                const SizedBox(height: 14),
+              ]
+              // Preset target (launched from a specific card) — show a summary
+              // of what's being settled instead of the redundant picker.
+              else if (_isSettleType && _settleTarget != null) ...[
+                _buildSettleTargetSummary(_settleTarget!, currency, tc),
                 const SizedBox(height: 14),
               ],
 
@@ -872,6 +894,72 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     }
   }
 
+  /// Optional Trip tag for an expense (travel tracking). Hidden entirely when
+  /// the user has no trips, so it never clutters the common case.
+  Widget _buildTripSelector(AppThemeColors tc) {
+    final trips = ref.watch(tripListProvider).valueOrNull ?? const <TripModel>[];
+    final active = trips.where((t) => t.isActive).toList();
+    if (active.isEmpty) return const SizedBox.shrink();
+
+    Widget chip({required bool selected, required String label, String? emoji,
+        required VoidCallback onTap}) {
+      return GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected ? tc.onSurface : tc.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+                color: selected ? Colors.transparent : tc.outlineVariant,
+                width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (emoji != null) ...[
+                Text(emoji, style: const TextStyle(fontSize: 13)),
+                const SizedBox(width: 5),
+              ],
+              Text(label,
+                  style: AppFonts.sans(
+                      color: selected ? tc.surface : tc.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Trip (optional)', tc),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            chip(
+              selected: _selectedTripId == null,
+              label: 'None',
+              onTap: () => setState(() => _selectedTripId = null),
+            ),
+            ...active.map((t) => chip(
+                  selected: _selectedTripId == t.id,
+                  label: t.name,
+                  emoji: t.emoji,
+                  onTap: () => setState(() => _selectedTripId = t.id),
+                )),
+          ],
+        ),
+        const SizedBox(height: 14),
+      ],
+    );
+  }
+
   Widget _buildAccountSelector(List<AccountModel> accounts, AppThemeColors tc) {
     // Debt flows fund from spendable accounts only.
     final options = _isDebtType ? _spendable(accounts) : accounts;
@@ -889,6 +977,47 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         _accountChip(null, 'None', tc),
         ...options.map((acc) => _accountChip(acc, acc.name, tc)),
       ],
+    );
+  }
+
+  /// Compact summary of the debt/receivable being settled when it was preset
+  /// (e.g. tapping "Repay" on a loan card). Shows the outstanding balance so
+  /// the user knows how much is left before they enter the amount.
+  Widget _buildSettleTargetSummary(
+      AccountModel target, CurrencyState currency, AppThemeColors tc) {
+    final isRepay = _type == TransactionType.borrowReturn;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Icon(target.type.icon, size: 18, color: target.type.color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isRepay ? 'Repaying ${target.name}' : 'From ${target.name}',
+                  style: AppFonts.sans(
+                      color: tc.onSurface,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  '${currency.format(target.balance)} outstanding',
+                  style: AppFonts.sans(
+                      color: tc.onSurfaceVariant, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

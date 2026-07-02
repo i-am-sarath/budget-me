@@ -22,10 +22,19 @@ class MagicFab extends ConsumerStatefulWidget {
   ConsumerState<MagicFab> createState() => _MagicFabState();
 }
 
-class _MagicFabState extends ConsumerState<MagicFab> {
+class _MagicFabState extends ConsumerState<MagicFab>
+    with SingleTickerProviderStateMixin {
   bool _isRecording = false;
   bool _starting = false; // async start (gates/permission) in flight
   bool _stopRequested = false; // user released before start finished
+  // ── Tap-to-toggle vs hold-to-talk ───────────────────────────
+  // A quick tap latches recording on (tap again to stop & save); a press-and-
+  // hold records only while held and stops on release.
+  bool _tapLatched = false; // recording toggled on by a tap; survives release
+  bool _ignoreNextRelease = false; // tap that stopped a latched recording
+  bool _latchRequested = false; // released as a tap before async start finished
+  DateTime? _pressStart; // physical press-down time, to tell tap from hold
+  static const int _tapThresholdMs = 350;
   double _dragOffset = 0.0;
   Timer? _recordingTimer;
   int _recordingSeconds = 0;
@@ -35,14 +44,27 @@ class _MagicFabState extends ConsumerState<MagicFab> {
   StreamSubscription<Amplitude>? _ampSub;
   double _amp = 0;
 
+  // Gentle breathing pulse on the idle mic to signal "this is interactive".
+  late final AnimationController _pulseCtrl;
+
   static const double _cancelThreshold = -80.0;
   bool get _isCancelling => _dragOffset < _cancelThreshold;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+  }
 
   @override
   void dispose() {
     _recordingTimer?.cancel();
     _ampSub?.cancel();
     _audioRecorder.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -53,6 +75,13 @@ class _MagicFabState extends ConsumerState<MagicFab> {
 
   void _onPointerDown(PointerDownEvent _) {
     _dragOffset = 0;
+    // Tapping while a latched (tap-mode) recording is running stops & saves it.
+    if (_isRecording && _tapLatched) {
+      _ignoreNextRelease = true;
+      _stopRecording();
+      return;
+    }
+    _pressStart = DateTime.now();
     _initiateRecording();
   }
 
@@ -69,16 +98,39 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       _handleRelease(forceCancel: true);
 
   void _handleRelease({required bool forceCancel}) {
+    // A release that corresponds to the tap which stopped a latched recording
+    // must not be re-interpreted as a new gesture.
+    if (_ignoreNextRelease) {
+      _ignoreNextRelease = false;
+      return;
+    }
+
+    final heldMs = _pressStart == null
+        ? 0
+        : DateTime.now().difference(_pressStart!).inMilliseconds;
+    final isQuickTap = heldMs < _tapThresholdMs;
+
     if (_isRecording) {
       if (forceCancel || _isCancelling) {
         _cancelRecording();
+      } else if (isQuickTap) {
+        // Quick tap → latch into toggle mode; keep recording until next tap.
+        HapticFeedback.selectionClick();
+        setState(() => _tapLatched = true);
       } else {
+        // Press-and-hold → stop & save on release.
         _stopRecording();
       }
     } else if (_starting) {
-      // Released while the async start was still running — make sure the
-      // recording that's about to begin is torn down immediately.
-      _stopRequested = true;
+      // Released while the async start was still running.
+      if (isQuickTap && !forceCancel) {
+        // Treat as a tap: latch on once the recording actually begins.
+        _latchRequested = true;
+      } else {
+        // A hold that was released early — tear the recording down once it
+        // begins instead of leaving it running forever.
+        _stopRequested = true;
+      }
     }
   }
 
@@ -139,6 +191,10 @@ class _MagicFabState extends ConsumerState<MagicFab> {
 
     setState(() {
       _isRecording = true;
+      // If the user released as a quick tap before start finished, latch the
+      // recording on (toggle mode) instead of waiting for them to keep holding.
+      _tapLatched = _latchRequested;
+      _latchRequested = false;
       _recordingSeconds = 0;
       _dragOffset = 0;
       _amp = 0;
@@ -163,6 +219,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
     final path = await _audioRecorder.stop();
     setState(() {
       _isRecording = false;
+      _tapLatched = false;
       _dragOffset = 0;
       _amp = 0;
     });
@@ -182,6 +239,7 @@ class _MagicFabState extends ConsumerState<MagicFab> {
     final path = await _audioRecorder.stop();
     setState(() {
       _isRecording = false;
+      _tapLatched = false;
       _dragOffset = 0;
       _amp = 0;
     });
@@ -318,61 +376,114 @@ class _MagicFabState extends ConsumerState<MagicFab> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left: Manual pill (idle) ↔ recording info (recording)
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _isRecording
-                  ? _RecordingInfoPill(
-                      key: const ValueKey('rec'),
-                      seconds: _recordingSeconds,
-                      isCancelling: _isCancelling,
-                      cancelProgress: cancelProgress,
-                      tc: tc,
-                    )
-                  : _ManualEntryPill(
-                      key: const ValueKey('manual'),
-                      tc: tc,
-                      onTap: _showManualEntry,
-                    ),
+          // Left: Manual pill (idle) ↔ recording info (recording).
+          // Nudged down so it lines up with the centre of the mic circle
+          // (the mic column carries an extra "Hold to speak" label below it).
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _isRecording
+                    ? _RecordingInfoPill(
+                        key: const ValueKey('rec'),
+                        seconds: _recordingSeconds,
+                        isCancelling: _isCancelling,
+                        cancelProgress: cancelProgress,
+                        latched: _tapLatched,
+                        tc: tc,
+                      )
+                    : _ManualEntryPill(
+                        key: const ValueKey('manual'),
+                        tc: tc,
+                        onTap: _showManualEntry,
+                      ),
+              ),
             ),
           ),
           const SizedBox(width: 16),
 
-          // Right: Mic button — hold to record, slide left to cancel
+          // Right: Mic button — hold to record, slide left to cancel.
+          // Idle state shows a brand-coloured button + "Hold to speak" label so
+          // the press-and-hold gesture is discoverable on first sight.
           Listener(
             onPointerDown: _onPointerDown,
             onPointerMove: _onPointerMove,
             onPointerUp: _onPointerUp,
             onPointerCancel: _onPointerCancel,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              width: _isRecording ? 80 : 68,
-              height: _isRecording ? 80 : 68,
-              decoration: BoxDecoration(
-                color: _isRecording
-                    ? (_isCancelling ? Colors.grey.shade600 : Colors.red)
-                    : tc.onSurface,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isRecording ? Colors.red : tc.onSurface)
-                        .withOpacity(_isRecording ? 0.45 : 0.2),
-                    blurRadius: _isRecording ? 24 : 12,
-                    spreadRadius: _isRecording ? 4 : 0,
-                    offset: const Offset(0, 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: _pulseCtrl,
+                  builder: (context, child) {
+                    // Soft expanding halo only while idle, to draw the eye
+                    // without distracting during recording.
+                    final pulse = _isRecording ? 0.0 : _pulseCtrl.value;
+                    return Container(
+                      width: 84,
+                      height: 84,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: tc.primary.withOpacity(0.16 * (1 - pulse)),
+                      ),
+                      child: Transform.scale(
+                        scale: 1 + pulse * 0.06,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    width: _isRecording ? 80 : 68,
+                    height: _isRecording ? 80 : 68,
+                    decoration: BoxDecoration(
+                      color: _isRecording
+                          ? (_isCancelling ? Colors.grey.shade600 : Colors.red)
+                          : tc.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_isRecording ? Colors.red : tc.primary)
+                              .withOpacity(_isRecording ? 0.45 : 0.35),
+                          blurRadius: _isRecording ? 24 : 16,
+                          spreadRadius: _isRecording ? 4 : 1,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.mic_rounded,
+                      color: tc.onPrimary,
+                      size: _isRecording ? 32 : 30,
+                    ),
                   ),
-                ],
-              ),
-              child: Icon(
-                Icons.mic_rounded,
-                color: Colors.white,
-                size: _isRecording ? 32 : 30,
-              ),
+                ),
+                // "Hold to speak" affordance — fades out while recording (the
+                // recording pill already explains slide-to-cancel).
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity: _isRecording ? 0 : 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Tap or hold to speak',
+                      style: AppFonts.sans(
+                        color: tc.onSurfaceVariant,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -435,6 +546,7 @@ class _RecordingInfoPill extends StatelessWidget {
   final int seconds;
   final bool isCancelling;
   final double cancelProgress; // 0.0 → 1.0 as user slides left
+  final bool latched; // tap-to-toggle mode (finger lifted, recording continues)
   final AppThemeColors tc;
 
   const _RecordingInfoPill({
@@ -442,6 +554,7 @@ class _RecordingInfoPill extends StatelessWidget {
     required this.seconds,
     required this.isCancelling,
     required this.cancelProgress,
+    required this.latched,
     required this.tc,
   });
 
@@ -483,42 +596,65 @@ class _RecordingInfoPill extends StatelessWidget {
                   ),
                 ),
               ]
-            : [
-                Icon(
-                  Icons.chevron_left_rounded,
-                  color: tc.onSurfaceVariant
-                      .withOpacity(0.35 + cancelProgress * 0.65),
-                  size: 16,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  'Slide to cancel',
-                  style: AppFonts.sans(
-                    color: tc.onSurfaceVariant
-                        .withOpacity(0.35 + cancelProgress * 0.65),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _time,
-                  style: AppFonts.sans(
-                    color: tc.onSurface,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            : latched
+                ? [
+                    Icon(Icons.stop_circle_rounded,
+                        color: Colors.red, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Tap to stop',
+                      style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _time,
+                      style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ]
+                : [
+                    Icon(
+                      Icons.chevron_left_rounded,
+                      color: tc.onSurfaceVariant
+                          .withOpacity(0.35 + cancelProgress * 0.65),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      'Slide to cancel',
+                      style: AppFonts.sans(
+                        color: tc.onSurfaceVariant
+                            .withOpacity(0.35 + cancelProgress * 0.65),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _time,
+                      style: AppFonts.sans(
+                        color: tc.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
       ),
     );
   }

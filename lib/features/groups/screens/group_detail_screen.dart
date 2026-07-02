@@ -41,7 +41,7 @@ class GroupDetailScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Share invite',
             onPressed: () => Share.share(
-                'Join my "${group.name}" group on Budget Me. Invite code: ${group.inviteCode}'),
+                'Join my "${group.name}" group on Money Purse. Invite code: ${group.inviteCode}'),
             icon: Icon(Icons.ios_share_rounded,
                 color: tc.onSurface, size: 20),
           ),

@@ -556,7 +556,7 @@ class _SubscriptionCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isPro ? 'Budget Me Pro' : 'Free Plan',
+                  isPro ? 'Money Purse Pro' : 'Free Plan',
                   style: AppFonts.sans(
                     color: isPro ? tc.surface : tc.onSurface,
                     fontSize: 15,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -45,6 +46,21 @@ class CloudService {
   /// Emits on sign-in / sign-out so the UI can react.
   static Stream<AuthState> get authChanges => client.auth.onAuthStateChange;
 
+  /// Calm, user-facing fallback for any Google sign-in failure the user can't
+  /// act on (misconfig, unregistered SHA-1 / OAuth client, Play Services).
+  static const String _googleUnavailable =
+      'Google sign-in isn\'t available right now. Please sign in with your '
+      'email instead.';
+
+  /// Routes technical sign-in diagnostics to the developer (debug console),
+  /// never to the UI. In release this is a no-op so nothing leaks to logs.
+  static void _logSignInError(String detail, [StackTrace? st]) {
+    if (kDebugMode) {
+      debugPrint('[CloudService] Google sign-in failed: $detail');
+      if (st != null) debugPrint('$st');
+    }
+  }
+
   /// Native Google sign-in → exchange the id token with Supabase.
   /// Returns the signed-in [User]. Throws [CloudException] on failure.
   static Future<User> signInWithGoogle() async {
@@ -52,34 +68,34 @@ class CloudService {
       throw CloudException('Cloud sync isn\'t set up in this build.');
     }
     if (ApiConfig.googleWebClientId.isEmpty) {
-      throw CloudException('Google sign-in isn\'t configured.');
+      // Build misconfiguration (missing --dart-define). Users can't act on it,
+      // so log for the developer and offer the working alternative.
+      _logSignInError('GOOGLE_WEB_CLIENT_ID is empty (build misconfigured)');
+      throw CloudException(_googleUnavailable);
     }
 
     final GoogleSignInAccount? account;
     try {
       account = await googleSignIn.signIn();
-    } on PlatformException catch (e) {
-      // Translate the opaque Google Play Services error codes into something
-      // actionable. Code 10 = DEVELOPER_ERROR: the app's Android OAuth client
-      // (package name + SHA-1) isn't registered in Google Cloud, or the
-      // serverClientId isn't the *Web* client.
+    } on PlatformException catch (e, st) {
+      // Never surface raw Google Play Services diagnostics to end users. Log the
+      // technical detail (code 10 = DEVELOPER_ERROR: the Android OAuth client's
+      // package + SHA-1 isn't registered, or serverClientId isn't the Web
+      // client) and show a calm, actionable message instead.
       final detail = '${e.code} ${e.message ?? ''}';
-      if (detail.contains('10')) {
-        throw CloudException(
-          'Google sign-in isn\'t set up for this app yet (error 10). '
-          'Add an Android OAuth client (package com.budgetme.budgettracker + '
-          'this build\'s SHA-1) in Google Cloud, and make sure '
-          'GOOGLE_WEB_CLIENT_ID is the Web client.',
-        );
-      }
-      if (detail.contains('12501') || detail.contains('canceled') ||
-          detail.contains('cancelled')) {
+      _logSignInError(detail, st);
+
+      final lower = detail.toLowerCase();
+      if (detail.contains('12501') || lower.contains('cancel')) {
         throw CloudException('Sign-in cancelled.');
       }
-      if (detail.contains('7') && detail.toLowerCase().contains('network')) {
-        throw CloudException('Network error. Check your connection and retry.');
+      if (lower.contains('network')) {
+        throw CloudException(
+            'Network error. Check your connection and try again.');
       }
-      throw CloudException('Google sign-in failed (${e.code}).');
+      // Everything else, including error 10, is a setup/server-side issue the
+      // user cannot fix — nudge them to email sign-in rather than alarm them.
+      throw CloudException(_googleUnavailable);
     }
     if (account == null) {
       throw CloudException('Sign-in cancelled.'); // user dismissed the sheet

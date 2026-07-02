@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/sheets_sync_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 
@@ -73,6 +74,67 @@ class TransactionNotifier
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
+  }
+
+  /// Move money between two accounts as one atomic operation.
+  ///
+  /// Both legs are written and *both* balances are adjusted before a single
+  /// refresh, and any failure is rethrown so the caller can surface it (the
+  /// generic [addTransaction] swallows errors into provider state, which made
+  /// transfers fail silently and leave balances untouched).
+  Future<void> transfer({
+    required AccountModel from,
+    required AccountModel to,
+    required double amount,
+    required DateTime date,
+    String note = '',
+  }) async {
+    if (amount <= 0) throw ArgumentError('Transfer amount must be positive');
+    if (from.id == to.id) {
+      throw ArgumentError('Source and destination must differ');
+    }
+
+    final displayNote = note.trim().isNotEmpty ? note.trim() : 'Transfer';
+    // Repaying a loan / credit card → the credit leg reduces the liability.
+    final isLoanRepayment = to.type.isLiability;
+
+    final debit = TransactionModel(
+      amount: amount,
+      type: TransactionType.transferOut,
+      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
+      note: '$displayNote → ${to.name}',
+      accountId: from.id,
+      accountName: from.name,
+      date: date,
+    );
+    final credit = TransactionModel(
+      amount: amount,
+      type: isLoanRepayment
+          ? TransactionType.borrowReturn
+          : TransactionType.transferIn,
+      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
+      note: '$displayNote ← ${from.name}',
+      accountId: to.id,
+      accountName: to.name,
+      date: date,
+    );
+
+    // Persist both legs first…
+    await _repository.addTransaction(debit, _spaceId);
+    await _repository.addTransaction(credit, _spaceId);
+
+    // …then adjust both balances (deduct from source, add to destination).
+    final accounts = _ref.read(accountProvider.notifier);
+    await accounts.adjustBalance(from.id, debit.balanceDelta);
+    await accounts.adjustBalance(to.id, credit.balanceDelta);
+
+    // Mirror to Google Sheets (no-op unless connected).
+    // ignore: discarded_futures
+    SheetsSyncService.instance.appendTransaction(debit);
+    // ignore: discarded_futures
+    SheetsSyncService.instance.appendTransaction(credit);
+
+    await refresh();
   }
 
   Future<void> deleteTransaction(String id) async {

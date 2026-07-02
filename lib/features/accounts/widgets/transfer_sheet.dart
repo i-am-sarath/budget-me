@@ -5,7 +5,6 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:intl/intl.dart';
 
@@ -60,42 +59,19 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     HapticFeedback.mediumImpact();
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
     final note = _noteCtrl.text.trim();
-    final displayNote = note.isNotEmpty ? note : 'Transfer';
-
-    // Determine if destination is a liability (loan / credit card)
-    final isLoanRepayment =
-        _to!.type == AccountType.loan || _to!.type == AccountType.creditCard;
-
-    // Debit from source — uses transferOut so it does NOT count as a budget expense
-    final debit = TransactionModel(
-      amount: amount,
-      type: TransactionType.transferOut,
-      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
-      note: '$displayNote → ${_to!.name}',
-      accountId: _from!.id,
-      accountName: _from!.name,
-      date: _date,
-    );
-
-    // Credit to destination
-    // For loan/credit card: borrowReturn → reduces the liability balance
-    // For normal accounts: transferIn → does NOT inflate "Earned" summary
-    final credit = TransactionModel(
-      amount: amount,
-      type: isLoanRepayment ? TransactionType.borrowReturn : TransactionType.transferIn,
-      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
-      note: '$displayNote ← ${_from!.name}',
-      accountId: _to!.id,
-      accountName: _to!.name,
-      date: _date,
-    );
 
     final txNotifier = ref.read(transactionListProvider.notifier);
 
     try {
-      await txNotifier.addTransaction(debit);
-      if (!mounted) return;
-      await txNotifier.addTransaction(credit);
+      // Single atomic transfer — deducts from source and credits destination,
+      // and rethrows on failure so we can show it instead of failing silently.
+      await txNotifier.transfer(
+        from: _from!,
+        to: _to!,
+        amount: amount,
+        date: _date,
+        note: note,
+      );
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {

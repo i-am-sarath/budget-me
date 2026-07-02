@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
+import 'package:agent_money/features/accounts/widgets/transfer_sheet.dart';
+import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
 import 'package:agent_money/features/settings/settings_screen.dart';
@@ -16,6 +18,9 @@ import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
 import 'package:agent_money/features/categories/screens/category_budget_screen.dart';
 import 'package:agent_money/features/groups/screens/groups_screen.dart';
+import 'package:agent_money/features/trips/screens/trips_screen.dart';
+import 'package:agent_money/core/services/tour_service.dart';
+import 'package:agent_money/features/onboarding/feature_tour.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -27,6 +32,29 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _navIndex = 0;
+  bool _tourChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // First-run feature tour. We wait for the post-frame callback so the
+    // dashboard is fully painted behind the dimmed overlay, and guard with a
+    // flag so navigation back to Home never re-triggers it within a session.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowTour());
+  }
+
+  Future<void> _maybeShowTour() async {
+    if (_tourChecked || !mounted) return;
+    _tourChecked = true;
+    // tourSeenProvider loads from prefs async; give it a beat to settle so we
+    // read the real persisted value rather than the safe "seen" default.
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    final seen = ref.read(tourSeenProvider);
+    if (!seen) {
+      await showFeatureTour(context);
+    }
+  }
 
   final _pages = const [
     _HomeTab(),
@@ -189,6 +217,15 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     });
   }
 
+  void _openTransfer() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const TransferSheet(),
+    ).then((_) => ref.read(accountProvider.notifier).loadAccounts());
+  }
+
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionListProvider);
@@ -207,6 +244,19 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           titleSpacing: 20,
           title: _SpaceHeaderTitle(tc: tc),
           actions: [
+            IconButton(
+              tooltip: 'Transfer money',
+              onPressed: _openTransfer,
+              icon: Icon(Icons.swap_horiz_rounded, color: tc.onSurface),
+            ),
+            IconButton(
+              tooltip: 'Trips',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TripsScreen()),
+              ),
+              icon: Icon(Icons.card_travel_rounded, color: tc.onSurface),
+            ),
             IconButton(
               tooltip: 'Groups',
               onPressed: () => Navigator.push(
@@ -609,7 +659,7 @@ class _EmptyTransactions extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Tap the mic or manual to start tracking',
+              'Hold the mic to speak, or tap Manual to start tracking',
               style: AppFonts.sans(
                 color: tc.onSurfaceVariant,
                 fontSize: 12,
@@ -648,7 +698,7 @@ class _SpaceHeaderTitle extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            'Budget Me',
+            'Money Purse',
             style: AppFonts.sans(
               color: tc.onSurface,
               fontWeight: FontWeight.w900,

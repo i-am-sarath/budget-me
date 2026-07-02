@@ -163,7 +163,7 @@ class SheetsSyncService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'properties': {'title': 'Budget Me — Transactions'},
+        'properties': {'title': 'Money Purse — Transactions'},
         'sheets': [
           {
             'properties': {'title': _sheetName},

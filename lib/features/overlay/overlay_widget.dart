@@ -7,6 +7,7 @@ import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Quick-log overlay bubble.
 ///
@@ -143,17 +144,32 @@ class _QuickLogOverlayState extends State<QuickLogOverlay>
     }
 
     if (path != null) {
+      // Persist the path to a queue first, so a recording is NEVER lost — even
+      // if the main app process is dead (then the live IPC below is a no-op and
+      // the app drains this queue on its next launch / resume).
+      await _enqueuePending(path);
       try {
         await FlutterOverlayWindow.shareData({
           'type': 'voice_log',
           'path': path,
         });
       } catch (_) {
-        // If IPC fails, drop the file rather than leaving it orphaned.
-        final f = File(path);
-        if (await f.exists()) await f.delete();
+        // IPC failed (app likely not running) — the queue above still has it.
       }
     }
+  }
+
+  /// Append [path] to the persisted pending-log queue read by the main app.
+  /// Runs from the overlay isolate; SharedPreferences is backed by the same
+  /// native store, so the main app sees it after a `reload()`.
+  Future<void> _enqueuePending(String path) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final list = prefs.getStringList('pending_voice_logs') ?? <String>[];
+      if (!list.contains(path)) list.add(path);
+      await prefs.setStringList('pending_voice_logs', list);
+    } catch (_) {/* best-effort */}
   }
 
   Future<void> _flashError() async {

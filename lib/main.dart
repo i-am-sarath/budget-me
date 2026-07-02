@@ -19,10 +19,11 @@ import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/dashboard/dashboard_screen.dart';
 import 'package:agent_money/features/onboarding/onboarding_screen.dart';
 import 'package:agent_money/features/overlay/overlay_widget.dart';
+import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
 import 'package:agent_money/features/transactions/widgets/voice_capture_sheet.dart';
 import 'package:record/record.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// App Group shared between the app and the iOS WidgetKit extension, and the
 /// host string used by the home-screen quick-add widget's deep link
@@ -129,8 +130,11 @@ class BudgetTrackerApp extends ConsumerStatefulWidget {
   ConsumerState<BudgetTrackerApp> createState() => _BudgetTrackerAppState();
 }
 
-class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
+class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp>
+    with WidgetsBindingObserver {
   StreamSubscription<dynamic>? _overlaySub;
+  static const String _pendingLogsKey = 'pending_voice_logs';
+  bool _draining = false;
 
   @override
   void initState() {
@@ -140,7 +144,11 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
     //   - {'type': 'mic_permission_needed'}      → prompt for mic
     //   - 'open_quick_entry' (legacy)             → manual entry sheet
     if (Platform.isAndroid) {
+      WidgetsBinding.instance.addObserver(this);
       _overlaySub = OverlayService.events.listen(_handleOverlayEvent);
+      // Drain any recordings the bubble captured while the app was killed.
+      // ignore: discarded_futures
+      _drainPendingVoiceLogs();
     }
 
     // Home-screen quick-add widget: tapping it deep-links to budgetme://voice.
@@ -204,6 +212,65 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Coming back to the foreground — pick up anything the bubble queued while
+    // the app was backgrounded or killed.
+    if (state == AppLifecycleState.resumed && Platform.isAndroid) {
+      // ignore: discarded_futures
+      _drainPendingVoiceLogs();
+    }
+  }
+
+  /// Process a single overlay recording and remove it from the persisted queue.
+  Future<void> _processOverlayLog(String path) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final list = prefs.getStringList(_pendingLogsKey) ?? <String>[];
+      if (list.remove(path)) {
+        await prefs.setStringList(_pendingLogsKey, list);
+      }
+    } catch (_) {/* the file check below still gates processing */}
+    final file = File(path);
+    if (!await file.exists() || !mounted) return;
+    await ref.read(voiceLogProvider.notifier).processAndSave(file);
+  }
+
+  /// Drain recordings the overlay bubble captured while the app process was not
+  /// alive to receive the live IPC. Waits until the app is ready, then runs
+  /// each through the normal voice auto-save pipeline. Files are deleted by the
+  /// pipeline, so a path whose file is already gone is simply skipped.
+  Future<void> _drainPendingVoiceLogs() async {
+    if (_draining) return;
+    _draining = true;
+    try {
+      for (var i = 0; i < 50; i++) {
+        if (!mounted) return;
+        final ready = rootNavigatorKey.currentContext != null &&
+            ref.read(budgetProvider).onboardingDone;
+        if (ready) break;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      if (!mounted) return;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final pending = prefs.getStringList(_pendingLogsKey) ?? <String>[];
+      if (pending.isEmpty) return;
+      await prefs.remove(_pendingLogsKey);
+      for (final path in pending) {
+        if (!mounted) return;
+        final file = File(path);
+        if (!await file.exists()) continue;
+        await ref.read(voiceLogProvider.notifier).processAndSave(file);
+      }
+    } catch (_) {
+      // Best-effort — anything left will be retried on the next resume.
+    } finally {
+      _draining = false;
+    }
+  }
+
   void _handleOverlayEvent(dynamic event) {
     final nav = rootNavigatorKey.currentState;
     final ctx = nav?.context;
@@ -226,14 +293,11 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
       if (type == 'voice_log') {
         final path = event['path'];
         if (path is! String || path.isEmpty) return;
-        final file = File(path);
-        if (!file.existsSync()) return;
-        showModalBottomSheet(
-          context: ctx,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => ProcessingSheet(audioFile: file),
-        );
+        // Process via the same background auto-save flow as the in-app mic
+        // (shimmer row + Undo), and clear it from the persisted queue so the
+        // startup/resume drain never processes it twice.
+        // ignore: discarded_futures
+        _processOverlayLog(path);
         return;
       }
       if (type == 'mic_permission_needed') {
@@ -253,6 +317,7 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _overlaySub?.cancel();
     _widgetSub?.cancel();
     super.dispose();
@@ -263,7 +328,7 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp> {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
-      title: 'Budget Me',
+      title: 'Money Purse',
       navigatorKey: rootNavigatorKey,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
@@ -324,7 +389,7 @@ class _LoadingOrOnboarding extends ConsumerWidget {
                         color: tc.surface, size: 36),
                   ),
                   const SizedBox(height: 16),
-                  Text('Budget Me',
+                  Text('Money Purse',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,

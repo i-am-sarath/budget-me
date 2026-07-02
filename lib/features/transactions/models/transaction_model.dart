@@ -42,6 +42,7 @@ class TransactionModel {
   final String? payee;
   final String? accountId;
   final String? accountName;
+  final String? tripId; // optional: tags this spend to a Trip (travel tracking)
   final DateTime date;
   final DateTime createdAt;
   final bool isSynced;
@@ -55,6 +56,7 @@ class TransactionModel {
     this.payee,
     this.accountId,
     this.accountName,
+    this.tripId,
     required this.date,
     DateTime? createdAt,
     this.isSynced = false,
@@ -95,6 +97,7 @@ class TransactionModel {
         'payee': payee ?? '',
         'account_id': accountId ?? '',
         'account_name': accountName ?? '',
+        'trip_id': tripId ?? '',
         'date': date.toIso8601String(),
         'created_at': createdAt.toIso8601String(),
         'is_synced': isSynced ? 1 : 0,
@@ -115,6 +118,9 @@ class TransactionModel {
         accountName: (map['account_name'] as String?)?.isNotEmpty == true
             ? map['account_name'] as String
             : null,
+        tripId: (map['trip_id'] as String?)?.isNotEmpty == true
+            ? map['trip_id'] as String
+            : null,
         date: DateTime.parse(map['date'] as String),
         createdAt: DateTime.parse(map['created_at'] as String),
         isSynced: (map['is_synced'] as int? ?? 0) == 1,
@@ -128,6 +134,7 @@ class TransactionModel {
     String? payee,
     String? accountId,
     String? accountName,
+    String? tripId,
     DateTime? date,
     bool? isSynced,
   }) =>
@@ -140,6 +147,7 @@ class TransactionModel {
         payee: payee ?? this.payee,
         accountId: accountId ?? this.accountId,
         accountName: accountName ?? this.accountName,
+        tripId: tripId ?? this.tripId,
         date: date ?? this.date,
         createdAt: createdAt,
         isSynced: isSynced ?? this.isSynced,

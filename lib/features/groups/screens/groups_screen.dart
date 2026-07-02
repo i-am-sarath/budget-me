@@ -6,6 +6,7 @@ import 'package:agent_money/features/groups/models/group_models.dart';
 import 'package:agent_money/features/groups/providers/groups_providers.dart';
 import 'package:agent_money/features/groups/screens/group_detail_screen.dart';
 import 'package:agent_money/features/groups/widgets/group_sheets.dart';
+import 'package:agent_money/features/trips/screens/trips_screen.dart';
 
 /// Entry point for shared spending. Adapts to three states:
 /// not-configured → signed-out → group list.
@@ -37,11 +38,79 @@ class GroupsScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: !enabled
-          ? const _NotConfigured()
-          : !auth.isSignedIn
-              ? _SignedOut(auth: auth)
-              : const _GroupList(),
+      body: Column(
+        children: [
+          // Personal travel tracking lives next to shared groups so users can
+          // pick the right tool: a Group (shared, online) or a Trip (your own
+          // travel spending, works offline).
+          _TripBanner(tc: tc),
+          Expanded(
+            child: !enabled
+                ? const _NotConfigured()
+                : !auth.isSignedIn
+                    ? _SignedOut(auth: auth)
+                    : const _GroupList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Banner: jump to personal Trips (travel tracking) ────────────────────────
+class _TripBanner extends StatelessWidget {
+  final AppThemeColors tc;
+  const _TripBanner({required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: GestureDetector(
+        onTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const TripsScreen())),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: tc.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: tc.outlineVariant, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tc.primary.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(Icons.card_travel_rounded,
+                    color: tc.primary, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Track a trip',
+                        style: AppFonts.sans(
+                            color: tc.onSurface,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                    Text('Budget a trip and track your travel spending',
+                        style: AppFonts.sans(
+                            color: tc.onSurfaceVariant, fontSize: 11)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: tc.onSurfaceVariant, size: 18),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -195,12 +264,12 @@ class _GroupList extends ConsumerWidget {
             ),
             data: (groups) {
               if (groups.isEmpty) {
-                return _CenteredMessage(
-                  icon: Icons.groups_2_rounded,
-                  title: 'No groups yet',
-                  body:
-                      'Create a group and share its invite code with your roommates.',
+                return _EmptyGroups(
                   tc: tc,
+                  onCreate: () async {
+                    await showCreateGroupSheet(context);
+                    ref.invalidate(myGroupsProvider);
+                  },
                 );
               }
               return RefreshIndicator(
@@ -220,80 +289,354 @@ class _GroupList extends ConsumerWidget {
   }
 }
 
-class _GroupCard extends StatelessWidget {
+class _GroupCard extends ConsumerStatefulWidget {
   final GroupModel group;
   const _GroupCard({required this.group});
 
   @override
+  ConsumerState<_GroupCard> createState() => _GroupCardState();
+}
+
+class _GroupCardState extends ConsumerState<_GroupCard> {
+  bool _pressed = false;
+
+  void _copyInvite() {
+    HapticFeedback.selectionClick();
+    Clipboard.setData(ClipboardData(text: widget.group.inviteCode));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Invite code ${widget.group.inviteCode} copied'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final group = widget.group;
     final tc = AppThemeColors.of(context);
+    // Live detail (members + total) so the card feels alive, not static.
+    final detail = ref.watch(groupDetailProvider(group));
+
     return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       onTap: () {
         HapticFeedback.lightImpact();
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => GroupDetailScreen(group: group)));
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: tc.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: tc.outlineVariant, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: group.color.withOpacity(0.14),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Text(group.emoji, style: const TextStyle(fontSize: 22)),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: AnimatedScale(
+        scale: _pressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: tc.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: tc.outlineVariant, width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Text(group.name,
-                      style: AppFonts.sans(
-                          color: tc.onSurface,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 2),
-                  Text(
-                    group.settleUp
-                        ? 'Shared · settle-up on'
-                        : 'Shared · track only',
-                    style: AppFonts.sans(
-                        color: tc.onSurfaceVariant, fontSize: 11),
+                  // Emoji avatar with a coloured accent ring drawn from the
+                  // group's own colour — gives each group its own identity.
+                  Container(
+                    width: 50,
+                    height: 50,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: group.color.withOpacity(0.16),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                          color: group.color.withOpacity(0.35), width: 1),
+                    ),
+                    child:
+                        Text(group.emoji, style: const TextStyle(fontSize: 24)),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(group.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.sans(
+                                color: tc.onSurface,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(
+                              group.settleUp
+                                  ? Icons.swap_horiz_rounded
+                                  : Icons.visibility_outlined,
+                              size: 13,
+                              color: tc.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              group.settleUp ? 'Settle-up' : 'Track only',
+                              style: AppFonts.sans(
+                                  color: tc.onSurfaceVariant, fontSize: 11),
+                            ),
+                            detail.maybeWhen(
+                              data: (d) => Row(
+                                children: [
+                                  _dot(tc),
+                                  Text(
+                                    '${d.members.length} '
+                                    '${d.members.length == 1 ? "member" : "members"}',
+                                    style: AppFonts.sans(
+                                        color: tc.onSurfaceVariant,
+                                        fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                              orElse: () => const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded,
+                      color: tc.onSurfaceVariant, size: 20),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // Footer: member avatar cluster + total + tappable invite code.
+              Row(
+                children: [
+                  detail.maybeWhen(
+                    data: (d) => _AvatarCluster(
+                        members: d.members, color: group.color, tc: tc),
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+                  const Spacer(),
+                  detail.maybeWhen(
+                    data: (d) => d.expenses.isEmpty
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: Text(
+                              '${group.currencyCode} ${d.total.toStringAsFixed(0)}',
+                              style: AppFonts.sans(
+                                  color: tc.onSurface,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+                  // Invite code — now a tappable copy chip.
+                  GestureDetector(
+                    onTap: _copyInvite,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: tc.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border:
+                            Border.all(color: tc.outlineVariant, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(group.inviteCode,
+                              style: AppFonts.sans(
+                                  color: tc.onSurfaceVariant,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1)),
+                          const SizedBox(width: 6),
+                          Icon(Icons.copy_rounded,
+                              color: tc.onSurfaceVariant, size: 13),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dot(AppThemeColors tc) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Container(
+          width: 3,
+          height: 3,
+          decoration: BoxDecoration(
+            color: tc.onSurfaceVariant.withOpacity(0.5),
+            shape: BoxShape.circle,
+          ),
+        ),
+      );
+}
+
+/// Overlapping circular initials for the first few members.
+class _AvatarCluster extends StatelessWidget {
+  final List<GroupMemberModel> members;
+  final Color color;
+  final AppThemeColors tc;
+  const _AvatarCluster(
+      {required this.members, required this.color, required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    if (members.isEmpty) return const SizedBox.shrink();
+    const maxShown = 3;
+    final shown = members.take(maxShown).toList();
+    final extra = members.length - shown.length;
+
+    final avatars = <Widget>[];
+    for (var i = 0; i < shown.length; i++) {
+      final initial = (shown[i].displayName.isNotEmpty
+              ? shown[i].displayName.characters.first
+              : '?')
+          .toUpperCase();
+      avatars.add(Padding(
+        padding: EdgeInsets.only(left: i == 0 ? 0 : 16.0 * i),
+        child: _avatarCircle(initial, color),
+      ));
+    }
+    if (extra > 0) {
+      avatars.add(Padding(
+        padding: EdgeInsets.only(left: 16.0 * shown.length),
+        child: _avatarCircle('+$extra', tc.onSurfaceVariant),
+      ));
+    }
+
+    return SizedBox(
+      height: 26,
+      width: 26.0 + 16.0 * (avatars.length - 1),
+      child: Stack(children: avatars),
+    );
+  }
+
+  Widget _avatarCircle(String label, Color base) => Container(
+        width: 26,
+        height: 26,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(base.withOpacity(0.18), tc.surfaceContainer),
+          shape: BoxShape.circle,
+          border: Border.all(color: tc.surfaceContainerLow, width: 1.5),
+        ),
+        child: Text(
+          label,
+          style: AppFonts.sans(
+              color: base, fontSize: 10, fontWeight: FontWeight.w800),
+        ),
+      );
+}
+
+/// Friendly, action-oriented empty state for the signed-in-but-no-groups case.
+class _EmptyGroups extends StatelessWidget {
+  final AppThemeColors tc;
+  final VoidCallback onCreate;
+  const _EmptyGroups({required this.tc, required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              width: 76,
+              height: 76,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: tc.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(8),
+                color: tc.primary.withOpacity(0.14),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-              child: Text(group.inviteCode,
-                  style: AppFonts.sans(
-                      color: tc.onSurfaceVariant,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1)),
+              child:
+                  Icon(Icons.groups_2_rounded, color: tc.primary, size: 36),
             ),
-            const SizedBox(width: 6),
-            Icon(Icons.chevron_right_rounded,
-                color: tc.onSurfaceVariant, size: 18),
+            const SizedBox(height: 18),
+            Text('Start your first group',
+                textAlign: TextAlign.center,
+                style: AppFonts.sans(
+                    color: tc.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Text(
+              'Track shared spending with roommates, partners or trip buddies. '
+              'Create one and share the invite code.',
+              textAlign: TextAlign.center,
+              style: AppFonts.sans(
+                  color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+            ),
+            const SizedBox(height: 22),
+            // Three quick example ideas to spark intent.
+            const Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _IdeaChip('🏠 Flatmates'),
+                _IdeaChip('✈️ Trip'),
+                _IdeaChip('💑 Partner'),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onCreate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tc.primary,
+                  foregroundColor: tc.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg)),
+                ),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text('Create a group',
+                    style: AppFonts.sans(fontWeight: FontWeight.w700)),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _IdeaChip extends StatelessWidget {
+  final String label;
+  const _IdeaChip(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Text(label,
+          style: AppFonts.sans(
+              color: tc.onSurface, fontSize: 12, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -319,8 +662,8 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          color: filled ? tc.onSurface : tc.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(14),
+          color: filled ? tc.primary : tc.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: filled
               ? null
               : Border.all(color: tc.outlineVariant, width: 0.5),
@@ -329,11 +672,11 @@ class _ActionButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: 18, color: filled ? tc.surface : tc.onSurface),
+                size: 18, color: filled ? tc.onPrimary : tc.onSurface),
             const SizedBox(width: 8),
             Text(label,
                 style: AppFonts.sans(
-                    color: filled ? tc.surface : tc.onSurface,
+                    color: filled ? tc.onPrimary : tc.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w700)),
           ],

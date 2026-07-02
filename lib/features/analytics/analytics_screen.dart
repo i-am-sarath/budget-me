@@ -85,7 +85,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       final file = File('${dir.path}/$name');
       await file.writeAsString(csv);
       await Share.shareXFiles([XFile(file.path)],
-          subject: 'Budget Me export — $name');
+          subject: 'Money Purse export — $name');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

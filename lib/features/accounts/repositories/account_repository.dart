@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 
+// Accounts are intentionally NOT scoped to a space: your real bank/cash/wallet
+// balances are the same money no matter which space (Personal, Business, …) you
+// are viewing. Transactions and budgets stay per-space, but they all draw from
+// and update this single shared set of accounts.
 class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   final DatabaseHelper _db = DatabaseHelper();
-  final String _spaceId;
 
-  AccountNotifier(this._spaceId) : super(const AsyncValue.loading()) {
+  AccountNotifier() : super(const AsyncValue.loading()) {
     loadAccounts();
   }
 
@@ -16,8 +18,6 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
       state = const AsyncValue.loading();
       final rows = await _db.queryAll(
         'accounts',
-        whereClause: 'space_id = ?',
-        whereArgs: [_spaceId],
         orderBy: 'created_at DESC',
       );
       state = AsyncValue.data(rows.map(AccountModel.fromMap).toList());
@@ -27,7 +27,9 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   }
 
   Future<void> addAccount(AccountModel account) async {
-    await _db.insert('accounts', {...account.toMap(), 'space_id': _spaceId});
+    // space_id falls back to the column default; accounts are shared so the
+    // value is irrelevant to which spaces can see the account.
+    await _db.insert('accounts', account.toMap());
     await loadAccounts();
   }
 
@@ -70,12 +72,10 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   List<AccountModel> get accounts => state.valueOrNull ?? [];
 }
 
+// Shared across every space — a single source of truth for account balances.
 final accountProvider =
     StateNotifierProvider<AccountNotifier, AsyncValue<List<AccountModel>>>(
-  (ref) {
-    final spaceId = ref.watch(activeSpaceIdProvider);
-    return AccountNotifier(spaceId);
-  },
+  (ref) => AccountNotifier(),
 );
 
 // ─── Voice account-name matcher ─────────────────────────────

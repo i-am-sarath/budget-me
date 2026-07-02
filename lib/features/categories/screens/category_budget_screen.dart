@@ -488,7 +488,7 @@ class _MonthlyBudgetCardState extends ConsumerState<_MonthlyBudgetCard> {
 
   Future<void> _save(CurrencyState currency) async {
     final val = double.tryParse(_ctrl.text.replaceAll(',', '')) ?? 0;
-    await ref.read(budgetProvider.notifier).updateBudget(val);
+    await ref.read(spaceMonthlyBudgetProvider.notifier).setBudget(val);
     if (!mounted) return;
     setState(() => _editing = false);
     FocusScope.of(context).unfocus();
@@ -506,7 +506,8 @@ class _MonthlyBudgetCardState extends ConsumerState<_MonthlyBudgetCard> {
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
     final currency = ref.watch(currencyProvider);
-    final budget = ref.watch(budgetProvider);
+    final monthlyBudget = ref.watch(spaceMonthlyBudgetProvider);
+    final hasBudget = monthlyBudget > 0;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -532,12 +533,12 @@ class _MonthlyBudgetCardState extends ConsumerState<_MonthlyBudgetCard> {
               if (!_editing)
                 GestureDetector(
                   onTap: () {
-                    _ctrl.text = budget.monthlyBudget > 0
-                        ? budget.monthlyBudget.toStringAsFixed(0)
+                    _ctrl.text = monthlyBudget > 0
+                        ? monthlyBudget.toStringAsFixed(0)
                         : '';
                     setState(() => _editing = true);
                   },
-                  child: Text(budget.hasBudget ? 'Edit' : 'Set',
+                  child: Text(hasBudget ? 'Edit' : 'Set',
                       style: AppFonts.sans(
                           color: tc.primary,
                           fontSize: 12,
@@ -548,11 +549,11 @@ class _MonthlyBudgetCardState extends ConsumerState<_MonthlyBudgetCard> {
           const SizedBox(height: 10),
           if (!_editing)
             Text(
-              budget.hasBudget
-                  ? currency.format(budget.monthlyBudget)
+              hasBudget
+                  ? currency.format(monthlyBudget)
                   : 'No budget set',
               style: AppFonts.sans(
-                  color: budget.hasBudget ? tc.onSurface : tc.onSurfaceVariant,
+                  color: hasBudget ? tc.onSurface : tc.onSurfaceVariant,
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5),

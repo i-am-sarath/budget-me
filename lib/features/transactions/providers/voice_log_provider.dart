@@ -7,7 +7,9 @@ import 'package:agent_money/main.dart' show rootScaffoldMessengerKey;
 import 'package:agent_money/core/services/openai_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/trips/repositories/trip_repository.dart';
 
 /// Drives the "hold → release → it just appears in the list" voice flow.
 ///
@@ -35,11 +37,20 @@ class VoiceLogNotifier extends StateNotifier<VoiceLogState> {
       // Resolve free-form account names ("SBI") to real accounts so balances
       // update, exactly like the old review sheet did.
       final accounts = _ref.read(accountProvider).valueOrNull ?? [];
+      // Tag voice expenses to the trip currently being tracked (if any).
+      final activeTripId = _ref.read(activeTripIdProvider);
       final resolved = parsed.map((tx) {
-        if (tx.accountName == null || tx.accountName!.isEmpty) return tx;
-        final matched = matchAccountByName(tx.accountName!, accounts);
-        if (matched == null) return tx;
-        return tx.copyWith(accountId: matched.id, accountName: matched.name);
+        var t = tx;
+        if (t.accountName != null && t.accountName!.isNotEmpty) {
+          final matched = matchAccountByName(t.accountName!, accounts);
+          if (matched != null) {
+            t = t.copyWith(accountId: matched.id, accountName: matched.name);
+          }
+        }
+        if (activeTripId != null && t.type == TransactionType.expense) {
+          t = t.copyWith(tripId: activeTripId);
+        }
+        return t;
       }).toList();
 
       if (resolved.isEmpty) {
