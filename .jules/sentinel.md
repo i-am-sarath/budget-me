@@ -1,0 +1,1 @@
+When validating numeric string inputs in Dart forms, use `double.tryParse(v) == null || double.parse(v) <= 0` in the `TextFormField` validator to explicitly prevent zero or negative amounts from being processed, as `tryParse` accepts negative strings.
