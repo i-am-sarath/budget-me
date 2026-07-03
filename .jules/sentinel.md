@@ -1,0 +1,1 @@
+- In Dart, when validating string inputs that must be positive numbers, a safe pattern is `double.tryParse(v) == null || double.parse(v) <= 0`, which leverages short-circuiting to prevent FormatException on invalid inputs.

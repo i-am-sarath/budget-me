@@ -95,16 +95,16 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
   // Types shown in the entry sheet — two rows for clarity
   static const _row1Types = [
-    (TransactionType.expense,    'Expense',    Icons.arrow_upward_rounded),
-    (TransactionType.income,     'Income',     Icons.arrow_downward_rounded),
-    (TransactionType.investment, 'Invest',     Icons.trending_up_rounded),
+    (TransactionType.expense, 'Expense', Icons.arrow_upward_rounded),
+    (TransactionType.income, 'Income', Icons.arrow_downward_rounded),
+    (TransactionType.investment, 'Invest', Icons.trending_up_rounded),
   ];
 
   static const _row2Types = [
-    (TransactionType.lend,         'Lend',       Icons.people_alt_rounded),
-    (TransactionType.lendReturn,   'Got Back',   Icons.undo_rounded),
-    (TransactionType.borrow,       'Borrow',     Icons.person_add_alt_1_rounded),
-    (TransactionType.borrowReturn, 'Repaid',     Icons.redo_rounded),
+    (TransactionType.lend, 'Lend', Icons.people_alt_rounded),
+    (TransactionType.lendReturn, 'Got Back', Icons.undo_rounded),
+    (TransactionType.borrow, 'Borrow', Icons.person_add_alt_1_rounded),
+    (TransactionType.borrowReturn, 'Repaid', Icons.redo_rounded),
   ];
 
   @override
@@ -133,8 +133,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
     final prefillAccountId = widget.prefill?.accountId;
     if (prefillAccountId != null && prefillAccountId.isNotEmpty) {
-      _selectedAccount =
-          accounts.where((a) => a.id == prefillAccountId).firstOrNull;
+      _selectedAccount = accounts
+          .where((a) => a.id == prefillAccountId)
+          .firstOrNull;
     } else if (widget.prefill == null) {
       _selectedAccount = accounts.first;
     }
@@ -215,29 +216,39 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: tc.surfaceContainerLow,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Delete this transaction?',
           style: GoogleFonts.inter(
-              color: tc.onSurface, fontWeight: FontWeight.w700),
+            color: tc.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           'The linked account balance will be reversed.',
           style: GoogleFonts.inter(
-              color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+            color: tc.onSurfaceVariant,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(color: tc.onSurfaceVariant)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: tc.onSurfaceVariant),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete',
-                style: GoogleFonts.inter(
-                    color: tc.expense, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: tc.expense,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -260,7 +271,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        top: 20, left: 24, right: 24, bottom: bottomPad + 32,
+        top: 20,
+        left: 24,
+        right: 24,
+        bottom: bottomPad + 32,
       ),
       decoration: BoxDecoration(
         color: tc.surface,
@@ -305,7 +319,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                       onTap: _confirmDelete,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: tc.expense.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(100),
@@ -313,8 +329,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.delete_outline_rounded,
-                                color: tc.expense, size: 14),
+                            Icon(
+                              Icons.delete_outline_rounded,
+                              color: tc.expense,
+                              size: 14,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Delete',
@@ -390,9 +409,13 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 child: ElevatedButton(
                   onPressed: _submit,
                   child: Text(
-                    widget.prefill != null ? 'Update Transaction' : 'Save Transaction',
+                    widget.prefill != null
+                        ? 'Update Transaction'
+                        : 'Save Transaction',
                     style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w700, fontSize: 15),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -406,18 +429,24 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   Widget _buildTypeSelector(AppThemeColors tc) {
     Color typeAccent(TransactionType t) {
       switch (t) {
-        case TransactionType.expense:      return tc.expense;
-        case TransactionType.income:       return tc.income;
-        case TransactionType.investment:   return tc.investment;
-        case TransactionType.lend:         return tc.lend;
-        case TransactionType.lendReturn:   return tc.income;
-        case TransactionType.borrow:       return tc.borrow;
-        case TransactionType.borrowReturn: return tc.expense;
+        case TransactionType.expense:
+          return tc.expense;
+        case TransactionType.income:
+          return tc.income;
+        case TransactionType.investment:
+          return tc.investment;
+        case TransactionType.lend:
+          return tc.lend;
+        case TransactionType.lendReturn:
+          return tc.income;
+        case TransactionType.borrow:
+          return tc.borrow;
+        case TransactionType.borrowReturn:
+          return tc.expense;
       }
     }
 
-    Widget typeButton(
-        TransactionType type, String label, IconData icon) {
+    Widget typeButton(TransactionType type, String label, IconData icon) {
       final isSelected = _type == type;
       final accent = typeAccent(type);
       return Expanded(
@@ -436,9 +465,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon,
-                    color: isSelected ? accent : tc.onSurfaceVariant,
-                    size: 16),
+                Icon(
+                  icon,
+                  color: isSelected ? accent : tc.onSurfaceVariant,
+                  size: 16,
+                ),
                 const SizedBox(height: 3),
                 Text(
                   label,
@@ -503,7 +534,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           Expanded(
             child: TextFormField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               autofocus: widget.prefill == null,
               style: GoogleFonts.inter(
                 color: tc.onSurface,
@@ -518,7 +551,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Enter amount';
-                if (double.tryParse(v) == null) return 'Invalid amount';
+                if (double.tryParse(v) == null || double.parse(v) <= 0) {
+                  return 'Invalid amount';
+                }
                 return null;
               },
             ),
@@ -529,14 +564,14 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   }
 
   Widget _buildLabel(String label, AppThemeColors tc) => Text(
-        label,
-        style: GoogleFonts.inter(
-          color: tc.onSurfaceVariant,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
-        ),
-      );
+    label,
+    style: GoogleFonts.inter(
+      color: tc.onSurfaceVariant,
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+    ),
+  );
 
   Widget _buildCategoryGrid(AppThemeColors tc) {
     return Wrap(
@@ -583,15 +618,14 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
     required String label,
     required IconData icon,
     required AppThemeColors tc,
-  }) =>
-      TextFormField(
-        controller: controller,
-        style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: tc.onSurfaceVariant, size: 20),
-        ),
-      );
+  }) => TextFormField(
+    controller: controller,
+    style: GoogleFonts.inter(color: tc.onSurface, fontSize: 14),
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: tc.onSurfaceVariant, size: 20),
+    ),
+  );
 
   Widget _buildAccountSelector(List<AccountModel> accounts, AppThemeColors tc) {
     if (accounts.isEmpty) {
@@ -632,9 +666,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (acc != null) ...[
-              Icon(acc.type.icon,
-                  size: 12,
-                  color: isSelected ? tc.surface : acc.type.color),
+              Icon(
+                acc.type.icon,
+                size: 12,
+                color: isSelected ? tc.surface : acc.type.color,
+              ),
               const SizedBox(width: 5),
             ],
             Text(
@@ -671,8 +707,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_month_outlined,
-                color: tc.onSurfaceVariant, size: 18),
+            Icon(
+              Icons.calendar_month_outlined,
+              color: tc.onSurfaceVariant,
+              size: 18,
+            ),
             const SizedBox(width: 12),
             Text(
               DateFormat('EEEE, MMM d, yyyy').format(_date),
