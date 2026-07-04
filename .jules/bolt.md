@@ -1,0 +1,1 @@
+- Replaced multiple chained `.where()` and `.fold()` list operations with a single-pass `for` loop in SummaryCard to reduce overhead and improve rendering performance.
