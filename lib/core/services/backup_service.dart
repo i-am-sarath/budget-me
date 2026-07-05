@@ -110,9 +110,6 @@ class BackupService {
       ..addFile(_jsonArchiveFile(_settingsEntryName, settings));
 
     final zipped = ZipEncoder().encode(archive);
-    if (zipped == null) {
-      throw StateError('Failed to build backup archive.');
-    }
     return Uint8List.fromList(zipped);
   }
 

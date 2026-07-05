@@ -23,14 +23,29 @@ class DatabaseHelper {
     return _database!;
   }
 
+  /// Absolute path to the sqlite file on disk, regardless of whether the
+  /// connection is currently open.
+  Future<String> get databaseFilePath async =>
+      join(await getDatabasesPath(), 'quicklog.db');
+
   Future<Database> _initDatabase() async {
-    final path = join(await getDatabasesPath(), 'quicklog.db');
+    final path = await databaseFilePath;
     return await openDatabase(
       path,
       version: 4, // v4: adds subscriptions + recurring_transactions tables
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+  }
+
+  /// Closes the live connection so the file on disk is a consistent
+  /// snapshot (e.g. before reading/overwriting it for backup/restore).
+  /// Safe to call even if nothing is open.
+  Future<void> closeForBackup() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {

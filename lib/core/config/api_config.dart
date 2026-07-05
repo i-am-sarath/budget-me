@@ -36,4 +36,15 @@ class ApiConfig {
   // ─── AdMob ────────────────────────────────────
   static const String rewardedInterstitialAdUnitId =
       'ca-app-pub-6384260983473792/8085872177';
+
+  // ─── Backup (Google Drive) ────────────────────
+  // OAuth web client ID for server-side/offline access during Google Sign-In.
+  // Override at build time: --dart-define=GOOGLE_DRIVE_SERVER_CLIENT_ID=xxx
+  static const String googleDriveServerClientId = String.fromEnvironment(
+    'GOOGLE_DRIVE_SERVER_CLIENT_ID',
+  );
+
+  static const String driveBackupFolderName = 'Budget Me Backups';
+
+  static const int maxBackupsRetained = 10;
 }
