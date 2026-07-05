@@ -1,0 +1,1 @@
+Always validate transaction amounts to be strictly positive (e.g., using double.tryParse(v) == null || double.parse(v) <= 0) in form validators to prevent negative transaction vulnerabilities while preserving UX.
