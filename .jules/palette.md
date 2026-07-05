@@ -1,0 +1,1 @@
+- Provided semantics and tooltips to icon-only buttons for screen reader support.
