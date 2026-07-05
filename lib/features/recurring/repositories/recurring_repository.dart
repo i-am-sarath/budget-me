@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/features/recurring/models/recurring_model.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:agent_money/features/spaces/repositories/space_repository.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/features/recurring/models/recurring_model.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/features/spaces/repositories/space_repository.dart';
 
 final recurringRepositoryProvider =
     Provider((ref) => RecurringRepository());

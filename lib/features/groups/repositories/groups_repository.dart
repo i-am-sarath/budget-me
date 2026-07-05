@@ -1,6 +1,6 @@
 import 'dart:math';
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/features/groups/models/group_models.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/features/groups/models/group_models.dart';
 
 /// All Supabase reads/writes for the cloud Groups feature live here.
 class GroupsRepository {

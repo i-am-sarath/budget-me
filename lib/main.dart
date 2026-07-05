@@ -6,22 +6,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/services/consent_service.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/core/services/backup_service.dart';
-import 'package:agent_money/core/services/budget_service.dart';
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/core/services/overlay_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/core/services/theme_service.dart';
-import 'package:agent_money/features/dashboard/dashboard_screen.dart';
-import 'package:agent_money/features/onboarding/onboarding_screen.dart';
-import 'package:agent_money/features/overlay/overlay_widget.dart';
-import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
-import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:agent_money/features/transactions/widgets/voice_capture_sheet.dart';
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/services/consent_service.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/core/services/backup_service.dart';
+import 'package:money_pi/core/services/budget_service.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/core/services/overlay_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/core/services/theme_service.dart';
+import 'package:money_pi/features/dashboard/dashboard_screen.dart';
+import 'package:money_pi/features/onboarding/onboarding_screen.dart';
+import 'package:money_pi/features/overlay/overlay_widget.dart';
+import 'package:money_pi/features/transactions/providers/voice_log_provider.dart';
+import 'package:money_pi/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:money_pi/features/transactions/widgets/voice_capture_sheet.dart';
 import 'package:record/record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -328,7 +328,7 @@ class _BudgetTrackerAppState extends ConsumerState<BudgetTrackerApp>
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
-      title: 'Money Purse',
+      title: 'Money Pi',
       navigatorKey: rootNavigatorKey,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
@@ -389,7 +389,7 @@ class _LoadingOrOnboarding extends ConsumerWidget {
                         color: tc.surface, size: 36),
                   ),
                   const SizedBox(height: 16),
-                  Text('Money Purse',
+                  Text('Money Pi',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,

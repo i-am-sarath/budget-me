@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show OtpType;
 
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/core/services/user_service.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/core/services/user_service.dart';
 
 /// Unified "do we have an account?" layer for the whole app.
 ///

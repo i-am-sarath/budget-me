@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/features/spaces/models/space_model.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/features/spaces/models/space_model.dart';
 
 // ─────────────────────────────────────────────
 // Active Space — persisted in SharedPreferences

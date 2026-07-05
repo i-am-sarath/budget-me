@@ -1,5 +1,5 @@
 import 'package:uuid/uuid.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
 
 enum RecurringFrequency {
   daily,

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/features/groups/models/group_models.dart';
-import 'package:agent_money/features/groups/providers/groups_providers.dart';
-import 'package:agent_money/features/groups/screens/group_detail_screen.dart';
-import 'package:agent_money/features/groups/widgets/group_sheets.dart';
-import 'package:agent_money/features/trips/screens/trips_screen.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/features/groups/models/group_models.dart';
+import 'package:money_pi/features/groups/providers/groups_providers.dart';
+import 'package:money_pi/features/groups/screens/group_detail_screen.dart';
+import 'package:money_pi/features/groups/widgets/group_sheets.dart';
+import 'package:money_pi/features/trips/screens/trips_screen.dart';
 
 /// Entry point for shared spending. Adapts to three states:
 /// not-configured → signed-out → group list.

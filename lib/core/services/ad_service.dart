@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:agent_money/core/config/api_config.dart';
+import 'package:money_pi/core/config/api_config.dart';
 
 bool get _isMobile => Platform.isAndroid || Platform.isIOS;
 

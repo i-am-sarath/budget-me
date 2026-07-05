@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/tour_service.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/tour_service.dart';
 
 /// A lightweight, fully-skippable first-run feature tour.
 ///
@@ -177,6 +177,8 @@ class _FeatureTourState extends ConsumerState<FeatureTour> {
                       label: _isLast ? 'Start tracking' : 'Next',
                       onTap: _next,
                       tc: tc,
+                      // Accent the final, most action-forward CTA.
+                      accent: _isLast,
                     ),
                   ],
                 ),
@@ -220,10 +222,10 @@ class _TourCard extends StatelessWidget {
             height: 64,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: tc.primary.withOpacity(0.16),
+              color: tc.accent.withOpacity(0.12),
               borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
-            child: Icon(step.icon, color: tc.primary, size: 32),
+            child: Icon(step.icon, color: tc.accent, size: 32),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
@@ -249,14 +251,14 @@ class _TourCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: tc.surfaceContainerHigh,
+              color: tc.accent.withOpacity(0.10),
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: tc.outlineVariant, width: 0.5),
+              border: Border.all(color: tc.accent.withOpacity(0.25), width: 0.5),
             ),
             child: Row(
               children: [
                 Icon(Icons.touch_app_rounded,
-                    color: tc.primary, size: 15),
+                    color: tc.accent, size: 15),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -296,7 +298,7 @@ class _Dots extends StatelessWidget {
           width: active ? 22 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.white.withOpacity(0.35),
+            color: active ? tc.accent : Colors.white.withOpacity(0.35),
             borderRadius: BorderRadius.circular(100),
           ),
         );
@@ -309,8 +311,12 @@ class _PrimaryCta extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final AppThemeColors tc;
+  final bool accent;
   const _PrimaryCta(
-      {required this.label, required this.onTap, required this.tc});
+      {required this.label,
+      required this.onTap,
+      required this.tc,
+      this.accent = false});
 
   @override
   Widget build(BuildContext context) {
@@ -320,8 +326,8 @@ class _PrimaryCta extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: tc.primary,
-          foregroundColor: tc.onPrimary,
+          backgroundColor: accent ? tc.accent : tc.primary,
+          foregroundColor: accent ? Colors.white : tc.onPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/user_service.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/user_service.dart';
 
 // Returns true if user registered, false if dismissed
 Future<bool> showEmailPrompt(BuildContext context) async {

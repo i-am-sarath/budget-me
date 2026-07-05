@@ -2,12 +2,12 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/features/spaces/models/space_model.dart';
-import 'package:agent_money/features/spaces/repositories/space_repository.dart';
-import 'package:agent_money/features/paywall/paywall_screen.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/features/spaces/models/space_model.dart';
+import 'package:money_pi/features/spaces/repositories/space_repository.dart';
+import 'package:money_pi/features/paywall/paywall_screen.dart';
 
 void showSpaceSwitcher(BuildContext context) {
   showModalBottomSheet(

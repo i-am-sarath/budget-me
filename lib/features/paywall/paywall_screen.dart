@@ -3,9 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   final bool isSheet;

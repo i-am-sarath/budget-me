@@ -1,26 +1,26 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
-import 'package:agent_money/features/accounts/widgets/transfer_sheet.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
-import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
-import 'package:agent_money/features/settings/settings_screen.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:agent_money/features/analytics/analytics_screen.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/features/accounts/screens/accounts_screen.dart';
+import 'package:money_pi/features/accounts/widgets/transfer_sheet.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/dashboard/widgets/magic_fab.dart';
+import 'package:money_pi/features/dashboard/widgets/transaction_tile.dart';
+import 'package:money_pi/features/settings/settings_screen.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/providers/voice_log_provider.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:money_pi/features/analytics/analytics_screen.dart';
 import 'package:intl/intl.dart';
-import 'package:agent_money/features/spaces/repositories/space_repository.dart';
-import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
-import 'package:agent_money/features/categories/screens/category_budget_screen.dart';
-import 'package:agent_money/features/groups/screens/groups_screen.dart';
-import 'package:agent_money/features/trips/screens/trips_screen.dart';
-import 'package:agent_money/core/services/tour_service.dart';
-import 'package:agent_money/features/onboarding/feature_tour.dart';
+import 'package:money_pi/features/spaces/repositories/space_repository.dart';
+import 'package:money_pi/features/spaces/widgets/space_switcher_sheet.dart';
+import 'package:money_pi/features/categories/screens/category_budget_screen.dart';
+import 'package:money_pi/features/groups/screens/groups_screen.dart';
+import 'package:money_pi/features/trips/screens/trips_screen.dart';
+import 'package:money_pi/core/services/tour_service.dart';
+import 'package:money_pi/features/onboarding/feature_tour.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -153,13 +153,12 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final pillBg = isSelected
-        ? (isDark ? tc.primary.withOpacity(0.15) : tc.primaryContainer)
-        : Colors.transparent;
-    final itemColor = isSelected
-        ? (isDark ? tc.primary : Colors.white)
-        : tc.onSurfaceVariant.withOpacity(0.6);
+    // Active tab: soft orange wash pill with orange icon + label — the single
+    // brand accent, applied identically across all five tabs.
+    final pillBg =
+        isSelected ? tc.accent.withOpacity(0.12) : Colors.transparent;
+    final itemColor =
+        isSelected ? tc.accent : tc.onSurfaceVariant.withOpacity(0.6);
 
     return Expanded(
       child: GestureDetector(
@@ -697,8 +696,16 @@ class _SpaceHeaderTitle extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Brand lockup: open orange-pie mark + navy wordmark.
+          Image.asset(
+            'assets/brand/logo_mark.png',
+            height: 26,
+            width: 26,
+            filterQuality: FilterQuality.high,
+          ),
+          const SizedBox(width: 8),
           Text(
-            'Money Purse',
+            'Money Pi',
             style: AppFonts.sans(
               color: tc.onSurface,
               fontWeight: FontWeight.w900,

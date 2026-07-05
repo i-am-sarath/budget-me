@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/auth_service.dart';
-import 'package:agent_money/core/services/cloud_service.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/auth_service.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
 
 /// Gate used everywhere a real account is required (voice, Google Sheets,
 /// Spaces). Manual entry never calls this.

@@ -1,16 +1,16 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/features/paywall/paywall_screen.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/features/paywall/paywall_screen.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
 import 'package:intl/intl.dart';
 
 // ─────────────────────────────────────────────
@@ -85,7 +85,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       final file = File('${dir.path}/$name');
       await file.writeAsString(csv);
       await Share.shareXFiles([XFile(file.path)],
-          subject: 'Money Purse export — $name');
+          subject: 'Money Pi export — $name');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

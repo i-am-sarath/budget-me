@@ -2,11 +2,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/features/recurring/models/recurring_model.dart';
-import 'package:agent_money/features/recurring/repositories/recurring_repository.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/features/recurring/models/recurring_model.dart';
+import 'package:money_pi/features/recurring/repositories/recurring_repository.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
 import 'package:intl/intl.dart';
 
 class RecurringScreen extends ConsumerWidget {

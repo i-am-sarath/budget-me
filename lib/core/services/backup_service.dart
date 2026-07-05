@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:agent_money/core/database/database_helper.dart';
+import 'package:money_pi/core/database/database_helper.dart';
 
 /// Defensive auto-backup: serializes every table to a JSON file in the app's
 /// documents directory. Runs at most once per [_minIntervalHours] hours.

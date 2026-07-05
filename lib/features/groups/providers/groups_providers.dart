@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/features/groups/models/group_models.dart';
-import 'package:agent_money/features/groups/repositories/groups_repository.dart';
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/features/groups/models/group_models.dart';
+import 'package:money_pi/features/groups/repositories/groups_repository.dart';
 
 final groupsRepositoryProvider = Provider((_) => GroupsRepository());
 

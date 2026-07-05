@@ -64,6 +64,10 @@ class AppColors {
   static const Color onPrimary        = Color(0xFF0A0A0A);
   static const Color onPrimaryContainer = Color(0xFFA5D6A7);
 
+  // Brand accent — single warm orange, identical in light & dark.
+  static const Color accent           = Color(0xFFEC5E27);
+  static const Color accentPressed    = Color(0xFFD24E1C);
+
   static const Color secondary        = Color(0xFFB0B0B0);
   static const Color secondaryContainer = Color(0xFF1E1E1E);
   static const Color onSecondary      = Color(0xFF0A0A0A);
@@ -90,36 +94,41 @@ class AppColors {
 }
 
 class AppColorsLight {
-  static const Color surface                = Color(0xFFF8F9FF);
+  // Warm neutral surfaces — bgWarm background with pure-white cards that lift.
+  static const Color surface                = Color(0xFFF7F6F3);  // bgWarm
   static const Color surfaceBright          = Color(0xFFFFFFFF);
   static const Color surfaceContainer       = Color(0xFFFFFFFF);  // white cards
-  static const Color surfaceContainerLow    = Color(0xFFEFF4FF);
-  static const Color surfaceContainerHigh   = Color(0xFFE5EEFF);
-  static const Color surfaceContainerHighest = Color(0xFFD4E4FC);
+  static const Color surfaceContainerLow    = Color(0xFFF1F0EC);
+  static const Color surfaceContainerHigh   = Color(0xFFEFEEE9);  // surfaceMuted
+  static const Color surfaceContainerHighest = Color(0xFFE7E5DF);
 
-  static const Color onSurface        = Color(0xFF0D1C2E);  // deep navy text
-  static const Color onSurfaceVariant = Color(0xFF43474E);
+  static const Color onSurface        = Color(0xFF0F1B3C);  // navy textPrimary
+  static const Color onSurfaceVariant = Color(0xFF6B7280);  // textSecondary
 
-  static const Color outline          = Color(0xFF74777F);
-  static const Color outlineVariant   = Color(0xFFC4C6CF);
+  static const Color outline          = Color(0xFFE7E5DF);  // warm border
+  static const Color outlineVariant   = Color(0xFFE7E5DF);
 
-  static const Color primary          = Color(0xFF002045);  // deep royal navy
-  static const Color primaryContainer = Color(0xFF1A365D);
+  static const Color primary          = Color(0xFF0F1B3C);  // brand navy
+  static const Color primaryContainer = Color(0xFF1A2A52);
   static const Color onPrimary        = Color(0xFFFFFFFF);
   static const Color onPrimaryContainer = Color(0xFF86A0CD);
 
-  static const Color secondary        = Color(0xFF0A6C44);  // success green
+  // Brand accent — single warm orange.
+  static const Color accent           = Color(0xFFEC5E27);
+  static const Color accentPressed    = Color(0xFFD24E1C);
+
+  static const Color secondary        = Color(0xFF1B8A5A);  // success green
   static const Color secondaryContainer = Color(0xFF9FF5C1);
   static const Color onSecondary      = Color(0xFFFFFFFF);
   static const Color onSecondaryContainer = Color(0xFF167249);
 
-  static const Color error            = Color(0xFFBA1A1A);
+  static const Color error            = Color(0xFFE5484D);
   static const Color errorContainer   = Color(0xFFFFDAD6);
   static const Color onError          = Color(0xFFFFFFFF);
 
   // Transaction type colors
-  static const Color expense  = Color(0xFFBA1A1A);
-  static const Color income   = Color(0xFF0A6C44);
+  static const Color expense  = Color(0xFFE5484D);
+  static const Color income   = Color(0xFF1B8A5A);
   static const Color investment = Color(0xFF1565C0);
   static const Color lend     = Color(0xFFD97706);
   static const Color borrow   = Color(0xFF7C3AED);
@@ -143,6 +152,8 @@ class AppThemeColors {
   final Color primaryContainer;
   final Color onPrimary;
   final Color onPrimaryContainer;
+  final Color accent;
+  final Color accentPressed;
   final Color error;
   final Color errorContainer;
   final Color expense;
@@ -165,6 +176,8 @@ class AppThemeColors {
     required this.primaryContainer,
     required this.onPrimary,
     required this.onPrimaryContainer,
+    required this.accent,
+    required this.accentPressed,
     required this.error,
     required this.errorContainer,
     required this.expense,
@@ -193,6 +206,8 @@ class AppThemeColors {
     primaryContainer: AppColors.primaryContainer,
     onPrimary: AppColors.onPrimary,
     onPrimaryContainer: AppColors.onPrimaryContainer,
+    accent: AppColors.accent,
+    accentPressed: AppColors.accentPressed,
     error: AppColors.error,
     errorContainer: AppColors.errorContainer,
     expense: AppColors.expense,
@@ -216,6 +231,8 @@ class AppThemeColors {
     primaryContainer: AppColorsLight.primaryContainer,
     onPrimary: AppColorsLight.onPrimary,
     onPrimaryContainer: AppColorsLight.onPrimaryContainer,
+    accent: AppColorsLight.accent,
+    accentPressed: AppColorsLight.accentPressed,
     error: AppColorsLight.error,
     errorContainer: AppColorsLight.errorContainer,
     expense: AppColorsLight.expense,
@@ -303,7 +320,7 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surfaceContainerLow,
-        selectedItemColor: AppColors.onSurface,
+        selectedItemColor: AppColors.accent,
         unselectedItemColor: AppColors.onSurfaceVariant,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
@@ -321,13 +338,13 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.onSurface, width: 1),
+          borderSide: const BorderSide(color: AppColors.accent, width: 2),
         ),
         labelStyle: const TextStyle(color: AppColors.onSurfaceVariant),
         hintStyle: const TextStyle(color: AppColors.onSurfaceVariant),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+        style: TextButton.styleFrom(foregroundColor: AppColors.accent),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -422,7 +439,7 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColorsLight.surfaceContainer,
-        selectedItemColor: AppColorsLight.primary,
+        selectedItemColor: AppColorsLight.accent,
         unselectedItemColor: AppColorsLight.onSurfaceVariant,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
@@ -440,13 +457,13 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColorsLight.onSurface, width: 1),
+          borderSide: const BorderSide(color: AppColorsLight.accent, width: 2),
         ),
         labelStyle: const TextStyle(color: AppColorsLight.onSurfaceVariant),
         hintStyle: const TextStyle(color: AppColorsLight.onSurfaceVariant),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColorsLight.primary),
+        style: TextButton.styleFrom(foregroundColor: AppColorsLight.accent),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/core/services/sheets_sync_service.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/spaces/repositories/space_repository.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/core/services/sheets_sync_service.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/accounts/models/account_model.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/spaces/repositories/space_repository.dart';
 
 final transactionRepositoryProvider =
     Provider((ref) => TransactionRepository());

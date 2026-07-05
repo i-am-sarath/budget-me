@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/features/groups/models/group_models.dart';
-import 'package:agent_money/features/groups/providers/groups_providers.dart';
-import 'package:agent_money/features/groups/widgets/group_sheets.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/features/groups/models/group_models.dart';
+import 'package:money_pi/features/groups/providers/groups_providers.dart';
+import 'package:money_pi/features/groups/widgets/group_sheets.dart';
 
 String _money(String code, double v) => '$code ${v.toStringAsFixed(2)}';
 
@@ -41,7 +41,7 @@ class GroupDetailScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Share invite',
             onPressed: () => Share.share(
-                'Join my "${group.name}" group on Money Purse. Invite code: ${group.inviteCode}'),
+                'Join my "${group.name}" group on Money Pi. Invite code: ${group.inviteCode}'),
             icon: Icon(Icons.ios_share_rounded,
                 color: tc.onSurface, size: 20),
           ),

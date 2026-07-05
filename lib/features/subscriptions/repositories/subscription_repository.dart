@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/features/subscriptions/models/subscription_model.dart';
-import 'package:agent_money/features/spaces/repositories/space_repository.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/features/subscriptions/models/subscription_model.dart';
+import 'package:money_pi/features/spaces/repositories/space_repository.dart';
 
 final subscriptionRepositoryProvider =
     Provider((ref) => SubscriptionRepository());
