@@ -1,0 +1,1 @@
+- Wrapped IconButtons in Semantics and added tooltips to improve accessibility for screen readers.
