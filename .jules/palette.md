@@ -1,0 +1,1 @@
+- `Semantics` and `tooltip` enhance accessibility for Flutter icon buttons.
