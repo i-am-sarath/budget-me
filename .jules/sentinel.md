@@ -1,0 +1,1 @@
+- Discovered missing positive validation on transaction amounts (allowance of negative or 0 amounts) in manual entry form. Fixed by appending `|| double.parse(v) <= 0` to the `double.tryParse` null check.
