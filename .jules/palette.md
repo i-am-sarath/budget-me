@@ -1,0 +1,1 @@
+- In Flutter, always add `tooltip`s to `IconButton`s and wrap them in `Semantics(label: "...", button: true, child: ...)` to ensure screen readers provide useful context for decorative/interactive icons.
