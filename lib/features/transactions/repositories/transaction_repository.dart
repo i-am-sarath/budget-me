@@ -140,4 +140,10 @@ class TransactionRepository {
         'transactions', 'account_id', accountId);
     return maps.map(TransactionModel.fromMap).toList();
   }
+
+  Future<List<TransactionModel>> getByTrip(String tripId) async {
+    final maps = await _dbHelper.queryByField(
+        'transactions', 'trip_id', tripId);
+    return maps.map(TransactionModel.fromMap).toList();
+  }
 }

@@ -27,7 +27,7 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'quicklog.db');
     return await openDatabase(
       path,
-      version: 4, // v4: adds subscriptions + recurring_transactions tables
+      version: 5, // v5: adds trips table + trip_id/trip_name on transactions
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -47,7 +47,9 @@ class DatabaseHelper {
         account_name TEXT DEFAULT '',
         date TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        is_synced INTEGER DEFAULT 0
+        is_synced INTEGER DEFAULT 0,
+        trip_id TEXT DEFAULT '',
+        trip_name TEXT DEFAULT ''
       )
     ''');
 
@@ -99,6 +101,21 @@ class DatabaseHelper {
         next_run_date TEXT NOT NULL,
         last_run_date TEXT DEFAULT '',
         is_active INTEGER NOT NULL DEFAULT 1,
+        note TEXT DEFAULT '',
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Trips table (Travel Spending Tracking)
+    await db.execute('''
+      CREATE TABLE trips (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        destination TEXT DEFAULT '',
+        icon TEXT NOT NULL DEFAULT '✈️',
+        budget REAL NOT NULL DEFAULT 0,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
         note TEXT DEFAULT '',
         created_at TEXT NOT NULL
       )
@@ -177,6 +194,27 @@ class DatabaseHelper {
         ''');
       } catch (_) {}
     }
+    if (oldVersion < 5) {
+      try {
+        await db.execute("ALTER TABLE transactions ADD COLUMN trip_id TEXT DEFAULT ''");
+        await db.execute("ALTER TABLE transactions ADD COLUMN trip_name TEXT DEFAULT ''");
+      } catch (_) {}
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS trips (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            destination TEXT DEFAULT '',
+            icon TEXT NOT NULL DEFAULT '✈️',
+            budget REAL NOT NULL DEFAULT 0,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            note TEXT DEFAULT '',
+            created_at TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -246,5 +284,6 @@ class DatabaseHelper {
     await db.delete('accounts');
     await db.delete('recurring_transactions');
     await db.delete('subscriptions');
+    await db.delete('trips');
   }
 }

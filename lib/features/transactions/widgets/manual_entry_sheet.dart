@@ -7,12 +7,21 @@ import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/travel/models/trip_model.dart';
+import 'package:agent_money/features/travel/repositories/trip_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class ManualEntrySheet extends ConsumerStatefulWidget {
   final TransactionModel? prefill;
-  const ManualEntrySheet({super.key, this.prefill});
+  final String? presetTripId;
+  final String? presetTripName;
+  const ManualEntrySheet({
+    super.key,
+    this.prefill,
+    this.presetTripId,
+    this.presetTripName,
+  });
 
   @override
   ConsumerState<ManualEntrySheet> createState() => _ManualEntrySheetState();
@@ -28,6 +37,8 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   String _category = 'General';
   AccountModel? _selectedAccount;
   DateTime _date = DateTime.now();
+  String? _selectedTripId;
+  String? _selectedTripName;
 
   static const _categories = {
     TransactionType.expense: [
@@ -118,6 +129,11 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       _type = p.type;
       _category = p.category;
       _date = p.date;
+      _selectedTripId = p.tripId;
+      _selectedTripName = p.tripName;
+    } else if (widget.presetTripId != null) {
+      _selectedTripId = widget.presetTripId;
+      _selectedTripName = widget.presetTripName;
     }
   }
 
@@ -195,6 +211,8 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         payee: _payeeController.text.isEmpty ? null : _payeeController.text,
         accountId: _selectedAccount?.id,
         accountName: _selectedAccount?.name,
+        tripId: _type == TransactionType.expense ? _selectedTripId : null,
+        tripName: _type == TransactionType.expense ? _selectedTripName : null,
         date: _date,
       );
 
@@ -255,6 +273,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   Widget build(BuildContext context) {
     final currency = ref.watch(currencyProvider);
     final accountsAsync = ref.watch(accountProvider);
+    final tripsAsync = ref.watch(tripListProvider);
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
     final tc = AppThemeColors.of(context);
 
@@ -378,6 +397,23 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 },
               ),
               const SizedBox(height: 14),
+
+              // Trip selector — only for expenses, only when trips exist
+              if (_type == TransactionType.expense)
+                tripsAsync.maybeWhen(
+                  data: (trips) => trips.isEmpty
+                      ? const SizedBox()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Trip (optional)', tc),
+                            const SizedBox(height: 8),
+                            _buildTripSelector(trips, tc),
+                            const SizedBox(height: 14),
+                          ],
+                        ),
+                  orElse: () => const SizedBox(),
+                ),
 
               // Date picker
               _buildDatePicker(tc),
@@ -635,6 +671,56 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               Icon(acc.type.icon,
                   size: 12,
                   color: isSelected ? tc.surface : acc.type.color),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: isSelected ? tc.surface : tc.onSurfaceVariant,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTripSelector(List<TripModel> trips, AppThemeColors tc) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _tripChip(null, 'None', tc),
+        ...trips.map((trip) => _tripChip(trip, trip.name, tc)),
+      ],
+    );
+  }
+
+  Widget _tripChip(TripModel? trip, String label, AppThemeColors tc) {
+    final isSelected = trip == null ? _selectedTripId == null : _selectedTripId == trip.id;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _selectedTripId = trip?.id;
+        _selectedTripName = trip?.name;
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? tc.onSurface : tc.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : tc.outlineVariant,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (trip != null) ...[
+              Text(trip.icon, style: const TextStyle(fontSize: 12)),
               const SizedBox(width: 5),
             ],
             Text(

@@ -38,6 +38,8 @@ class TransactionModel {
   final String? payee;
   final String? accountId;
   final String? accountName;
+  final String? tripId;
+  final String? tripName;
   final DateTime date;
   final DateTime createdAt;
   final bool isSynced;
@@ -51,6 +53,8 @@ class TransactionModel {
     this.payee,
     this.accountId,
     this.accountName,
+    this.tripId,
+    this.tripName,
     required this.date,
     DateTime? createdAt,
     this.isSynced = false,
@@ -81,6 +85,8 @@ class TransactionModel {
         'payee': payee ?? '',
         'account_id': accountId ?? '',
         'account_name': accountName ?? '',
+        'trip_id': tripId ?? '',
+        'trip_name': tripName ?? '',
         'date': date.toIso8601String(),
         'created_at': createdAt.toIso8601String(),
         'is_synced': isSynced ? 1 : 0,
@@ -101,6 +107,12 @@ class TransactionModel {
         accountName: (map['account_name'] as String?)?.isNotEmpty == true
             ? map['account_name'] as String
             : null,
+        tripId: (map['trip_id'] as String?)?.isNotEmpty == true
+            ? map['trip_id'] as String
+            : null,
+        tripName: (map['trip_name'] as String?)?.isNotEmpty == true
+            ? map['trip_name'] as String
+            : null,
         date: DateTime.parse(map['date'] as String),
         createdAt: DateTime.parse(map['created_at'] as String),
         isSynced: (map['is_synced'] as int? ?? 0) == 1,
@@ -114,6 +126,8 @@ class TransactionModel {
     String? payee,
     String? accountId,
     String? accountName,
+    String? tripId,
+    String? tripName,
     DateTime? date,
     bool? isSynced,
   }) =>
@@ -126,6 +140,8 @@ class TransactionModel {
         payee: payee ?? this.payee,
         accountId: accountId ?? this.accountId,
         accountName: accountName ?? this.accountName,
+        tripId: tripId ?? this.tripId,
+        tripName: tripName ?? this.tripName,
         date: date ?? this.date,
         createdAt: createdAt,
         isSynced: isSynced ?? this.isSynced,

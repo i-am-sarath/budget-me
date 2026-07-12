@@ -12,6 +12,7 @@ import 'package:agent_money/features/dashboard/widgets/summary_card.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
 import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
 import 'package:agent_money/features/settings/settings_screen.dart';
+import 'package:agent_money/features/travel/screens/travel_screen.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
@@ -205,6 +206,16 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                 Navigator.pop(ctx);
                 Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const RecurringScreen()));
+              },
+            ),
+            _MoreMenuItem(
+              icon: Icons.flight_takeoff_rounded,
+              label: 'Travel',
+              tc: tc,
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const TravelScreen()));
               },
             ),
             _MoreMenuItem(
