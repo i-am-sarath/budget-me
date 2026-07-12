@@ -7,12 +7,42 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/notification_service.dart';
+import 'package:agent_money/core/services/overlay_service.dart';
 import 'package:agent_money/core/services/quick_capture_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/dashboard/dashboard_screen.dart';
 import 'package:agent_money/features/onboarding/onboarding_screen.dart';
+import 'package:agent_money/features/overlay/overlay_widget.dart';
 import 'package:agent_money/features/paywall/paywall_screen.dart';
+
+/// Entry point for the floating quick-log bubble's separate Flutter
+/// engine — `flutter_overlay_window` launches this instead of `main()`
+/// when the SYSTEM_ALERT_WINDOW overlay is shown. This isolate has no
+/// ProviderScope; see overlay_capture_runner.dart for why the bubble
+/// doesn't reuse [QuickCaptureService] directly.
+@pragma('vm:entry-point')
+void overlayMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Local notifications and RevenueCat configuration are plugin state
+  // local to this engine — the main isolate's init() doesn't carry over.
+  // RevenueCat lets OverlayCaptureRunner re-check Pro status at capture
+  // time (e.g. a subscription that lapsed after the bubble was enabled)
+  // without needing Riverpod's subscriptionProvider.
+  await NotificationService.instance.init();
+  try {
+    await initRevenueCat();
+  } catch (_) {
+    // Falls back to treating the user as free in OverlayCaptureRunner.
+  }
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(
+      backgroundColor: Colors.transparent,
+      body: QuickLogOverlay(),
+    ),
+  ));
+}
 
 /// Root navigator key so a tapped notification (app not necessarily in the
 /// foreground with a usable BuildContext) can still push a route.
@@ -60,6 +90,17 @@ void main() async {
       }
     },
   );
+
+  // Re-show the floating quick-log bubble if the user left it enabled —
+  // it doesn't survive a full process restart on its own.
+  if (Platform.isAndroid) {
+    try {
+      await OverlayService.instance.restoreIfEnabled();
+    } catch (_) {
+      // Best-effort — the Settings toggle remains the source of truth and
+      // can always re-enable it.
+    }
+  }
 
   runApp(const ProviderScope(child: BudgetTrackerApp()));
 }

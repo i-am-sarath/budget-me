@@ -11,6 +11,16 @@
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Floating quick-log bubble (Pro): draggable SYSTEM_ALERT_WINDOW overlay
+         backed by a foreground service so the bubble survives while the app
+         is backgrounded. FOREGROUND_SERVICE_SPECIAL_USE + the matching
+         <property> below require a Foreground Service Type declaration in
+         Play Console before this can ship — see settings_screen.dart's
+         "Floating quick-log bubble" toggle. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
 
@@ -48,6 +58,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- flutter_overlay_window's foreground service backing the
+             floating quick-log bubble. The plugin doesn't declare this
+             itself, so the host app must. -->
+        <service
+            android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Persistent floating button for quick voice-based expense logging"/>
+        </service>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

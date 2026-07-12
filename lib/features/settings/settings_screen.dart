@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -10,6 +11,7 @@ import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
+import 'package:agent_money/core/services/overlay_service.dart';
 import 'package:agent_money/core/services/quick_capture_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
@@ -95,6 +97,12 @@ class SettingsScreen extends ConsumerWidget {
                 _QuickCaptureCard(subscription: subscription)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 170.ms),
+                if (Platform.isAndroid) ...[
+                  const SizedBox(height: 12),
+                  _OverlayToggleCard(subscription: subscription)
+                      .animate()
+                      .fadeIn(duration: 350.ms, delay: 185.ms),
+                ],
                 const SizedBox(height: 28),
 
                 // About
@@ -601,6 +609,161 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
                       size: 16, color: isPro ? tc.surface : tc.onSurfaceVariant),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Floating Quick-Log Bubble Toggle — Android only, Pro-gated. A draggable
+// SYSTEM_ALERT_WINDOW overlay reachable from inside any other app; tap
+// triggers the same shared capture pipeline as the Quick Capture card.
+// ─────────────────────────────────────────────
+
+class _OverlayToggleCard extends ConsumerStatefulWidget {
+  final SubscriptionState subscription;
+  const _OverlayToggleCard({required this.subscription});
+
+  @override
+  ConsumerState<_OverlayToggleCard> createState() => _OverlayToggleCardState();
+}
+
+class _OverlayToggleCardState extends ConsumerState<_OverlayToggleCard>
+    with WidgetsBindingObserver {
+  bool _awaitingPermissionResult = false;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The overlay-permission request sends the user to system Settings;
+    // when they come back, finish turning the bubble on if it was granted.
+    if (state == AppLifecycleState.resumed && _awaitingPermissionResult) {
+      _awaitingPermissionResult = false;
+      _finishEnableAfterPermissionScreen();
+    }
+  }
+
+  Future<void> _finishEnableAfterPermissionScreen() async {
+    if (!await OverlayService.instance.hasPermission()) return;
+    await OverlayService.instance.enable();
+    ref.invalidate(overlayEnabledProvider);
+  }
+
+  Future<void> _toggle(bool turnOn) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      if (!turnOn) {
+        await ref.read(overlayEnabledProvider.notifier).turnOff();
+        return;
+      }
+
+      if (!widget.subscription.isPro) {
+        if (mounted) showPaywall(context);
+        return;
+      }
+
+      if (!await OverlayService.instance.hasPermission()) {
+        // requestPermission() launches system Settings; the user may not
+        // return synchronously, so we also re-check on app resume above.
+        _awaitingPermissionResult = true;
+        final granted = await OverlayService.instance.requestPermission();
+        if (!granted) {
+          _awaitingPermissionResult = false;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Overlay permission denied — enable "Display over other apps" for Money Pi in system Settings to use the bubble.'),
+              duration: Duration(seconds: 4),
+            ));
+          }
+          return;
+        }
+        _awaitingPermissionResult = false;
+      }
+
+      final error = await ref.read(overlayEnabledProvider.notifier).turnOn();
+      if (error != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't enable the quick-log bubble.")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    final isPro = widget.subscription.isPro;
+    final enabled = ref.watch(overlayEnabledProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.blur_circular_rounded, color: tc.onSurface, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Floating quick-log bubble',
+                  style: GoogleFonts.inter(
+                      color: tc.onSurface, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                Text(
+                  isPro
+                      ? 'Show a draggable button over other apps for instant logging'
+                      : 'Pro feature — log from inside any app, no need to open Money Pi',
+                  style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          if (_busy)
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(tc.onSurfaceVariant),
+              ),
+            )
+          else
+            Switch(
+              value: enabled,
+              onChanged: _toggle,
+              activeColor: tc.onSurface,
+            ),
         ],
       ),
     );

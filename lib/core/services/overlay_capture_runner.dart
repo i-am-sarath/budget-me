@@ -1,45 +1,58 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/capture_lock.dart';
 import 'package:agent_money/core/services/notification_service.dart';
 import 'package:agent_money/core/services/openai_service.dart';
 import 'package:agent_money/core/services/silence_recorder.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
+import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 
-/// The shared capture pipeline behind every no-open-the-app voice entry
-/// point (Android widget, iOS Siri Shortcut/App Intent/Back Tap, and — for
-/// now, until those native triggers exist — the in-app quick-capture entry
-/// in Settings): record with silence auto-stop → Whisper transcribe → parse
-/// → write transaction → confirmation notification. Fire-and-forget: the
-/// caller does not await a UI result, everything is reported via
-/// [NotificationService].
-class QuickCaptureService {
-  QuickCaptureService(this._ref);
-
-  final Ref _ref;
+/// The floating bubble runs in its own Flutter engine/isolate
+/// (`overlayMain` in main.dart) with no access to the main isolate's
+/// Riverpod [ProviderScope] — [QuickCaptureService] can't be reused
+/// directly. This mirrors its record → transcribe → parse → save →
+/// notify pipeline using the repositories directly instead of providers;
+/// sqflite supports opening the same database from multiple isolates, so
+/// the write lands immediately, exactly like the widget/in-app entry
+/// points, without waiting for the main app to next be opened.
+///
+/// Pro-gating and the overlay-permission dance happen before this runs
+/// (in the Settings toggle and the bubble's tap handler) — this class
+/// assumes both are already satisfied.
+class OverlayCaptureRunner {
   final _recorder = SilenceRecorder();
   final _openAi = OpenAIService();
+  final _transactions = TransactionRepository();
+  final _db = DatabaseHelper();
 
   static const _pendingQueueKey = 'quick_capture_pending_audio';
 
-  /// Entry point for every trigger. Checks Pro entitlement *before*
-  /// recording so free users never hit Whisper, records with silence
-  /// auto-stop, and reports the outcome via a local notification.
-  Future<void> captureExpense() async {
-    if (!_ref.read(subscriptionProvider).isPro) {
-      await NotificationService.instance.showProUpsell();
-      return;
-    }
+  Future<bool> hasMicPermission() => _recorder.hasPermission();
 
-    if (!await _recorder.hasPermission()) {
-      await NotificationService.instance.showError(
-        'Microphone permission is required for voice logging.',
-      );
+  /// Re-checks Pro status at capture time (not just when the bubble was
+  /// enabled in Settings) — e.g. a subscription that lapsed since. Fails
+  /// closed: any RevenueCat error is treated as "not Pro".
+  Future<bool> _isPro() async {
+    try {
+      final info = await Purchases.getCustomerInfo();
+      return info.entitlements.active.containsKey(ApiConfig.entitlementPro);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Records with silence auto-stop, transcribes, parses, saves, and shows
+  /// a confirmation notification — the full pipeline for a single bubble
+  /// tap. Never throws; failures are reported via [NotificationService].
+  Future<void> captureExpense() async {
+    if (!await _isPro()) {
+      await NotificationService.instance.showProUpsell();
       return;
     }
 
@@ -52,7 +65,7 @@ class QuickCaptureService {
 
     File? audioFile;
     try {
-      audioFile = await _recorder.recordWithSilenceDetection();
+      audioFile = await _recorder.recordWithSilenceDetection(prefix: 'overlay_capture');
       if (audioFile == null) {
         await NotificationService.instance.showError(
           "Didn't catch any speech. Please try again.",
@@ -63,8 +76,6 @@ class QuickCaptureService {
     } on VoiceLogException catch (e) {
       await NotificationService.instance.showError(e.message);
     } catch (_) {
-      // Network/proxy failure with audio already captured — queue it rather
-      // than silently drop the user's spoken transaction.
       if (audioFile != null && await audioFile.exists()) {
         await _queueForRetry(audioFile);
         await NotificationService.instance.showError(
@@ -85,7 +96,6 @@ class QuickCaptureService {
       final transcript = await _openAi.transcribeAudio(audioFile);
       final parsed = await _openAi.parseTransactions(transcript);
       await _saveResolved(parsed);
-      await _ref.read(subscriptionProvider.notifier).recordVoiceLogUsed();
       await NotificationService.instance.showCaptureResult(parsed);
     } finally {
       if (await audioFile.exists()) await audioFile.delete();
@@ -93,7 +103,9 @@ class QuickCaptureService {
   }
 
   Future<void> _saveResolved(List<ParsedTransaction> parsed) async {
-    final accounts = _ref.read(accountProvider).valueOrNull ?? [];
+    final accountRows = await _db.queryAll('accounts', orderBy: 'created_at DESC');
+    final accounts = accountRows.map(AccountModel.fromMap).toList();
+
     for (final pt in parsed) {
       final tx = pt.transaction;
       var resolvedTx = tx;
@@ -103,13 +115,12 @@ class QuickCaptureService {
           resolvedTx = tx.copyWith(accountId: matched.id, accountName: matched.name);
         }
       }
-      await _ref.read(transactionListProvider.notifier).addTransaction(resolvedTx);
+      await _transactions.addTransaction(resolvedTx);
+      if (resolvedTx.accountId != null && resolvedTx.accountId!.isNotEmpty) {
+        await _db.adjustAccountBalance(resolvedTx.accountId!, resolvedTx.balanceDelta);
+      }
     }
   }
-
-  // ── Offline queue: retry audio that failed to reach the transcribe/parse
-  // proxy (e.g. no connectivity at capture time) the next time the pipeline
-  // runs successfully. ──
 
   Future<void> _queueForRetry(File audioFile) async {
     final prefs = await SharedPreferences.getInstance();
@@ -118,32 +129,5 @@ class QuickCaptureService {
     await prefs.setStringList(_pendingQueueKey, queue);
   }
 
-  /// Call once at app startup (when connectivity is most likely restored)
-  /// to flush any audio queued by a previous offline capture attempt.
-  Future<void> processPendingQueue() async {
-    final prefs = await SharedPreferences.getInstance();
-    final queue = prefs.getStringList(_pendingQueueKey) ?? [];
-    if (queue.isEmpty) return;
-    await prefs.remove(_pendingQueueKey);
-
-    for (final entry in queue) {
-      try {
-        final path = (jsonDecode(entry) as Map<String, dynamic>)['path'] as String;
-        final file = File(path);
-        if (!await file.exists()) continue;
-        await _transcribeParseAndSave(file);
-      } catch (_) {
-        // Still unreachable, or the temp file was cleaned up by the OS —
-        // drop it rather than retry forever.
-      }
-    }
-  }
-
   void dispose() => _recorder.dispose();
 }
-
-final quickCaptureServiceProvider = Provider<QuickCaptureService>((ref) {
-  final service = QuickCaptureService(ref);
-  ref.onDispose(service.dispose);
-  return service;
-});
