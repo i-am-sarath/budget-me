@@ -6,10 +6,17 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/services/budget_service.dart';
+import 'package:agent_money/core/services/notification_service.dart';
+import 'package:agent_money/core/services/quick_capture_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/dashboard/dashboard_screen.dart';
 import 'package:agent_money/features/onboarding/onboarding_screen.dart';
+import 'package:agent_money/features/paywall/paywall_screen.dart';
+
+/// Root navigator key so a tapped notification (app not necessarily in the
+/// foreground with a usable BuildContext) can still push a route.
+final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +50,17 @@ void main() async {
     await MobileAds.instance.initialize();
   }
 
+  // Local notifications power the quick-capture confirmation/Pro-upsell
+  // flow — the app is typically not foregrounded when these fire.
+  await NotificationService.instance.init(
+    onNotificationTap: (payload) {
+      if (payload == NotificationService.payloadPaywall) {
+        final context = navigatorKey.currentContext;
+        if (context != null) showPaywall(context);
+      }
+    },
+  );
+
   runApp(const ProviderScope(child: BudgetTrackerApp()));
 }
 
@@ -54,6 +72,7 @@ class BudgetTrackerApp extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Budget Me',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -66,10 +85,24 @@ class BudgetTrackerApp extends ConsumerWidget {
 
 /// Decides whether to show onboarding or the main app.
 /// Waits for the budget provider to load from SharedPreferences first.
-class _Bootstrapper extends ConsumerWidget {
+class _Bootstrapper extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Bootstrapper> createState() => _BootstrapperState();
+}
+
+class _BootstrapperState extends ConsumerState<_Bootstrapper> {
+  bool _queueDrained = false;
+
+  @override
+  Widget build(BuildContext context) {
     final budget = ref.watch(budgetProvider);
+
+    // Best-effort retry of any voice log queued while offline, once
+    // per app launch — this is when connectivity is most likely restored.
+    if (!_queueDrained) {
+      _queueDrained = true;
+      ref.read(quickCaptureServiceProvider).processPendingQueue();
+    }
 
     // Budget provider initialises async — show a blank splash while loading
     // We detect "not yet loaded" by checking if the state equals the default

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
@@ -72,6 +73,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     // Also set the currency
     await ref.read(currencyProvider.notifier).changeCurrency(_currency.code);
+
+    // Voice logging (in-app and quick-capture entry points) needs the mic.
+    // A widget/Siri Shortcut can't prompt for this itself, so it must
+    // already be granted by the time the user reaches for those — ask here.
+    await Permission.microphone.request();
 
     if (mounted) {
       Navigator.of(context).pushReplacement(

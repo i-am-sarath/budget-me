@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -9,6 +10,7 @@ import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/budget_service.dart';
 import 'package:agent_money/core/services/currency_service.dart';
+import 'package:agent_money/core/services/quick_capture_service.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
 import 'package:agent_money/core/services/theme_service.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
@@ -89,6 +91,10 @@ class SettingsScreen extends ConsumerWidget {
                 _VoiceCard(subscription: subscription)
                     .animate()
                     .fadeIn(duration: 350.ms, delay: 150.ms),
+                const SizedBox(height: 12),
+                _QuickCaptureCard(subscription: subscription)
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 170.ms),
                 const SizedBox(height: 28),
 
                 // About
@@ -491,6 +497,110 @@ class _VoiceCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Quick Capture Card — log an expense without opening the app.
+// Pro-only. This is also the in-app trigger for the shared capture
+// engine ahead of the native Android widget / iOS Siri Shortcut entry
+// points landing.
+// ─────────────────────────────────────────────
+
+class _QuickCaptureCard extends ConsumerStatefulWidget {
+  final SubscriptionState subscription;
+  const _QuickCaptureCard({required this.subscription});
+
+  @override
+  ConsumerState<_QuickCaptureCard> createState() => _QuickCaptureCardState();
+}
+
+class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
+  bool _capturing = false;
+
+  Future<void> _trigger() async {
+    if (!widget.subscription.isPro) {
+      showPaywall(context);
+      return;
+    }
+    setState(() => _capturing = true);
+    // Fire-and-forget by design — the result arrives via notification, not
+    // a spinner, mirroring the widget/Siri entry points that have no UI.
+    unawaited(ref.read(quickCaptureServiceProvider).captureExpense().whenComplete(() {
+      if (mounted) setState(() => _capturing = false);
+    }));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Listening... check notifications for the result')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = AppThemeColors.of(context);
+    final isPro = widget.subscription.isPro;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: tc.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.flash_on_rounded, color: tc.onSurface, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Quick Capture',
+                  style: GoogleFonts.inter(
+                      color: tc.onSurface, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                Text(
+                  isPro
+                      ? 'Log by voice, confirmed via notification'
+                      : 'Pro feature — log an expense without opening the app',
+                  style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: _capturing ? null : _trigger,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isPro ? tc.onSurface : tc.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: _capturing
+                  ? SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            isPro ? tc.surface : tc.onSurfaceVariant),
+                      ),
+                    )
+                  : Icon(Icons.mic_rounded,
+                      size: 16, color: isPro ? tc.surface : tc.onSurfaceVariant),
+            ),
+          ),
         ],
       ),
     );
