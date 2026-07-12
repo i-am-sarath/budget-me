@@ -5,6 +5,7 @@ import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:agent_money/features/transactions/models/category_catalog.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/travel/models/trip_model.dart';
@@ -16,11 +17,30 @@ class ManualEntrySheet extends ConsumerStatefulWidget {
   final TransactionModel? prefill;
   final String? presetTripId;
   final String? presetTripName;
+
+  /// When set, submitting the form calls this instead of writing directly to
+  /// the transaction repository / adjusting account balances. Used to edit a
+  /// not-yet-saved draft (e.g. a voice-parsed transaction awaiting review) in
+  /// place, with the caller deciding what happens to the corrected value.
+  final void Function(TransactionModel)? onSubmit;
+
+  /// Shown in place of the default "New/Edit transaction" heading — useful
+  /// when this sheet is opened to correct a low-confidence voice parse.
+  final String? title;
+
+  /// Pre-fills just the note field on a fresh (non-prefilled) entry — used
+  /// for the "enter manually" fallback so the user doesn't have to retype
+  /// what they said, without pulling in a fake amount/category/type guess.
+  final String? initialNote;
+
   const ManualEntrySheet({
     super.key,
     this.prefill,
     this.presetTripId,
     this.presetTripName,
+    this.onSubmit,
+    this.title,
+    this.initialNote,
   });
 
   @override
@@ -40,69 +60,6 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   String? _selectedTripId;
   String? _selectedTripName;
 
-  static const _categories = {
-    TransactionType.expense: [
-      ('🍔', 'Food & Dining'),
-      ('🚗', 'Transport'),
-      ('🛍️', 'Shopping'),
-      ('🏠', 'Housing'),
-      ('💊', 'Health'),
-      ('📱', 'Bills & Utilities'),
-      ('🎬', 'Entertainment'),
-      ('📚', 'Education'),
-      ('✈️', 'Travel'),
-      ('👗', 'Clothing'),
-      ('🐾', 'Pet Care'),
-      ('⚙️', 'General'),
-    ],
-    TransactionType.income: [
-      ('💼', 'Salary'),
-      ('💰', 'Freelance'),
-      ('🎁', 'Gift'),
-      ('🏦', 'Interest'),
-      ('🏡', 'Rental Income'),
-      ('📦', 'Side Business'),
-      ('💹', 'Dividends'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.investment: [
-      ('📈', 'Stocks'),
-      ('🏦', 'Mutual Fund'),
-      ('🏠', 'Real Estate'),
-      ('💎', 'Crypto'),
-      ('🪙', 'Gold / Metals'),
-      ('📊', 'ETF / Index Fund'),
-      ('💵', 'Fixed Deposit'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.lend: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('💼', 'Colleague'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.borrow: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('🏦', 'Bank / Lender'),
-      ('💼', 'Colleague'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.lendReturn: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('💼', 'Colleague'),
-      ('⚙️', 'Other'),
-    ],
-    TransactionType.borrowReturn: [
-      ('👤', 'Friend'),
-      ('👨‍👩‍👧', 'Family'),
-      ('🏦', 'Bank / Lender'),
-      ('💼', 'Colleague'),
-      ('💳', 'Loan Repayment'),
-      ('⚙️', 'Other'),
-    ],
-  };
 
   // Types shown in the entry sheet — two rows for clarity
   static const _row1Types = [
@@ -131,9 +88,14 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
       _date = p.date;
       _selectedTripId = p.tripId;
       _selectedTripName = p.tripName;
-    } else if (widget.presetTripId != null) {
-      _selectedTripId = widget.presetTripId;
-      _selectedTripName = widget.presetTripName;
+    } else {
+      if (widget.presetTripId != null) {
+        _selectedTripId = widget.presetTripId;
+        _selectedTripName = widget.presetTripName;
+      }
+      if (widget.initialNote != null && widget.initialNote!.isNotEmpty) {
+        _noteController.text = widget.initialNote!;
+      }
     }
   }
 
@@ -165,12 +127,12 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
   }
 
   List<(String, String)> get _currentCategories =>
-      _categories[_type] ?? _categories[TransactionType.expense]!;
+      kTransactionCategories[_type] ?? kTransactionCategories[TransactionType.expense]!;
 
   void _onTypeChanged(TransactionType type) {
     setState(() {
       _type = type;
-      final cats = _categories[type]!;
+      final cats = kTransactionCategories[type]!;
       if (!cats.any((c) => c.$2 == _category)) {
         _category = cats.first.$2;
       }
@@ -216,7 +178,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
         date: _date,
       );
 
-      if (widget.prefill != null) {
+      if (widget.onSubmit != null) {
+        widget.onSubmit!(transaction);
+      } else if (widget.prefill != null) {
         ref
             .read(transactionListProvider.notifier)
             .updateTransaction(widget.prefill!, transaction);
@@ -309,9 +273,10 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
               Row(
                 children: [
                   Text(
-                    widget.prefill != null
-                        ? 'Edit transaction'
-                        : 'New transaction',
+                    widget.title ??
+                        (widget.prefill != null
+                            ? 'Edit transaction'
+                            : 'New transaction'),
                     style: GoogleFonts.inter(
                       color: tc.onSurface,
                       fontSize: 15,
@@ -319,7 +284,7 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                     ),
                   ),
                   const Spacer(),
-                  if (widget.prefill != null)
+                  if (widget.prefill != null && widget.onSubmit == null)
                     GestureDetector(
                       onTap: _confirmDelete,
                       child: Container(
@@ -426,7 +391,9 @@ class _ManualEntrySheetState extends ConsumerState<ManualEntrySheet> {
                 child: ElevatedButton(
                   onPressed: _submit,
                   child: Text(
-                    widget.prefill != null ? 'Update Transaction' : 'Save Transaction',
+                    widget.onSubmit != null
+                        ? 'Use This'
+                        : (widget.prefill != null ? 'Update Transaction' : 'Save Transaction'),
                     style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700, fontSize: 15),
                   ),

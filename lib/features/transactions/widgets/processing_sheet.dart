@@ -14,6 +14,7 @@ import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ─────────────────────────────────────────────
@@ -36,11 +37,12 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
 
   String _status = 'Transcribing audio...';
   String _transcript = '';
-  List<TransactionModel> _transactions = [];
+  List<ParsedTransaction> _transactions = [];
   bool _isProcessing = true;
   bool _isReRecording = false;
-  String? _error;
+  VoiceLogException? _error;
   File? _currentAudioFile;
+  bool _autoEditShown = false;
 
   @override
   void initState() {
@@ -60,6 +62,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
       _isProcessing = true;
       _error = null;
       _transactions = [];
+      _autoEditShown = false;
       _status = 'Listening to your voice...';
     });
 
@@ -77,11 +80,14 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
       // Eagerly resolve account names against the user's accounts so the
       // result view can show the linked account (or a picker if no match).
       final accounts = ref.read(accountProvider).valueOrNull ?? [];
-      final resolved = transactions.map((tx) {
-        if (tx.accountName == null || tx.accountName!.isEmpty) return tx;
+      final resolved = transactions.map((pt) {
+        final tx = pt.transaction;
+        if (tx.accountName == null || tx.accountName!.isEmpty) return pt;
         final matched = matchAccountByName(tx.accountName!, accounts);
-        if (matched == null) return tx;
-        return tx.copyWith(accountId: matched.id, accountName: matched.name);
+        if (matched == null) return pt;
+        return pt.copyWithTransaction(
+          tx.copyWith(accountId: matched.id, accountName: matched.name),
+        );
       }).toList();
 
       await ref.read(subscriptionProvider.notifier).recordVoiceLogUsed();
@@ -91,10 +97,20 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
         _isProcessing = false;
         _status = 'Done';
       });
+
+      // A single low-confidence parse (missing amount, unclear category/type,
+      // or a garbled transcript) is surfaced as an editable draft rather than
+      // a one-tap "Save All" — the user reviews/corrects it before it's saved.
+      if (resolved.length == 1 && resolved.first.lowConfidence && !_autoEditShown) {
+        _autoEditShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _editTransaction(0);
+        });
+      }
     } catch (e) {
       setState(() {
         _isProcessing = false;
-        _error = e.toString();
+        _error = e is VoiceLogException ? e : VoiceLogException(e.toString());
       });
     } finally {
       if (_currentAudioFile != null &&
@@ -107,10 +123,51 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
   void _setTransactionAccount(int index, AccountModel? account) {
     HapticFeedback.lightImpact();
     setState(() {
-      _transactions[index] = _transactions[index].copyWith(
-        accountId: account?.id,
-        accountName: account?.name,
-      );
+      final tx = _transactions[index].transaction.copyWith(
+            accountId: account?.id,
+            accountName: account?.name,
+          );
+      _transactions[index] = _transactions[index].copyWithTransaction(tx);
+    });
+  }
+
+  /// Opens the full manual-entry form prefilled with the parsed draft so the
+  /// user can correct any field before it's saved. The draft is only
+  /// updated in place here — nothing is persisted until "Save All".
+  void _editTransaction(int index) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ManualEntrySheet(
+        prefill: _transactions[index].transaction,
+        title: 'Review transaction',
+        onSubmit: (edited) {
+          setState(() {
+            _transactions[index] = ParsedTransaction(edited);
+          });
+        },
+      ),
+    );
+  }
+
+  /// Graceful fallback for empty/unclear audio or a hard error — never
+  /// leaves the user stuck with nothing but "try again". Opens the full
+  /// manual entry form (prefilled with the transcript as a note, if any)
+  /// and closes this sheet once that's dismissed.
+  void _openManualFallback() {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ManualEntrySheet(
+        title: 'Enter manually',
+        initialNote: _transcript.trim(),
+      ),
+    ).then((_) {
+      if (mounted) Navigator.pop(context);
     });
   }
 
@@ -140,8 +197,8 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
   }
 
   void _saveAll() {
-    for (final tx in _transactions) {
-      ref.read(transactionListProvider.notifier).addTransaction(tx);
+    for (final pt in _transactions) {
+      ref.read(transactionListProvider.notifier).addTransaction(pt.transaction);
     }
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -201,6 +258,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
               error: _error!,
               tc: tc,
               onRetry: () => _startReSpeak(),
+              onEnterManually: _openManualFallback,
               onClose: () => Navigator.pop(context),
             )
           else
@@ -214,6 +272,7 @@ class _ProcessingSheetState extends ConsumerState<ProcessingSheet> {
               onRespeak: _startReSpeak,
               onCancel: () => Navigator.pop(context),
               onSetAccount: _setTransactionAccount,
+              onEdit: _editTransaction,
             ),
         ],
       ),
@@ -380,20 +439,26 @@ class _ReRecordingView extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _ErrorView extends StatelessWidget {
-  final String error;
+  final VoiceLogException error;
   final AppThemeColors tc;
   final VoidCallback onRetry;
+  final VoidCallback onEnterManually;
   final VoidCallback onClose;
 
   const _ErrorView({
     required this.error,
     required this.tc,
     required this.onRetry,
+    required this.onEnterManually,
     required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
+    final message = error.message;
+    final heading = error.isNoTransactions ? "Didn't catch that" : 'Processing failed';
+    final icon = error.isNoTransactions ? Icons.hearing_disabled_rounded : Icons.error_outline_rounded;
+
     return Column(
       children: [
         Container(
@@ -403,17 +468,17 @@ class _ErrorView extends StatelessWidget {
             color: Colors.red.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.error_outline_rounded, color: Colors.red, size: 32),
+          child: Icon(icon, color: Colors.red, size: 32),
         ),
         const SizedBox(height: 16),
-        Text('Processing failed',
+        Text(heading,
             style: GoogleFonts.inter(
                 color: tc.onSurface,
                 fontSize: 18,
                 fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Text(
-          error.length > 140 ? '${error.substring(0, 140)}...' : error,
+          message.length > 140 ? '${message.substring(0, 140)}...' : message,
           textAlign: TextAlign.center,
           style:
               GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 12, height: 1.4),
@@ -426,7 +491,18 @@ class _ErrorView extends StatelessWidget {
           tc: tc,
         ),
         const SizedBox(height: 10),
-        _Btn(label: 'Close', onTap: onClose, isPrimary: false, tc: tc),
+        _Btn(
+          label: '✏️  Enter Manually',
+          onTap: onEnterManually,
+          isPrimary: false,
+          tc: tc,
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: onClose,
+          child: Text('Close',
+              style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13)),
+        ),
       ],
     );
   }
@@ -437,7 +513,7 @@ class _ErrorView extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _ResultView extends StatelessWidget {
-  final List<TransactionModel> transactions;
+  final List<ParsedTransaction> transactions;
   final String transcript;
   final CurrencyState currency;
   final List<AccountModel> accounts;
@@ -446,6 +522,7 @@ class _ResultView extends StatelessWidget {
   final VoidCallback onRespeak;
   final VoidCallback onCancel;
   final void Function(int index, AccountModel? account) onSetAccount;
+  final void Function(int index) onEdit;
 
   const _ResultView({
     required this.transactions,
@@ -457,6 +534,7 @@ class _ResultView extends StatelessWidget {
     required this.onRespeak,
     required this.onCancel,
     required this.onSetAccount,
+    required this.onEdit,
   });
 
   Color _typeColor(TransactionType type) {
@@ -540,63 +618,98 @@ class _ResultView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Transaction cards
+        // Transaction cards — tap any card to review/correct it before saving.
         ...transactions.asMap().entries.map((e) {
           final i = e.key;
-          final tx = e.value;
+          final parsed = e.value;
+          final tx = parsed.transaction;
           final color = _typeColor(tx.type);
           final showPicker = _affectsAccount(tx.type) &&
               accounts.isNotEmpty &&
               (tx.accountId == null || tx.accountId!.isEmpty);
+          final flagged = parsed.lowConfidence;
 
+          // Only the static header (icon/note/amount) is the tap-to-edit
+          // target — the account picker below has its own tappable chips,
+          // and keeping it outside this GestureDetector avoids any gesture-
+          // arena ambiguity between "edit this transaction" and "pick this
+          // account" on the same tap.
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: tc.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.3)),
+              border: Border.all(
+                color: flagged ? const Color(0xFFF59E0B) : color.withOpacity(0.3),
+                width: flagged ? 1.5 : 1,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.12),
-                        shape: BoxShape.circle,
+                if (flagged) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded,
+                          size: 13, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'TAP TO REVIEW',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFF59E0B),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                      child: Icon(_typeIcon(tx.type), color: color, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tx.note.isNotEmpty ? tx.note : tx.category,
-                            style: GoogleFonts.inter(
-                                color: tc.onSurface, fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
-                            style: GoogleFonts.inter(
-                                color: tc.onSurfaceVariant, fontSize: 11),
-                          ),
-                        ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onEdit(i),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(_typeIcon(tx.type), color: color, size: 18),
                       ),
-                    ),
-                    Text(
-                      currency.format(tx.amount),
-                      style: GoogleFonts.inter(
-                          color: color, fontWeight: FontWeight.w700, fontSize: 16),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.note.isNotEmpty ? tx.note : tx.category,
+                              style: GoogleFonts.inter(
+                                  color: tc.onSurface, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${tx.type.label}${tx.payee != null && tx.payee!.isNotEmpty ? ' · ${tx.payee}' : ''} · ${tx.category}',
+                              style: GoogleFonts.inter(
+                                  color: tc.onSurfaceVariant, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        currency.format(tx.amount),
+                        style: GoogleFonts.inter(
+                            color: color, fontWeight: FontWeight.w700, fontSize: 16),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.edit_outlined, size: 14, color: tc.onSurfaceVariant),
+                    ],
+                  ),
                 ),
 
                 // Linked account tag (matched) OR picker (unmatched)

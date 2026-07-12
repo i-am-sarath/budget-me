@@ -7,10 +7,13 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "tail": "wrangler tail",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:regression": "tsx test/run_regression.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240821.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.5.0",
     "wrangler": "^3.78.0"
   }
