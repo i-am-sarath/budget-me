@@ -1,13 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class TransferSheet extends ConsumerStatefulWidget {
@@ -61,42 +59,27 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
     HapticFeedback.mediumImpact();
     final amount = double.tryParse(_amountCtrl.text) ?? 0;
     final note = _noteCtrl.text.trim();
-    final displayNote = note.isNotEmpty ? note : 'Transfer';
-
-    // Determine if destination is a liability (loan / credit card)
-    final isLoanRepayment =
-        _to!.type == AccountType.loan || _to!.type == AccountType.creditCard;
-
-    // Debit from source (always expense — reduces source balance)
-    final debit = TransactionModel(
-      amount: amount,
-      type: TransactionType.expense,
-      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
-      note: '$displayNote → ${_to!.name}',
-      accountId: _from!.id,
-      accountName: _from!.name,
-      date: _date,
-    );
-
-    // Credit to destination
-    // For loan/credit card: borrowReturn → balanceDelta is -amount (reduces debt)
-    // For normal accounts: income → balanceDelta is +amount (adds funds)
-    final credit = TransactionModel(
-      amount: amount,
-      type: isLoanRepayment ? TransactionType.borrowReturn : TransactionType.income,
-      category: isLoanRepayment ? 'Loan Repayment' : 'Transfer',
-      note: '$displayNote ← ${_from!.name}',
-      accountId: _to!.id,
-      accountName: _to!.name,
-      date: _date,
-    );
 
     final txNotifier = ref.read(transactionListProvider.notifier);
 
-    // Sequential: add both legs — addTransaction already adjusts linked account balances
-    await txNotifier.addTransaction(debit);
-    await txNotifier.addTransaction(credit);
-    if (mounted) Navigator.pop(context);
+    try {
+      // Single atomic transfer — deducts from source and credits destination,
+      // and rethrows on failure so we can show it instead of failing silently.
+      await txNotifier.transfer(
+        from: _from!,
+        to: _to!,
+        amount: amount,
+        date: _date,
+        note: note,
+      );
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Transfer failed: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -150,7 +133,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   const SizedBox(width: 12),
                   Text(
                     'Transfer Money',
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                       color: tc.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -174,7 +157,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                   children: [
                     Text(
                       currency.currency.symbol,
-                      style: GoogleFonts.inter(
+                      style: AppFonts.sans(
                         color: tc.onSurfaceVariant,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -187,7 +170,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         autofocus: true,
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
@@ -267,7 +250,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                     // Note
                     TextFormField(
                       controller: _noteCtrl,
-                      style: GoogleFonts.inter(
+                      style: AppFonts.sans(
                           color: tc.onSurface, fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Note (optional)',
@@ -304,7 +287,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                             const SizedBox(width: 12),
                             Text(
                               DateFormat('EEEE, MMM d, yyyy').format(_date),
-                              style: GoogleFonts.inter(
+                              style: AppFonts.sans(
                                   color: tc.onSurface, fontSize: 13),
                             ),
                           ],
@@ -320,7 +303,7 @@ class _TransferSheetState extends ConsumerState<TransferSheet> {
                         onPressed: () => _submit(accounts),
                         child: Text(
                           'Transfer',
-                          style: GoogleFonts.inter(
+                          style: AppFonts.sans(
                               fontWeight: FontWeight.w700, fontSize: 15),
                         ),
                       ),
@@ -364,7 +347,7 @@ class _AccountDropdown extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: AppFonts.sans(
             color: tc.onSurfaceVariant,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -387,7 +370,7 @@ class _AccountDropdown extends StatelessWidget {
                   : null,
               hint: Text(
                 'Select account',
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                     color: tc.onSurfaceVariant, fontSize: 14),
               ),
               isExpanded: true,
@@ -405,7 +388,7 @@ class _AccountDropdown extends StatelessWidget {
                       Expanded(
                         child: Text(
                           acc.name,
-                          style: GoogleFonts.inter(
+                          style: AppFonts.sans(
                               color: tc.onSurface,
                               fontSize: 14,
                               fontWeight: FontWeight.w600),

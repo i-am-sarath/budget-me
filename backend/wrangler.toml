@@ -6,23 +6,29 @@
 #   3. npx wrangler login
 #   4. npx wrangler kv namespace create RATE_LIMIT
 #      → copy the returned id into kv_namespaces below
-#   5. npx wrangler secret put OPENAI_API_KEY     (paste your sk-... key)
+#   5. npx wrangler secret put GROQ_API_KEY       (paste your gsk_... key)
 #   6. npx wrangler secret put CLIENT_SECRET      (generate one: `openssl rand -hex 32`)
-#   7. npm run deploy
+#   7. npx wrangler secret put SUPABASE_JWT_SECRET (Supabase → Settings → API →
+#      JWT Secret). Enables tamper-proof per-user rate limiting; once set, the
+#      app must send a valid Supabase access token (it does when signed in).
+#   8. npm run deploy
 #
 # Your worker URL will be printed (e.g. https://budgetme-proxy.<you>.workers.dev).
-# Put that URL + the CLIENT_SECRET into dart_defines.env as PROXY_BASE_URL and PROXY_CLIENT_SECRET.
+# Put that URL + the CLIENT_SECRET into dart_defines.json as PROXY_BASE_URL and PROXY_CLIENT_SECRET.
 
 name = "budgetme-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-09-25"
 
-# Per-user monthly request cap. Free tier in the app is 100 voice logs/month;
-# we leave a small safety margin here so retries on errors don't lock users out.
+# Per-user monthly request ceiling — the Pro "soft cap". Pro is sold as
+# "unlimited" but is capped here so a future, pricier AI model can't blow up
+# unit economics; ~99% of users never approach 1000/month. Free users are
+# already gated to 15/month client-side (SubscriptionState.freeVoiceLogLimit)
+# long before they reach this ceiling, so one value safely covers both tiers.
 [vars]
-MONTHLY_LIMIT = "150"
+MONTHLY_LIMIT = "1000"
 
 # Run `wrangler kv namespace create RATE_LIMIT` and paste the id below.
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "e37aa062fc734e1baa045d2802d6382e"
+id = "7e95e419be984bfa9ca018764d43ae86"

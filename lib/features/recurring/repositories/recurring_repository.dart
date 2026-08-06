@@ -3,15 +3,18 @@ import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/recurring/models/recurring_model.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 
 final recurringRepositoryProvider =
     Provider((ref) => RecurringRepository());
 
 final recurringListProvider = StateNotifierProvider<RecurringListNotifier,
     AsyncValue<List<RecurringModel>>>((ref) {
+  final spaceId = ref.watch(activeSpaceIdProvider);
   return RecurringListNotifier(
     ref.read(recurringRepositoryProvider),
     ref,
+    spaceId,
   );
 });
 
@@ -19,8 +22,9 @@ class RecurringListNotifier
     extends StateNotifier<AsyncValue<List<RecurringModel>>> {
   final RecurringRepository _repo;
   final Ref _ref;
+  final String _spaceId;
 
-  RecurringListNotifier(this._repo, this._ref)
+  RecurringListNotifier(this._repo, this._ref, this._spaceId)
       : super(const AsyncValue.loading()) {
     refresh();
   }
@@ -28,7 +32,7 @@ class RecurringListNotifier
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     try {
-      final list = await _repo.getAll();
+      final list = await _repo.getAll(_spaceId);
       state = AsyncValue.data(list);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -36,7 +40,7 @@ class RecurringListNotifier
   }
 
   Future<void> add(RecurringModel rule) async {
-    await _repo.insert(rule);
+    await _repo.insert(rule, _spaceId);
     await refresh();
   }
 
@@ -79,19 +83,24 @@ class RecurringListNotifier
 class RecurringRepository {
   final DatabaseHelper _db = DatabaseHelper();
 
-  Future<List<RecurringModel>> getAll() async {
-    final maps = await _db.queryAll('recurring_transactions',
-        orderBy: 'next_run_date ASC');
+  Future<List<RecurringModel>> getAll(String spaceId) async {
+    final maps = await _db.queryAll(
+      'recurring_transactions',
+      whereClause: 'space_id = ?',
+      whereArgs: [spaceId],
+      orderBy: 'next_run_date ASC',
+    );
     return maps.map(RecurringModel.fromMap).toList();
   }
 
-  Future<List<RecurringModel>> getPendingToday() async {
-    final all = await getAll();
+  Future<List<RecurringModel>> getPendingToday(String spaceId) async {
+    final all = await getAll(spaceId);
     return all.where((r) => r.isActive && r.isDueToday).toList();
   }
 
-  Future<void> insert(RecurringModel rule) async {
-    await _db.insert('recurring_transactions', rule.toMap());
+  Future<void> insert(RecurringModel rule, String spaceId) async {
+    await _db.insert('recurring_transactions',
+        {...rule.toMap(), 'space_id': spaceId});
   }
 
   Future<void> update(RecurringModel rule) async {

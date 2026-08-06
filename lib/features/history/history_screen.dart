@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:agent_money/core/theme.dart';
@@ -7,7 +7,6 @@ import 'package:agent_money/features/transactions/models/transaction_model.dart'
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
@@ -83,7 +82,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 title: Row(
                   children: [
                     Text('History',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.sans(
                           color: tc.onSurface,
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -101,7 +100,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('MMM yyyy').format(_selectedMonth),
-                          style: GoogleFonts.inter(
+                          style: AppFonts.sans(
                             color: tc.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -109,8 +108,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant),
-                          onPressed: () => _changeMonth(1),
+                          icon: Icon(
+                            Icons.chevron_right_rounded,
+                            color: (_selectedMonth.year == DateTime.now().year &&
+                                    _selectedMonth.month == DateTime.now().month)
+                                ? tc.onSurfaceVariant.withOpacity(0.3)
+                                : tc.onSurfaceVariant,
+                          ),
+                          onPressed: (_selectedMonth.year == DateTime.now().year &&
+                                  _selectedMonth.month == DateTime.now().month)
+                              ? null
+                              : () => _changeMonth(1),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
@@ -133,11 +141,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            style: GoogleFonts.inter(
+                            style: AppFonts.sans(
                                 color: tc.onSurface, fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Search transactions...',
-                              hintStyle: GoogleFonts.inter(
+                              hintStyle: AppFonts.sans(
                                   color: tc.onSurfaceVariant),
                               prefixIcon: Icon(Icons.search_rounded,
                                   color: tc.onSurfaceVariant, size: 20),
@@ -182,7 +190,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                             color: tc.onSurfaceVariant, size: 48),
                         const SizedBox(height: 12),
                         Text('No transactions found',
-                            style: GoogleFonts.inter(
+                            style: AppFonts.sans(
                               color: tc.onSurfaceVariant,
                               fontSize: 16,
                             )),
@@ -207,7 +215,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 children: [
                                   Text(
                                     _formatGroupDate(dateKey),
-                                    style: GoogleFonts.inter(
+                                    style: AppFonts.sans(
                                       color: tc.onSurfaceVariant,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -224,7 +232,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     _groupTotal(items, currency),
-                                    style: GoogleFonts.inter(
+                                    style: AppFonts.sans(
                                       color: tc.onSurfaceVariant,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -233,8 +241,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                 ],
                               ),
                             ),
-                            ...items.asMap().entries.map((e) {
-                              return GestureDetector(
+                            ...items.asMap().entries.expand((e) {
+                              final tile = GestureDetector(
                                 onTap: () {
                                   showModalBottomSheet(
                                     context: context,
@@ -251,6 +259,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                       delay: (e.key * 40).ms,
                                     ),
                               );
+                              final isLast = e.key == items.length - 1;
+                              return [
+                                tile,
+                                if (!isLast)
+                                  Divider(
+                                    indent: 62,
+                                    height: 1,
+                                    color: tc.outlineVariant.withOpacity(0.5),
+                                  ),
+                              ];
                             }),
                           ],
                         );
@@ -327,7 +345,7 @@ class _FilterChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: AppFonts.sans(
             color: isActive ? tc.surface : tc.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w600,

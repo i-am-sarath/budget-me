@@ -1,15 +1,13 @@
-# Release build script - reads secrets from dart_defines.env (gitignored)
-# Usage: .\build_release.ps1
+# Release build (wrapper). Delegates to scripts\build_release.ps1 so there is
+# ONE build path and ONE config source (dart_defines.json). All secrets -
+# Supabase, GOOGLE_WEB_CLIENT_ID, Sentry, RevenueCat - come from that file.
+#
+# Usage:
+#   .\build_release.ps1          # builds an AAB for Play
+#   .\build_release.ps1 -Apk     # builds a universal APK instead
 
-$envFile = "dart_defines.env"
-if (-not (Test-Path $envFile)) {
-    Write-Error "Missing $envFile - create it with PROXY_BASE_URL, PROXY_CLIENT_SECRET, RC_ANDROID_KEY"
-    exit 1
-}
+param(
+    [switch]$Apk
+)
 
-$defines = Get-Content $envFile |
-    Where-Object { $_ -match '^\w+=' } |
-    ForEach-Object { "--dart-define=$_" }
-
-Write-Host "Building release AAB..."
-flutter build appbundle --release --no-tree-shake-icons @defines
+& "$PSScriptRoot\scripts\build_release.ps1" @PSBoundParameters

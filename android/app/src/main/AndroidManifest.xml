@@ -1,22 +1,47 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <!-- The app has no gallery / photo-picker feature, so it must NOT request
+         persistent media access. Google Play rejects READ_MEDIA_IMAGES /
+         READ_MEDIA_VIDEO for apps that only need one-time/infrequent access.
+         tools:node="remove" strips them even if a dependency injects them via
+         manifest merge. Legacy external-storage perms are removed for the same
+         reason — nothing in the app reads or writes shared storage. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Always-on quick-log overlay (flutter_overlay_window). Android only.
+         SYSTEM_ALERT_WINDOW is heavily restricted by Play Store; user must
+         manually grant via system settings on Android 11+. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Foreground service DISABLED for now (revisit when the always-on overlay
+         is reworked). flutter_overlay_window injects these via manifest merge,
+         so tools:node="remove" strips them — this keeps the build free of a
+         Play Console Foreground Service declaration. The quick-log overlay
+         bubble is inactive as a result. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" tools:node="remove"/>
+
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
 
     <application
-        android:label="Budget Me"
+        android:label="Money Purse"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:networkSecurityConfig="@xml/network_security_config">
+        <!-- allowBackup=false: this is a finance app. The local SQLite DB holds
+             every transaction and SharedPreferences holds the user's email and
+             linked-sheet id, so we opt out of Android auto-backup / adb backup
+             rather than let that data leave the device unencrypted. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,6 +67,29 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-6384260983473792~8804057473"/>
+
+        <!-- Home-screen quick-add widget. Tapping it launches MainActivity with
+             the budgetme://voice deep link (handled in main.dart) which opens
+             voice recording. -->
+        <receiver
+            android:name=".BudgetWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/budget_widget_info" />
+        </receiver>
+        <!-- OverlayService (flutter_overlay_window) removed for now along with
+             the foreground-service permissions above, so no specialUse FGS
+             reaches the merged manifest and Play needs no FGS declaration.
+             Re-declare this (with the FOREGROUND_SERVICE perms) when the
+             always-on quick-log overlay is reworked. -->
+        <service
+            android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
+            tools:node="remove"/>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

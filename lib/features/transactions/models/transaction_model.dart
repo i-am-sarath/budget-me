@@ -6,8 +6,10 @@ enum TransactionType {
   investment,
   lend,
   borrow,
-  lendReturn,   // someone returned money they owed → user receives money back
-  borrowReturn; // user returns money they borrowed → user pays out
+  lendReturn,    // someone returned money they owed → user receives money back
+  borrowReturn,  // user returns money they borrowed → user pays out
+  transferOut,   // money leaving an account via transfer (not a budget expense)
+  transferIn;    // money arriving in an account via transfer (not real income)
 
   static TransactionType fromString(String value) {
     return TransactionType.values.firstWhere(
@@ -25,6 +27,8 @@ enum TransactionType {
       case TransactionType.borrow:       return 'Borrowed';
       case TransactionType.lendReturn:   return 'Lent - Returned';
       case TransactionType.borrowReturn: return 'Borrow - Repaid';
+      case TransactionType.transferOut:  return 'Transfer Out';
+      case TransactionType.transferIn:   return 'Transfer In';
     }
   }
 }
@@ -38,6 +42,7 @@ class TransactionModel {
   final String? payee;
   final String? accountId;
   final String? accountName;
+  final String? tripId; // optional: tags this spend to a Trip (travel tracking)
   final DateTime date;
   final DateTime createdAt;
   final bool isSynced;
@@ -51,6 +56,7 @@ class TransactionModel {
     this.payee,
     this.accountId,
     this.accountName,
+    this.tripId,
     required this.date,
     DateTime? createdAt,
     this.isSynced = false,
@@ -58,16 +64,26 @@ class TransactionModel {
         createdAt = createdAt ?? DateTime.now();
 
   // ── Balance effect ──────────────────────────────────────
+  //
+  // Debt/receivable tracking accounts hold an *outstanding* balance:
+  //   • borrow      → increases what you owe on a loan account
+  //   • borrowReturn→ decreases it (repayment)
+  //   • lend        → increases what's owed to you on a receivable account
+  //   • lendReturn  → decreases it (you got the money back)
+  // The matching effect on your own cash/bank account is recorded as a
+  // separate transferIn/transferOut transaction by the debt flow.
   double get balanceDelta {
     switch (type) {
       case TransactionType.income:
       case TransactionType.borrow:
-      case TransactionType.lendReturn:   // money returned TO user → positive
+      case TransactionType.lend:
+      case TransactionType.transferIn:   // funds arrive → positive
         return amount;
       case TransactionType.expense:
-      case TransactionType.lend:
+      case TransactionType.lendReturn:
       case TransactionType.investment:
-      case TransactionType.borrowReturn: // user repays → negative
+      case TransactionType.borrowReturn:
+      case TransactionType.transferOut:  // funds leave → negative
         return -amount;
     }
   }
@@ -81,6 +97,7 @@ class TransactionModel {
         'payee': payee ?? '',
         'account_id': accountId ?? '',
         'account_name': accountName ?? '',
+        'trip_id': tripId ?? '',
         'date': date.toIso8601String(),
         'created_at': createdAt.toIso8601String(),
         'is_synced': isSynced ? 1 : 0,
@@ -101,6 +118,9 @@ class TransactionModel {
         accountName: (map['account_name'] as String?)?.isNotEmpty == true
             ? map['account_name'] as String
             : null,
+        tripId: (map['trip_id'] as String?)?.isNotEmpty == true
+            ? map['trip_id'] as String
+            : null,
         date: DateTime.parse(map['date'] as String),
         createdAt: DateTime.parse(map['created_at'] as String),
         isSynced: (map['is_synced'] as int? ?? 0) == 1,
@@ -114,6 +134,7 @@ class TransactionModel {
     String? payee,
     String? accountId,
     String? accountName,
+    String? tripId,
     DateTime? date,
     bool? isSynced,
   }) =>
@@ -126,6 +147,7 @@ class TransactionModel {
         payee: payee ?? this.payee,
         accountId: accountId ?? this.accountId,
         accountName: accountName ?? this.accountName,
+        tripId: tripId ?? this.tripId,
         date: date ?? this.date,
         createdAt: createdAt,
         isSynced: isSynced ?? this.isSynced,

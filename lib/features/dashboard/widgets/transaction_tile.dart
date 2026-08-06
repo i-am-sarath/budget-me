@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 class TransactionTile extends ConsumerWidget {
   final TransactionModel transaction;
@@ -28,11 +26,7 @@ class TransactionTile extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: tc.errorContainer,
-          borderRadius: BorderRadius.circular(18),
-        ),
+        color: tc.errorContainer,
         child: Icon(Icons.delete_sweep_rounded, color: tc.expense, size: 24),
       ),
       onDismissed: (_) {
@@ -44,11 +38,9 @@ class TransactionTile extends ConsumerWidget {
             content: Text('Transaction deleted'),
             action: SnackBarAction(
               label: 'Undo',
-              onPressed: () {
-                ref
-                    .read(transactionListProvider.notifier)
-                    .addTransaction(transaction);
-              },
+              onPressed: () => ref
+                  .read(transactionListProvider.notifier)
+                  .addTransaction(transaction),
             ),
           ),
         );
@@ -59,19 +51,19 @@ class TransactionTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: tc.surfaceContainerLow,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: tc.outlineVariant, width: 0.5),
+          border: Border.all(color: tc.outline, width: 1.0),
         ),
         child: Row(
           children: [
-            // Icon badge — minimal square
+            // 48px circle icon
             Container(
-              width: 42,
-              height: 42,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: tc.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(12),
+                color: typeColor.withOpacity(0.10),
+                shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: typeColor, size: 18),
+              child: Icon(icon, color: typeColor, size: 22),
             ),
             const SizedBox(width: 14),
             // Title + meta
@@ -85,74 +77,51 @@ class TransactionTile extends ConsumerWidget {
                         : transaction.category,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                       color: tc.onSurface,
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Text(
-                        transaction.category,
-                        style: GoogleFonts.inter(
-                          color: tc.onSurfaceVariant,
-                          fontSize: 11,
-                        ),
-                      ),
-                      if (transaction.accountName != null &&
-                          transaction.accountName!.isNotEmpty) ...[
-                        Text(
-                          ' · ${transaction.accountName}',
-                          style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                      if (transaction.payee != null &&
-                          transaction.payee!.isNotEmpty) ...[
-                        Text(
-                          ' · ${transaction.payee}',
-                          style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    _subtitle(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.sans(
+                      color: tc.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            // Amount + date
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '$prefix${currency.format(transaction.amount)}',
-                  style: GoogleFonts.inter(
-                    color: typeColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  _formatDate(transaction.date),
-                  style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
+            // Amount right-aligned, color-coded
+            Text(
+              '$prefix${currency.format(transaction.amount)}',
+              style: AppFonts.sans(
+                color: typeColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _subtitle() {
+    final parts = <String>[];
+    parts.add(transaction.category);
+    if (transaction.accountName != null && transaction.accountName!.isNotEmpty) {
+      parts.add(transaction.accountName!);
+    }
+    if (transaction.payee != null && transaction.payee!.isNotEmpty) {
+      parts.add(transaction.payee!);
+    }
+    return parts.join(' · ');
   }
 
   (Color, String, IconData) _typeStyle(
@@ -172,16 +141,12 @@ class TransactionTile extends ConsumerWidget {
         return (tc.income, '←', Icons.undo_rounded);
       case TransactionType.borrowReturn:
         return (tc.expense, '→', Icons.redo_rounded);
+      case TransactionType.transferOut:
+        return (tc.investment, '⇄', Icons.swap_horiz_rounded);
+      case TransactionType.transferIn:
+        return (tc.investment, '⇄', Icons.swap_horiz_rounded);
     }
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final txDate = DateTime(date.year, date.month, date.day);
-    final diff = today.difference(txDate).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Yesterday';
-    return DateFormat('d MMM').format(date);
-  }
 }
+

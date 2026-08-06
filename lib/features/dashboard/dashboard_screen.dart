@@ -1,25 +1,26 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/services/theme_service.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/accounts/screens/accounts_screen.dart';
+import 'package:agent_money/features/accounts/widgets/transfer_sheet.dart';
+import 'package:agent_money/features/accounts/repositories/account_repository.dart';
 import 'package:agent_money/features/dashboard/widgets/magic_fab.dart';
-import 'package:agent_money/features/dashboard/widgets/summary_card.dart';
 import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
-import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
 import 'package:agent_money/features/settings/settings_screen.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
 import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
 import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:agent_money/features/analytics/analytics_screen.dart';
-import 'package:agent_money/core/services/budget_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
+import 'package:agent_money/features/spaces/repositories/space_repository.dart';
+import 'package:agent_money/features/spaces/widgets/space_switcher_sheet.dart';
+import 'package:agent_money/features/categories/screens/category_budget_screen.dart';
+import 'package:agent_money/features/groups/screens/groups_screen.dart';
+import 'package:agent_money/features/trips/screens/trips_screen.dart';
+import 'package:agent_money/core/services/tour_service.dart';
+import 'package:agent_money/features/onboarding/feature_tour.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -31,11 +32,36 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _navIndex = 0;
+  bool _tourChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // First-run feature tour. We wait for the post-frame callback so the
+    // dashboard is fully painted behind the dimmed overlay, and guard with a
+    // flag so navigation back to Home never re-triggers it within a session.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowTour());
+  }
+
+  Future<void> _maybeShowTour() async {
+    if (_tourChecked || !mounted) return;
+    _tourChecked = true;
+    // tourSeenProvider loads from prefs async; give it a beat to settle so we
+    // read the real persisted value rather than the safe "seen" default.
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    final seen = ref.read(tourSeenProvider);
+    if (!seen) {
+      await showFeatureTour(context);
+    }
+  }
 
   final _pages = const [
     _HomeTab(),
+    CategoryBudgetScreen(),
     AnalyticsScreen(),
     AccountsScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -52,14 +78,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: tc.surfaceContainerLow,
+          color: tc.surfaceContainer,
           border: Border(
             top: BorderSide(color: tc.outlineVariant, width: 0.5),
           ),
         ),
         child: SafeArea(
           child: SizedBox(
-            height: 64,
+            height: 68,
             child: Row(
               children: [
                 _NavItem(
@@ -70,18 +96,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () => setState(() => _navIndex = 0),
                 ),
                 _NavItem(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Stats',
+                  icon: Icons.donut_large_rounded,
+                  label: 'Budget',
                   isSelected: _navIndex == 1,
                   tc: tc,
                   onTap: () => setState(() => _navIndex = 1),
                 ),
                 _NavItem(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'Accounts',
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Stats',
                   isSelected: _navIndex == 2,
                   tc: tc,
                   onTap: () => setState(() => _navIndex = 2),
+                ),
+                _NavItem(
+                  icon: Icons.account_balance_wallet_rounded,
+                  label: 'Accounts',
+                  isSelected: _navIndex == 3,
+                  tc: tc,
+                  onTap: () => setState(() => _navIndex = 3),
+                ),
+                _NavItem(
+                  icon: Icons.settings_rounded,
+                  label: 'Settings',
+                  isSelected: _navIndex == 4,
+                  tc: tc,
+                  onTap: () => setState(() => _navIndex = 4),
                 ),
               ],
             ),
@@ -113,38 +153,42 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pillBg = isSelected
+        ? (isDark ? tc.primary.withOpacity(0.15) : tc.primaryContainer)
+        : Colors.transparent;
+    final itemColor = isSelected
+        ? (isDark ? tc.primary : Colors.white)
+        : tc.onSurfaceVariant.withOpacity(0.6);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? tc.onSurface.withOpacity(0.08)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: pillBg,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: itemColor, size: 22),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: AppFonts.sans(
+                  color: itemColor,
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: isSelected ? tc.onSurface : tc.onSurfaceVariant.withOpacity(0.6),
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: isSelected ? tc.onSurface : tc.onSurfaceVariant.withOpacity(0.6),
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -173,69 +217,21 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
     });
   }
 
-  void _showMoreMenu(BuildContext context, AppThemeColors tc) {
+  void _openTransfer() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: tc.surface,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: tc.outlineVariant, width: 0.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: tc.outlineVariant,
-                borderRadius: BorderRadius.circular(100),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _MoreMenuItem(
-              icon: Icons.repeat_rounded,
-              label: 'Recurring Payments',
-              tc: tc,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const RecurringScreen()));
-              },
-            ),
-            _MoreMenuItem(
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              tc: tc,
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
+      builder: (_) => const TransferSheet(),
+    ).then((_) => ref.read(accountProvider.notifier).loadAccounts());
   }
 
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionListProvider);
     final currency = ref.watch(currencyProvider);
-    final accountsAsync = ref.watch(accountProvider);
-    final themeMode = ref.watch(themeProvider);
+    final voiceProcessing = ref.watch(voiceLogProvider).isProcessing;
     final tc = AppThemeColors.of(context);
-    final budget = ref.watch(budgetProvider);
-
-    final isDark = themeMode == ThemeMode.dark ||
-        (themeMode == ThemeMode.system &&
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -246,27 +242,28 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           snap: true,
           elevation: 0,
           titleSpacing: 20,
-          title: Text(
-            'Budget Me',
-            style: GoogleFonts.inter(
-              color: tc.onSurface,
-              fontWeight: FontWeight.w900,
-              fontSize: 24,
-              letterSpacing: -0.8,
-            ),
-          ),
+          title: _SpaceHeaderTitle(tc: tc),
           actions: [
             IconButton(
-              onPressed: () => ref.read(themeProvider.notifier).toggle(),
-              icon: Icon(
-                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                color: tc.onSurface,
-                size: 20,
-              ),
+              tooltip: 'Transfer money',
+              onPressed: _openTransfer,
+              icon: Icon(Icons.swap_horiz_rounded, color: tc.onSurface),
             ),
             IconButton(
-              onPressed: () => _showMoreMenu(context, tc),
-              icon: Icon(Icons.more_horiz_rounded, color: tc.onSurface),
+              tooltip: 'Trips',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TripsScreen()),
+              ),
+              icon: Icon(Icons.card_travel_rounded, color: tc.onSurface),
+            ),
+            IconButton(
+              tooltip: 'Groups',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const GroupsScreen()),
+              ),
+              icon: Icon(Icons.groups_rounded, color: tc.onSurface),
             ),
             const SizedBox(width: 8),
           ],
@@ -276,75 +273,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 120),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // ─── Budget Progress (hero spot) ───────────
-              transactionsAsync.when(
-                loading: () => const _BalanceSkeleton(),
-                error: (_, __) => const SizedBox(),
-                data: (txs) {
-                  if (!budget.hasBudget) return const SizedBox();
-                  final now = DateTime.now();
-                  final spent = txs
-                      .where((t) =>
-                          t.type == TransactionType.expense &&
-                          t.date.month == now.month &&
-                          t.date.year == now.year)
-                      .fold(0.0, (s, t) => s + t.amount);
-                  return _BudgetCard(
-                    budget: budget,
-                    spent: spent,
-                    currency: currency,
-                  ).animate().fadeIn(duration: 350.ms);
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // ─── Quick Stats ───────────────────────────
-              transactionsAsync.when(
-                loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
-                data: (txs) => SummaryCard(
-                  transactions: txs,
-                  currency: currency,
-                ).animate().fadeIn(delay: 200.ms),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ─── Accounts Strip ────────────────────────
-              accountsAsync.when(
-                loading: () => const SizedBox(),
-                error: (_, __) => const SizedBox(),
-                data: (accounts) {
-                  if (accounts.isEmpty) return const SizedBox();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SectionHeader(label: 'ACCOUNTS'),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 90,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: accounts.length + 1,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (ctx, i) {
-                            if (i == accounts.length) {
-                              return _AddAccountMiniCard();
-                            }
-                            return _AccountMiniCard(
-                              account: accounts[i],
-                              currency: currency,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  );
-                },
-              ),
-
               // ─── Month Navigation ─────────────────────
               _buildMonthNav(tc),
               const SizedBox(height: 12),
@@ -352,6 +280,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               // ─── Filter Chips ──────────────────────────
               _buildFilterChips(tc),
               const SizedBox(height: 14),
+
+              // ─── Voice auto-save in progress ───────────
+              if (voiceProcessing) ...[
+                _VoiceLoggingRow(tc: tc),
+                const SizedBox(height: 10),
+              ],
 
               // ─── Transactions for selected month ───────
               transactionsAsync.when(
@@ -371,28 +305,18 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     filtered =
                         filtered.where((t) => t.type == _filter).toList();
                   }
-                  if (filtered.isEmpty) return _EmptyTransactions();
-                  return Column(
-                    children: filtered.asMap().entries.map((e) {
-                      return GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) =>
-                              ManualEntrySheet(prefill: e.value),
-                        ),
-                        child: TransactionTile(
-                          transaction: e.value,
-                          currency: currency,
-                        )
-                            .animate()
-                            .fadeIn(
-                                duration: 300.ms,
-                                delay: (e.key * 30).ms)
-                            .slideY(begin: 0.08, end: 0),
-                      );
-                    }).toList(),
+                  // While a voice log is processing, don't show the empty state
+                  // under the shimmer row — it'll fill in a second.
+                  if (filtered.isEmpty) {
+                    return voiceProcessing
+                        ? const SizedBox.shrink()
+                        : _EmptyTransactions();
+                  }
+                  return _DateGroupedList(
+                    transactions: filtered,
+                    currency: currency,
+                    tc: tc,
+                    context: context,
                   );
                 },
               ),
@@ -425,7 +349,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         const SizedBox(width: 10),
         Text(
           DateFormat('MMM yyyy').format(_selectedMonth),
-          style: GoogleFonts.inter(
+          style: AppFonts.sans(
             color: tc.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -463,6 +387,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
       (TransactionType.lendReturn, 'Got Back'),
       (TransactionType.borrow, 'Borrowed'),
       (TransactionType.borrowReturn, 'Repaid'),
+      (TransactionType.transferOut, 'Transfer'),
     ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -486,7 +411,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               ),
               child: Text(
                 f.$2,
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: isActive ? tc.surface : tc.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -500,168 +425,108 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   }
 }
 
-class _MoreMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final AppThemeColors tc;
-  final VoidCallback onTap;
+// ─────────────────────────────────────────────
+// Date-grouped transaction list
+// ─────────────────────────────────────────────
 
-  const _MoreMenuItem({
-    required this.icon,
-    required this.label,
+class _DateGroupedList extends StatelessWidget {
+  final List<TransactionModel> transactions;
+  final CurrencyState currency;
+  final AppThemeColors tc;
+  final BuildContext context;
+
+  const _DateGroupedList({
+    required this.transactions,
+    required this.currency,
     required this.tc,
-    required this.onTap,
+    required this.context,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: tc.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: tc.onSurface, size: 20),
-      ),
-      title: Text(
-        label,
-        style: GoogleFonts.inter(
-          color: tc.onSurface,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      trailing:
-          Icon(Icons.chevron_right_rounded, color: tc.onSurfaceVariant, size: 20),
-      onTap: onTap,
-    );
-  }
-}
+  Widget build(BuildContext ctx) {
+    // Group by day key
+    final grouped = <String, List<TransactionModel>>{};
+    final keyOrder = <String>[];
+    for (final tx in transactions) {
+      final key = _dayKey(tx.date);
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+        keyOrder.add(key);
+      }
+      grouped[key]!.add(tx);
+    }
 
-// ─────────────────────────────────────────────
-// Account Mini Cards
-// ─────────────────────────────────────────────
-
-class _AccountMiniCard extends StatelessWidget {
-  final AccountModel account;
-  final CurrencyState currency;
-
-  const _AccountMiniCard({required this.account, required this.currency});
-
-  bool get _isLiability =>
-      account.type == AccountType.loan ||
-      account.type == AccountType.creditCard;
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = AppThemeColors.of(context);
-    final balanceColor = _isLiability ? tc.expense : tc.onSurface;
-    final displayBalance = account.balance.abs();
-
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _isLiability
-              ? tc.expense.withOpacity(0.3)
-              : tc.outlineVariant,
-          width: _isLiability ? 1 : 0.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(account.displayIcon, color: account.type.color, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  account.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _isLiability
-                    ? '−${currency.format(displayBalance)}'
-                    : currency.format(displayBalance),
-                style: GoogleFonts.inter(
-                  color: balanceColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              if (_isLiability)
-                Text(
-                  'owed',
-                  style: GoogleFonts.inter(
-                    color: tc.expense.withOpacity(0.7),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddAccountMiniCard extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tc = AppThemeColors.of(context);
-    return GestureDetector(
-      onTap: () => showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => AddAccountSheet(),
-      ),
-      child: Container(
-        width: 80,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: tc.outlineVariant,
-            width: 1.5,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: keyOrder.map((key) {
+        final group = grouped[key]!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.add_rounded, color: tc.onSurfaceVariant, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              'Add',
-              style: GoogleFonts.inter(
-                color: tc.onSurfaceVariant,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+            // Date header row
+            Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 4),
+              child: Row(
+                children: [
+                  Text(
+                    key,
+                    style: AppFonts.sans(
+                      color: tc.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Divider(
+                      height: 1,
+                      color: tc.outlineVariant.withOpacity(0.6),
+                    ),
+                  ),
+                ],
               ),
             ),
+            // Transactions with dividers
+            ...group.asMap().entries.map((e) {
+              final isLast = e.key == group.length - 1;
+              return Column(
+                children: [
+                  GestureDetector(
+                    onTap: () => showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => ManualEntrySheet(prefill: e.value),
+                    ),
+                    child: TransactionTile(
+                      transaction: e.value,
+                      currency: currency,
+                    ),
+                  ),
+                  if (!isLast)
+                    Divider(
+                      indent: 62,
+                      height: 1,
+                      color: tc.outlineVariant.withOpacity(0.5),
+                    ),
+                ],
+              );
+            }),
           ],
-        ),
-      ),
+        );
+      }).toList(),
     );
+  }
+
+  String _dayKey(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(d).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    return DateFormat('EEE, d MMM').format(date);
   }
 }
 
@@ -676,7 +541,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         label,
-        style: GoogleFonts.inter(
+        style: AppFonts.sans(
           color: AppThemeColors.of(context).onSurfaceVariant,
           fontSize: 10,
           fontWeight: FontWeight.w800,
@@ -685,16 +550,58 @@ class _SectionHeader extends StatelessWidget {
       );
 }
 
-class _BalanceSkeleton extends StatelessWidget {
-  const _BalanceSkeleton();
+/// Shimmer-style row shown at the top of the list while a voice log is being
+/// transcribed + parsed in the background (the auto-save flow).
+class _VoiceLoggingRow extends StatelessWidget {
+  final AppThemeColors tc;
+  const _VoiceLoggingRow({required this.tc});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 160,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: AppThemeColors.of(context).surfaceContainerLow,
-        borderRadius: BorderRadius.circular(28),
+        color: tc.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tc.outlineVariant, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.4,
+              valueColor: AlwaysStoppedAnimation<Color>(tc.onSurface),
+              backgroundColor: tc.outlineVariant,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Logging your transaction…',
+                  style: AppFonts.sans(
+                    color: tc.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Transcribing and saving',
+                  style: AppFonts.sans(
+                    color: tc.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.mic_rounded, color: tc.onSurfaceVariant, size: 18),
+        ],
       ),
     );
   }
@@ -714,7 +621,7 @@ class _TransactionsSkeleton extends StatelessWidget {
           height: 72,
           decoration: BoxDecoration(
             color: tc.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -744,7 +651,7 @@ class _EmptyTransactions extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No logs yet',
-              style: GoogleFonts.inter(
+              style: AppFonts.sans(
                 color: tc.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -752,8 +659,8 @@ class _EmptyTransactions extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Tap the mic or manual to start tracking',
-              style: GoogleFonts.inter(
+              'Hold the mic to speak, or tap Manual to start tracking',
+              style: AppFonts.sans(
                 color: tc.onSurfaceVariant,
                 fontSize: 12,
               ),
@@ -766,131 +673,76 @@ class _EmptyTransactions extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Budget Progress Card
+// Space header title — shows active space chip
 // ─────────────────────────────────────────────
 
-class _BudgetCard extends StatelessWidget {
-  final BudgetState budget;
-  final double spent;
-  final CurrencyState currency;
-
-  const _BudgetCard({
-    required this.budget,
-    required this.spent,
-    required this.currency,
-  });
+class _SpaceHeaderTitle extends ConsumerWidget {
+  final AppThemeColors tc;
+  const _SpaceHeaderTitle({required this.tc});
 
   @override
-  Widget build(BuildContext context) {
-    final tc = AppThemeColors.of(context);
-    final fraction = (spent / budget.monthlyBudget).clamp(0.0, 1.0);
-    final isOver = spent > budget.monthlyBudget;
-    final remaining = budget.monthlyBudget - spent;
-    final daysInMonth =
-        DateUtils.getDaysInMonth(DateTime.now().year, DateTime.now().month);
-    final dayOfMonth = DateTime.now().day;
-    final expectedFraction = dayOfMonth / daysInMonth;
-    final isOnTrack = fraction <= expectedFraction + 0.05;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeId = ref.watch(activeSpaceIdProvider);
+    final spacesAsync = ref.watch(spaceListProvider);
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isOver ? tc.expense.withOpacity(0.3) : tc.outlineVariant,
-          width: isOver ? 1.5 : 0.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final activeSpace = spacesAsync.valueOrNull
+        ?.where((s) => s.id == activeId)
+        .firstOrNull;
+
+    final isPersonal = activeSpace == null || activeSpace.isPersonal;
+
+    return GestureDetector(
+      onTap: () => showSpaceSwitcher(context),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('MONTHLY BUDGET',
-                        style: GoogleFonts.inter(
-                            color: tc.onSurfaceVariant,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2)),
-                    const SizedBox(height: 4),
-                    Text(currency.format(budget.monthlyBudget),
-                        style: GoogleFonts.inter(
-                            color: tc.onSurface,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5)),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isOver
-                      ? tc.expense.withOpacity(0.12)
-                      : isOnTrack
-                          ? tc.income.withOpacity(0.12)
-                          : tc.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Text(
-                  isOver
-                      ? '⚠ Over budget'
-                      : isOnTrack
-                          ? '✓ On track'
-                          : 'Watch out',
-                  style: GoogleFonts.inter(
-                    color: isOver
-                        ? tc.expense
-                        : isOnTrack
-                            ? tc.income
-                            : tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: LinearProgressIndicator(
-              value: fraction,
-              minHeight: 10,
-              backgroundColor: tc.surfaceContainerHigh,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                  isOver ? tc.expense : tc.onSurface),
+          Text(
+            'Money Purse',
+            style: AppFonts.sans(
+              color: tc.onSurface,
+              fontWeight: FontWeight.w900,
+              fontSize: 24,
+              letterSpacing: -0.8,
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Spent: ${currency.format(spent)}',
-                style: GoogleFonts.inter(
-                    color: tc.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600),
-              ),
-              Text(
-                isOver
-                    ? 'Over by ${currency.format(-remaining)}'
-                    : '${currency.format(remaining)} left',
-                style: GoogleFonts.inter(
-                  color: isOver ? tc.expense : tc.onSurfaceVariant,
-                  fontSize: 11,
-                  fontWeight: isOver ? FontWeight.w800 : FontWeight.w600,
+          if (!isPersonal) ...[
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Color(activeSpace.colorValue).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Color(activeSpace.colorValue).withOpacity(0.3),
+                  width: 1,
                 ),
               ),
-            ],
-          ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(activeSpace.emoji,
+                      style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 4),
+                  Text(
+                    activeSpace.name,
+                    style: AppFonts.sans(
+                      color: Color(activeSpace.colorValue),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      color: Color(activeSpace.colorValue), size: 14),
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                color: tc.onSurfaceVariant.withOpacity(0.5), size: 18),
+          ],
         ],
       ),
     );

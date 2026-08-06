@@ -21,8 +21,13 @@ class SubscriptionState {
   final bool isLoading;
   final Package? monthlyPackage;
   final Package? annualPackage;
-  final Package? lifetimePackage;
   final CustomerInfo? customerInfo;
+
+  /// Complimentary Pro granted server-side (the `profiles.is_pro` flag in
+  /// Supabase). Lets you comp Pro to friends/testers without a payment by
+  /// flipping a boolean in the Supabase table editor — see [[auth-architecture]]
+  /// / CloudService.fetchIsProFlag. Cached locally so it survives offline.
+  final bool compedPro;
 
   const SubscriptionState({
     this.tier = SubscriptionTier.free,
@@ -31,22 +36,29 @@ class SubscriptionState {
     this.isLoading = false,
     this.monthlyPackage,
     this.annualPackage,
-    this.lifetimePackage,
     this.customerInfo,
+    this.compedPro = false,
   });
 
-  bool get isPro => tier == SubscriptionTier.pro;
+  bool get isPro => tier == SubscriptionTier.pro || compedPro;
 
-  /// Free users get 100 voice logs per month.
-  static const int freeVoiceLogLimit = 100;
+  /// Free users get a small monthly allowance of voice logs. Kept low on
+  /// purpose: voice is the costly AI path, so it's a Pro feature with just
+  /// enough free usage to let people experience it. Pro is "unlimited" but
+  /// soft-capped server-side (worker `MONTHLY_LIMIT`) so a future, pricier AI
+  /// model can't blow up unit economics. See [proSoftCapVoiceLogs].
+  static const int freeVoiceLogLimit = 15;
+
+  /// Informational mirror of the worker's per-user monthly ceiling. The cap is
+  /// actually enforced in the Cloudflare Worker (`MONTHLY_LIMIT`); ~99% of Pro
+  /// users never approach it, so it reads as "unlimited".
+  static const int proSoftCapVoiceLogs = 1000;
 
   bool get canUseVoice => isPro || voiceLogsUsedThisMonth < freeVoiceLogLimit;
 
   int get voiceLogsRemaining => isPro ? -1 : (freeVoiceLogLimit - voiceLogsUsedThisMonth).clamp(0, freeVoiceLogLimit); // -1 = unlimited sentinel
 
-  bool get hasCloudSync => isPro;
-
-  bool get hasOfferings => monthlyPackage != null || annualPackage != null || lifetimePackage != null;
+  bool get hasOfferings => monthlyPackage != null || annualPackage != null;
 
   SubscriptionState copyWith({
     SubscriptionTier? tier,
@@ -55,17 +67,17 @@ class SubscriptionState {
     bool? isLoading,
     Package? monthlyPackage,
     Package? annualPackage,
-    Package? lifetimePackage,
     CustomerInfo? customerInfo,
+    bool? compedPro,
   }) {
     return SubscriptionState(
       tier: tier ?? this.tier,
       voiceLogsUsedThisMonth: voiceLogsUsedThisMonth ?? this.voiceLogsUsedThisMonth,
       lastVoiceLogDate: lastVoiceLogDate ?? this.lastVoiceLogDate,
       isLoading: isLoading ?? this.isLoading,
+      compedPro: compedPro ?? this.compedPro,
       monthlyPackage: monthlyPackage ?? this.monthlyPackage,
       annualPackage: annualPackage ?? this.annualPackage,
-      lifetimePackage: lifetimePackage ?? this.lifetimePackage,
       customerInfo: customerInfo ?? this.customerInfo,
     );
   }
@@ -95,6 +107,7 @@ Future<void> initRevenueCat() async {
 class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   static const _voiceCountKey = 'voice_logs_month';
   static const _voiceMonthKey = 'voice_logs_month_id';
+  static const _compedProKey = 'comped_pro';
 
   SubscriptionNotifier() : super(const SubscriptionState()) {
     _initialize();
@@ -102,6 +115,13 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
   Future<void> _initialize() async {
     state = state.copyWith(isLoading: true);
+
+    // Restore the cached complimentary-Pro flag so it works offline; the auth
+    // layer refreshes it from Supabase on sign-in.
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_compedProKey) ?? false) {
+      state = state.copyWith(compedPro: true);
+    }
 
     // Load local voice usage tracking
     await _loadVoiceUsage();
@@ -135,6 +155,16 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     );
   }
 
+  /// Apply the complimentary-Pro flag fetched from Supabase (`profiles.is_pro`).
+  /// Called by the auth layer on sign-in / sign-out. Cached so it persists
+  /// offline.
+  Future<void> setCompedPro(bool value) async {
+    if (value == state.compedPro) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_compedProKey, value);
+    state = state.copyWith(compedPro: value);
+  }
+
   /// Sync subscription tier from RevenueCat entitlements
   Future<void> refreshSubscriptionStatus() async {
     try {
@@ -166,18 +196,15 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
       Package? monthly;
       Package? annual;
-      Package? lifetime;
 
       for (final pkg in current.availablePackages) {
         if (pkg.packageType == PackageType.monthly) monthly = pkg;
         if (pkg.packageType == PackageType.annual) annual = pkg;
-        if (pkg.packageType == PackageType.lifetime) lifetime = pkg;
       }
 
       state = state.copyWith(
         monthlyPackage: monthly,
         annualPackage: annual,
-        lifetimePackage: lifetime,
       );
     } catch (_) {
       // Offerings not critical — paywall will show "Contact support"
@@ -198,12 +225,6 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   Future<String?> purchaseAnnual() async {
     final pkg = state.annualPackage;
     if (pkg == null) return 'Annual plan not available';
-    return _purchase(pkg);
-  }
-
-  Future<String?> purchaseLifetime() async {
-    final pkg = state.lifetimePackage;
-    if (pkg == null) return 'Lifetime plan not available';
     return _purchase(pkg);
   }
 

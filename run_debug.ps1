@@ -1,17 +1,17 @@
-# Debug run script - injects secrets from dart_defines.env (gitignored)
-# Usage: .\run_debug.ps1            (runs on default device)
-#        .\run_debug.ps1 -d chrome   (or any flutter device id)
+# Debug run script - injects ALL secrets from dart_defines.json (gitignored),
+# the same single config source the release build uses. This guarantees debug
+# and release behave identically (Google sign-in, Supabase, RevenueCat, Sentry).
+#
+# Usage:
+#   .\run_debug.ps1              (runs on default device)
+#   .\run_debug.ps1 -d chrome    (or any flutter device id)
 
 param([Parameter(ValueFromRemainingArguments = $true)] $extraArgs)
 
-$envFile = "dart_defines.env"
-if (-not (Test-Path $envFile)) {
-    Write-Error "Missing $envFile - create it with PROXY_BASE_URL, PROXY_CLIENT_SECRET, RC_ANDROID_KEY"
+$definesFile = "dart_defines.json"
+if (-not (Test-Path $definesFile)) {
+    Write-Error "Missing $definesFile - copy dart_defines.example.json to dart_defines.json and fill in real values."
     exit 1
 }
 
-$defines = Get-Content $envFile |
-    Where-Object { $_ -match '^\w+=' } |
-    ForEach-Object { "--dart-define=$_" }
-
-flutter run @defines @extraArgs
+flutter run --dart-define-from-file=$definesFile @extraArgs

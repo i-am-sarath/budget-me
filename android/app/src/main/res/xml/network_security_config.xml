@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Finance app: never allow cleartext (unencrypted HTTP) traffic. All network
+     calls (proxy worker, Supabase, Sheets, Groq via proxy) are HTTPS, so this
+     just makes the guarantee explicit and tamper-resistant. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

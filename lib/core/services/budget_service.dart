@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:agent_money/features/spaces/models/space_model.dart';
+import 'package:agent_money/features/spaces/repositories/space_repository.dart';
 
 // ─────────────────────────────────────────────
 // Budget State
@@ -102,3 +104,50 @@ class BudgetNotifier extends StateNotifier<BudgetState> {
 final budgetProvider = StateNotifierProvider<BudgetNotifier, BudgetState>(
   (ref) => BudgetNotifier(),
 );
+
+// ─────────────────────────────────────────────
+// Per-space monthly budget
+// ─────────────────────────────────────────────
+//
+// The overall monthly budget is tracked independently per space so a budget
+// set in "Personal" never bleeds into "Business" (or any other space). It is
+// kept separate from [budgetProvider] (which also gates onboarding globally)
+// so switching spaces only swaps this small value and never re-triggers the
+// onboarding splash.
+
+class SpaceMonthlyBudgetNotifier extends StateNotifier<double> {
+  final String _spaceId;
+  SpaceMonthlyBudgetNotifier(this._spaceId) : super(0) {
+    _load();
+  }
+
+  String get _key => 'monthly_budget_$_spaceId';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    var val = prefs.getDouble(_key);
+    // One-time migration: the legacy single global budget becomes the
+    // Personal space's budget the first time it's read.
+    if (val == null && _spaceId == SpaceModel.personalId) {
+      val = prefs.getDouble('monthly_budget');
+    }
+    if (mounted) state = val ?? 0;
+  }
+
+  Future<void> setBudget(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_key, value);
+    // Keep the legacy global key in sync for the Personal space so anything
+    // still reading it (e.g. onboarding) stays consistent.
+    if (_spaceId == SpaceModel.personalId) {
+      await prefs.setDouble('monthly_budget', value);
+    }
+    state = value;
+  }
+}
+
+final spaceMonthlyBudgetProvider =
+    StateNotifierProvider<SpaceMonthlyBudgetNotifier, double>((ref) {
+  final spaceId = ref.watch(activeSpaceIdProvider);
+  return SpaceMonthlyBudgetNotifier(spaceId);
+});

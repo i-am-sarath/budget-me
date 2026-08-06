@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -6,7 +6,6 @@ import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:agent_money/core/config/api_config.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   final bool isSheet;
@@ -67,7 +66,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
                 Text(
                   'Budget Tracker Pro',
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onSurface,
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -78,9 +77,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 const SizedBox(height: 6),
 
                 Text(
-                  'Voice-log without limits.\nSync everywhere. Never lose a transaction.',
+                  'Auto-sync to your Google Sheet.\nVoice without limits, Spaces, and exports.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 14,
                     height: 1.5,
@@ -123,7 +122,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                       sub.isLoading ? null : () => _handleRestore(sub),
                   child: Text(
                     'Restore purchases',
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                       color: tc.onSurfaceVariant,
                       fontSize: 13,
                     ),
@@ -131,9 +130,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 ).animate().fadeIn(delay: 520.ms),
 
                 Text(
-                  'Cancel anytime · Secure payment via Google / Apple',
+                  '14-day free trial · Cancel anytime · Secure payment via Google / Apple',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.sans(
                     color: tc.onSurfaceVariant,
                     fontSize: 10,
                   ),
@@ -214,18 +213,18 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'In-app purchases',
-          style: GoogleFonts.inter(
+          style: AppFonts.sans(
               color: tc.onSurface, fontWeight: FontWeight.w700),
         ),
         content: Text(
           'Store payments are not yet configured for this build. Pro features will be available when the app is published.',
-          style: GoogleFonts.inter(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
+          style: AppFonts.sans(color: tc.onSurfaceVariant, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('OK',
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                     color: tc.onSurface, fontWeight: FontWeight.w600)),
           ),
         ],
@@ -239,11 +238,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 // ─────────────────────────────────────────────
 
 const _features = [
-  (Icons.mic_rounded, 'Unlimited voice logs', 'No 1/day limit'),
-  (Icons.cloud_sync_rounded, 'Cloud sync', 'Access on any device'),
-  (Icons.receipt_long_rounded, 'Full transaction history', 'View & export all records'),
-  (Icons.trending_up_rounded, 'Investment tracking', 'Portfolio insights'),
-  (Icons.repeat_rounded, 'Unlimited recurring rules', 'DigiGold, SIP and more'),
+  (Icons.table_chart_rounded, 'Google Sheets auto-sync', 'Every entry lands in your own sheet'),
+  (Icons.workspaces_rounded, 'Spaces', 'Group a trip or outing & see its total'),
+  (Icons.mic_rounded, 'Unlimited voice logs', 'No monthly cap'),
+  (Icons.repeat_rounded, 'Recurring auto-entries', 'Rent, SIP, subscriptions on autopilot'),
+  (Icons.cloud_done_rounded, 'Multi-device backup & export', 'Restore anywhere · CSV export'),
 ];
 
 class _FeatureRow extends StatelessWidget {
@@ -275,12 +274,12 @@ class _FeatureRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                         color: tc.onSurface,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 Text(sub,
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                         color: tc.onSurfaceVariant, fontSize: 11)),
               ],
             ),
@@ -330,10 +329,10 @@ class _PlanToggle extends StatelessWidget {
           ),
           _PlanOption(
             label: 'Annual',
-            price: _price(sub.annualPackage, '\$29.99'),
+            price: _price(sub.annualPackage, '\$23.99'),
             subLabel: _annualPerMonth(sub.annualPackage).isNotEmpty
-                ? '${_annualPerMonth(sub.annualPackage)} · Save 37%'
-                : '/year · Save 37%',
+                ? '${_annualPerMonth(sub.annualPackage)} · Save 50%'
+                : '/year · Save 50%',
             isSelected: isAnnual,
             onTap: () => onChanged(true),
             badge: 'Best Value',
@@ -408,7 +407,7 @@ class _PlanOption extends StatelessWidget {
                   ),
                   child: Text(
                     badge!,
-                    style: GoogleFonts.inter(
+                    style: AppFonts.sans(
                       color: isSelected ? tc.surface : tc.onSurfaceVariant,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -419,7 +418,7 @@ class _PlanOption extends StatelessWidget {
                 const SizedBox(height: 22),
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: isSelected ? tc.surface : tc.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -428,7 +427,7 @@ class _PlanOption extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 price,
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: isSelected ? tc.surface : tc.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -437,7 +436,7 @@ class _PlanOption extends StatelessWidget {
               Text(
                 subLabel,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   color: isSelected
                       ? tc.surface.withOpacity(0.7)
                       : tc.onSurfaceVariant,
@@ -488,7 +487,7 @@ class _PurchaseButton extends StatelessWidget {
               )
             : Text(
                 label,
-                style: GoogleFonts.inter(
+                style: AppFonts.sans(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),

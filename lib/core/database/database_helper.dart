@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' show join;
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -25,19 +25,65 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'quicklog.db');
-    return await openDatabase(
-      path,
-      version: 4, // v4: adds subscriptions + recurring_transactions tables
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
-    );
+    final backupPath = '$path.pre-upgrade-backup';
+
+    // Snapshot the existing DB file before opening, so a bad migration is
+    // recoverable. This is cheap (single file copy) and only matters when an
+    // upgrade is about to run.
+    final dbFile = File(path);
+    if (await dbFile.exists()) {
+      try {
+        await dbFile.copy(backupPath);
+      } catch (_) {
+        // Backup is best-effort; do not block startup.
+      }
+    }
+
+    try {
+      return await openDatabase(
+        path,
+        version: 7, // v7: adds trips table + transactions.trip_id (travel tracking)
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    } catch (e) {
+      // Migration blew up — restore the snapshot so the user's data is
+      // preserved on the next launch, then rethrow so the failure surfaces.
+      final backup = File(backupPath);
+      if (await backup.exists()) {
+        try {
+          await backup.copy(path);
+        } catch (_) {}
+      }
+      rethrow;
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    // Spaces table
+    await db.execute('''
+      CREATE TABLE spaces (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '🏠',
+        color_value INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    // Seed the default personal space
+    await db.insert('spaces', {
+      'id': 'personal',
+      'name': 'Personal',
+      'emoji': '🏠',
+      'color_value': 0xFF2D6A2D,
+      'created_at': DateTime(2024, 1, 1).toIso8601String(),
+    });
+
     // Transactions table
     await db.execute('''
       CREATE TABLE transactions (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         amount REAL NOT NULL,
         type TEXT NOT NULL,
         category TEXT NOT NULL,
@@ -45,6 +91,7 @@ class DatabaseHelper {
         payee TEXT DEFAULT '',
         account_id TEXT DEFAULT '',
         account_name TEXT DEFAULT '',
+        trip_id TEXT DEFAULT '',
         date TEXT NOT NULL,
         created_at TEXT NOT NULL,
         is_synced INTEGER DEFAULT 0
@@ -55,6 +102,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE accounts (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         balance REAL NOT NULL DEFAULT 0,
@@ -71,6 +119,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE subscriptions (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         name TEXT NOT NULL,
         category TEXT NOT NULL DEFAULT 'Other',
         amount REAL NOT NULL DEFAULT 0,
@@ -88,6 +137,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE recurring_transactions (
         id TEXT PRIMARY KEY,
+        space_id TEXT NOT NULL DEFAULT 'personal',
         title TEXT NOT NULL,
         amount REAL NOT NULL,
         type TEXT NOT NULL DEFAULT 'expense',
@@ -100,6 +150,38 @@ class DatabaseHelper {
         last_run_date TEXT DEFAULT '',
         is_active INTEGER NOT NULL DEFAULT 1,
         note TEXT DEFAULT '',
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Categories table
+    await db.execute('''
+      CREATE TABLE categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '⚙️',
+        color_value INTEGER NOT NULL DEFAULT 0,
+        budget_amount REAL NOT NULL DEFAULT 0,
+        transaction_type TEXT NOT NULL DEFAULT 'expense',
+        is_custom INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        space_id TEXT NOT NULL DEFAULT 'personal',
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Trips table (travel spending tracking)
+    await db.execute('''
+      CREATE TABLE trips (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        emoji TEXT NOT NULL DEFAULT '✈️',
+        color_value INTEGER NOT NULL DEFAULT 0,
+        budget REAL NOT NULL DEFAULT 0,
+        currency_code TEXT DEFAULT 'USD',
+        start_date TEXT DEFAULT '',
+        end_date TEXT DEFAULT '',
+        is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
       )
     ''');
@@ -177,6 +259,81 @@ class DatabaseHelper {
         ''');
       } catch (_) {}
     }
+    if (oldVersion < 5) {
+      // Create spaces table
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS spaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            emoji TEXT NOT NULL DEFAULT '🏠',
+            color_value INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+          )
+        ''');
+        await db.insert('spaces', {
+          'id': 'personal',
+          'name': 'Personal',
+          'emoji': '🏠',
+          'color_value': 0xFF2D6A2D,
+          'created_at': DateTime(2024, 1, 1).toIso8601String(),
+        });
+      } catch (_) {}
+
+      // Add space_id to all existing tables (existing rows → 'personal')
+      for (final table in [
+        'transactions',
+        'accounts',
+        'subscriptions',
+        'recurring_transactions',
+      ]) {
+        try {
+          await db.execute(
+              "ALTER TABLE $table ADD COLUMN space_id TEXT NOT NULL DEFAULT 'personal'");
+        } catch (_) {}
+      }
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS categories (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            emoji TEXT NOT NULL DEFAULT '⚙️',
+            color_value INTEGER NOT NULL DEFAULT 0,
+            budget_amount REAL NOT NULL DEFAULT 0,
+            transaction_type TEXT NOT NULL DEFAULT 'expense',
+            is_custom INTEGER NOT NULL DEFAULT 0,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            space_id TEXT NOT NULL DEFAULT 'personal',
+            created_at TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
+    if (oldVersion < 7) {
+      // Travel tracking: tag transactions to a trip, and a trips table.
+      try {
+        await db.execute(
+            "ALTER TABLE transactions ADD COLUMN trip_id TEXT DEFAULT ''");
+      } catch (_) {}
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS trips (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            emoji TEXT NOT NULL DEFAULT '✈️',
+            color_value INTEGER NOT NULL DEFAULT 0,
+            budget REAL NOT NULL DEFAULT 0,
+            currency_code TEXT DEFAULT 'USD',
+            start_date TEXT DEFAULT '',
+            end_date TEXT DEFAULT '',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -246,5 +403,24 @@ class DatabaseHelper {
     await db.delete('accounts');
     await db.delete('recurring_transactions');
     await db.delete('subscriptions');
+    // Remove all non-personal spaces; re-seed personal
+    await db.delete('spaces', where: 'id != ?', whereArgs: ['personal']);
+    // Remove custom categories; default categories will be re-seeded on next load
+    await db.delete('categories', where: 'is_custom = ?', whereArgs: [1]);
+  }
+
+  Future<void> clearDataForSpace(String spaceId) async {
+    final db = await database;
+    // NB: 'accounts' is intentionally omitted — accounts are shared across all
+    // spaces, so deleting one space must never remove them.
+    for (final t in const [
+      'transactions',
+      'recurring_transactions',
+      'subscriptions'
+    ]) {
+      await db.delete(t, where: 'space_id = ?', whereArgs: [spaceId]);
+    }
+    // Also clear categories for this space
+    await db.delete('categories', where: 'space_id = ?', whereArgs: [spaceId]);
   }
 }

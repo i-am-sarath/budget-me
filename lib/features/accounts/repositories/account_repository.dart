@@ -2,6 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:agent_money/core/database/database_helper.dart';
 import 'package:agent_money/features/accounts/models/account_model.dart';
 
+// Accounts are intentionally NOT scoped to a space: your real bank/cash/wallet
+// balances are the same money no matter which space (Personal, Business, …) you
+// are viewing. Transactions and budgets stay per-space, but they all draw from
+// and update this single shared set of accounts.
 class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   final DatabaseHelper _db = DatabaseHelper();
 
@@ -12,16 +16,19 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
   Future<void> loadAccounts() async {
     try {
       state = const AsyncValue.loading();
-      final rows = await _db.queryAll('accounts',
-          orderBy: 'created_at DESC');
-      state = AsyncValue.data(
-          rows.map(AccountModel.fromMap).toList());
+      final rows = await _db.queryAll(
+        'accounts',
+        orderBy: 'created_at DESC',
+      );
+      state = AsyncValue.data(rows.map(AccountModel.fromMap).toList());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
 
   Future<void> addAccount(AccountModel account) async {
+    // space_id falls back to the column default; accounts are shared so the
+    // value is irrelevant to which spaces can see the account.
     await _db.insert('accounts', account.toMap());
     await loadAccounts();
   }
@@ -43,10 +50,29 @@ class AccountNotifier extends StateNotifier<AsyncValue<List<AccountModel>>> {
     await loadAccounts();
   }
 
-  List<AccountModel> get accounts =>
-      state.valueOrNull ?? [];
+  /// Find an existing debt/receivable tracking account by [name] (case-insensitive)
+  /// and [type], or create a fresh one with a zero balance. Returns the account so
+  /// the caller can link transactions to it. Used by the Lend / Borrow flows.
+  Future<AccountModel> ensureTrackerAccount({
+    required String name,
+    required AccountType type,
+  }) async {
+    final trimmed = name.trim();
+    final lower = trimmed.toLowerCase();
+    for (final a in accounts) {
+      if (a.type == type && a.name.trim().toLowerCase() == lower) {
+        return a;
+      }
+    }
+    final account = AccountModel(name: trimmed, type: type, balance: 0);
+    await addAccount(account);
+    return account;
+  }
+
+  List<AccountModel> get accounts => state.valueOrNull ?? [];
 }
 
+// Shared across every space — a single source of truth for account balances.
 final accountProvider =
     StateNotifierProvider<AccountNotifier, AsyncValue<List<AccountModel>>>(
   (ref) => AccountNotifier(),

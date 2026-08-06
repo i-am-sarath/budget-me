@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agent_money/core/config/api_config.dart';
+import 'package:agent_money/core/services/cloud_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
 
 /// User-facing exception for voice-log failures.
@@ -28,17 +30,36 @@ class OpenAIService {
   Future<String> _userId() async {
     try {
       return await Purchases.appUserID;
+    } catch (_) {}
+    // Fall back to registered email, then a stable device id
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('user_email');
+      if (email != null && email.isNotEmpty) return email;
+    } catch (_) {}
+    return 'anon-${Platform.operatingSystem}';
+  }
+
+  /// The signed-in user's Supabase access token, when available. The worker
+  /// verifies this to key rate limiting on a tamper-proof identity (the
+  /// X-User-Id header alone is client-controlled and spoofable).
+  String? _accessToken() {
+    try {
+      if (!CloudService.isReady) return null;
+      return CloudService.client.auth.currentSession?.accessToken;
     } catch (_) {
-      // RevenueCat not initialized (e.g. desktop). Fall back to a stable-enough
-      // device identifier so rate limiting still works coarsely.
-      return 'anon-${Platform.operatingSystem}';
+      return null;
     }
   }
 
-  Map<String, String> _baseHeaders(String userId) => {
-        'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
-        'X-User-Id': userId,
-      };
+  Map<String, String> _baseHeaders(String userId) {
+    final token = _accessToken();
+    return {
+      'Authorization': 'Bearer ${ApiConfig.proxyClientSecret}',
+      'X-User-Id': userId,
+      if (token != null && token.isNotEmpty) 'X-User-Token': token,
+    };
+  }
 
   // ─────────────────────────────────────────────
   // Step 1: Transcribe audio (proxied → Whisper)

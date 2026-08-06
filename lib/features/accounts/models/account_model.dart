@@ -5,7 +5,9 @@ import 'package:agent_money/core/theme.dart';
 /// Account types — designed for a global audience.
 /// `mobilePay` replaces the India-specific UPI concept with a
 /// generic mobile payment wallet (PayPal, GCash, Pix, etc.).
-enum AccountType { bank, cash, loan, creditCard, wallet, mobilePay }
+/// `receivable` is an auto-created tracking account for money other people
+/// owe you (created by the "Lend" flow). It is an asset, not user-addable.
+enum AccountType { bank, cash, loan, creditCard, wallet, mobilePay, receivable }
 
 extension AccountTypeX on AccountType {
   String get label {
@@ -16,6 +18,7 @@ extension AccountTypeX on AccountType {
       case AccountType.creditCard: return 'Credit Card';
       case AccountType.wallet:     return 'Digital Wallet';
       case AccountType.mobilePay:  return 'Mobile Pay';
+      case AccountType.receivable: return 'Owed to You';
     }
   }
 
@@ -28,6 +31,7 @@ extension AccountTypeX on AccountType {
       case AccountType.creditCard: return 'Credit card balance owed';
       case AccountType.wallet:     return 'PayPal, Apple Pay, etc.';
       case AccountType.mobilePay:  return 'GCash, Pix, M-Pesa, etc.';
+      case AccountType.receivable: return 'Money someone owes you';
     }
   }
 
@@ -39,6 +43,7 @@ extension AccountTypeX on AccountType {
       case AccountType.creditCard: return Icons.credit_card_rounded;
       case AccountType.wallet:     return Icons.account_balance_wallet_rounded;
       case AccountType.mobilePay:  return Icons.phone_android_rounded;
+      case AccountType.receivable: return Icons.volunteer_activism_rounded;
     }
   }
 
@@ -50,8 +55,16 @@ extension AccountTypeX on AccountType {
       case AccountType.creditCard: return AppColors.borrow;
       case AccountType.wallet:     return AppColors.secondary;
       case AccountType.mobilePay:  return AppColors.lend;
+      case AccountType.receivable: return AppColors.lend;
     }
   }
+
+  /// A debt you owe (subtracted from net worth, shown as "owed").
+  bool get isLiability =>
+      this == AccountType.loan || this == AccountType.creditCard;
+
+  /// Money owed to you (an asset created by the Lend flow).
+  bool get isReceivable => this == AccountType.receivable;
 
   static AccountType fromString(String s) {
     // Legacy mapping: 'upi' → mobilePay

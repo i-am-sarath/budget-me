@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:agent_money/core/theme.dart';
 import 'package:agent_money/core/services/currency_service.dart';
 import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SummaryCard extends StatelessWidget {
   final List<TransactionModel> transactions;
@@ -144,12 +143,22 @@ class _BentoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = AppThemeColors.of(context);
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: tc.surfaceContainerLow,
+        color: tc.surfaceContainer,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: tc.outlineVariant, width: 0.5),
+        border: Border.all(color: tc.outline, width: 1.0),
+        boxShadow: isLight
+            ? [
+                BoxShadow(
+                  color: const Color(0x0A000000),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +175,7 @@ class _BentoItem extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: AppFonts.sans(
               color: tc.onSurfaceVariant,
               fontSize: 10,
               fontWeight: FontWeight.w600,
@@ -176,7 +185,7 @@ class _BentoItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             _compactFormat(amount, currency),
-            style: GoogleFonts.inter(
+            style: AppFonts.sans(
               color: tc.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -189,7 +198,7 @@ class _BentoItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               sublabel!,
-              style: GoogleFonts.inter(
+              style: AppFonts.sans(
                 color: tc.onSurfaceVariant.withOpacity(0.6),
                 fontSize: 9,
                 fontWeight: FontWeight.w500,

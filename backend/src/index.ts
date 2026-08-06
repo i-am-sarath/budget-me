@@ -1,14 +1,37 @@
 // Budget Me proxy worker.
-// Sits between the Flutter app and OpenAI so the API key never ships in the AAB.
+// Sits between the Flutter app and Groq so the API key never ships in the AAB.
 
 interface Env {
-  OPENAI_API_KEY: string;   // wrangler secret
+  GROQ_API_KEY: string;     // wrangler secret
   CLIENT_SECRET: string;    // wrangler secret
+  // Optional: when both are set, every request must carry a valid Supabase
+  // access token in X-User-Token. We validate it by asking Supabase's GoTrue
+  // /auth/v1/user endpoint (robust to HS256/ES256/RS256 signing) and key the
+  // rate-limit on the *verified* user id — so the cap can't be bypassed by
+  // spoofing the X-User-Id header. When unset, falls back to the legacy
+  // (client-supplied) X-User-Id for backward compatibility.
+  SUPABASE_URL?: string;        // wrangler secret (e.g. https://xxx.supabase.co)
+  SUPABASE_ANON_KEY?: string;   // wrangler secret (public anon key)
   RATE_LIMIT: KVNamespace;  // KV binding from wrangler.toml
   MONTHLY_LIMIT: string;    // var from wrangler.toml
 }
 
-const OPENAI_BASE = 'https://api.openai.com/v1';
+// Groq rejects audio above 25 MB; reject early so a malicious or buggy client
+// can't push huge uploads through the proxy.
+const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+
+// Groq exposes an OpenAI-compatible API, so the request shapes below are
+// unchanged from the old OpenAI integration — only the base URL, models,
+// and auth key differ.
+const GROQ_BASE = 'https://api.groq.com/openai/v1';
+
+// whisper-large-v3: most accurate Whisper model, served on Groq's LPU for
+// near-instant transcription. Swap to 'whisper-large-v3-turbo' for even lower
+// latency at a small accuracy cost.
+const TRANSCRIBE_MODEL = 'whisper-large-v3';
+
+// Fast, capable instruction model for structured JSON extraction.
+const PARSE_MODEL = 'llama-3.3-70b-versatile';
 
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
@@ -42,9 +65,22 @@ async function handle(req: Request, env: Env, fn: Handler): Promise<Response> {
     return error('unauthorized', 'Invalid or missing client credentials', 401);
   }
 
-  const userId = (req.headers.get('x-user-id') ?? '').trim();
-  if (!userId || userId.length > 128) {
-    return error('bad_request', 'Missing or invalid X-User-Id header', 400);
+  // Identify the user for rate limiting. Prefer a cryptographically verified
+  // Supabase JWT (tamper-proof); fall back to the legacy client-supplied id
+  // only when JWT verification isn't configured.
+  let userId: string;
+  if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+    const token = (req.headers.get('x-user-token') ?? '').trim();
+    const sub = token ? await verifySupabaseUser(token, env) : null;
+    if (!sub) {
+      return error('unauthorized', 'Invalid or missing user token', 401);
+    }
+    userId = sub;
+  } else {
+    userId = (req.headers.get('x-user-id') ?? '').trim();
+    if (!userId || userId.length > 128) {
+      return error('bad_request', 'Missing or invalid X-User-Id header', 400);
+    }
   }
 
   const limit = parseInt(env.MONTHLY_LIMIT, 10) || 150;
@@ -79,15 +115,30 @@ async function transcribe(req: Request, env: Env, _userId: string): Promise<Resp
   if (!(file instanceof File)) {
     return error('bad_request', 'Missing audio file', 400);
   }
+  if (file.size > MAX_AUDIO_BYTES) {
+    return error('payload_too_large', 'Audio file too large', 413);
+  }
 
   const upstream = new FormData();
   upstream.append('file', file, file.name || 'audio.m4a');
-  upstream.append('model', 'whisper-1');
+  upstream.append('model', TRANSCRIBE_MODEL);
   upstream.append('response_format', 'text');
+  // Bias Whisper toward personal-finance vocabulary so spoken amounts, payment
+  // methods and Indian financial terms transcribe far more accurately. The
+  // prompt is a hint, not a constraint — it doesn't limit what can be heard.
+  upstream.append(
+    'prompt',
+    'Personal finance voice note. Amounts are in rupees. Common words: ' +
+      'spent, paid, received, salary, rent, EMI, UPI, GPay, PhonePe, petrol, ' +
+      'groceries, lunch, dinner, SIP, mutual fund, lent, borrowed, returned, ' +
+      'cashback, recharge, subscription.'
+  );
+  // temperature 0 = most deterministic transcription.
+  upstream.append('temperature', '0');
 
-  const res = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
+  const res = await fetch(`${GROQ_BASE}/audio/transcriptions`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}` },
+    headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
     body: upstream,
   });
 
@@ -113,14 +164,14 @@ async function parseTransactions(req: Request, env: Env, _userId: string): Promi
 
   const systemPrompt = buildSystemPrompt(today);
 
-  const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
+  const res = await fetch(`${GROQ_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${env.GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: PARSE_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: body.transcript },
@@ -168,11 +219,34 @@ function safeEquals(a: string, b: string): boolean {
   return diff === 0;
 }
 
+// ─── Supabase token verification ─────────────────────────
+// Rather than verify the JWT signature ourselves (which breaks when a project
+// switches signing algorithm), we hand the token to Supabase's GoTrue
+// /auth/v1/user endpoint. A 200 means the token is valid and unexpired; we
+// return the user id so the rate limiter keys on a non-spoofable identity.
+
+async function verifySupabaseUser(token: string, env: Env): Promise<string | null> {
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY ?? '',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) return null;
+    const user = await res.json<{ id?: string }>();
+    return typeof user.id === 'string' && user.id.length > 0 ? user.id : null;
+  } catch {
+    return null;
+  }
+}
+
 function cors(res: Response): Response {
   const h = new Headers(res.headers);
   h.set('Access-Control-Allow-Origin', '*');
   h.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  h.set('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-User-Id');
+  h.set('Access-Control-Allow-Headers',
+    'Authorization, Content-Type, X-User-Id, X-User-Token');
   return new Response(res.body, { status: res.status, headers: h });
 }
 
