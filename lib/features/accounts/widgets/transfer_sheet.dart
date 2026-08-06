@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/features/accounts/models/account_model.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
 import 'package:intl/intl.dart';
 
 class TransferSheet extends ConsumerStatefulWidget {

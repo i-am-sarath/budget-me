@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
 
 /// User-facing exception for voice-log failures.
 /// Messages here are safe to render directly in the UI.

@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:agent_money/features/dashboard/widgets/transaction_tile.dart';
-import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/features/dashboard/widgets/transaction_tile.dart';
+import 'package:money_pi/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {

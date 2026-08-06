@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/features/trips/models/trip_model.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/features/trips/models/trip_model.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
 
 class TripRepository {
   final DatabaseHelper _db = DatabaseHelper();

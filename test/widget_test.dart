@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/main.dart';
+import 'package:money_pi/main.dart';
 
 void main() {
   testWidgets('App smoke test — renders without crashing', (WidgetTester tester) async {

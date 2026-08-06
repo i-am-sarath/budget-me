@@ -1,24 +1,24 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/services/overlay_service.dart';
-import 'package:agent_money/core/services/sheets_sync_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/core/services/theme_service.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:agent_money/features/paywall/paywall_screen.dart';
-import 'package:agent_money/features/auth/widgets/account_sheet.dart';
-import 'package:agent_money/core/services/auth_service.dart';
-import 'package:agent_money/features/groups/providers/groups_providers.dart';
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/core/services/overlay_service.dart';
+import 'package:money_pi/core/services/sheets_sync_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/core/services/theme_service.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/features/paywall/paywall_screen.dart';
+import 'package:money_pi/features/auth/widgets/account_sheet.dart';
+import 'package:money_pi/core/services/auth_service.dart';
+import 'package:money_pi/features/groups/providers/groups_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -556,7 +556,7 @@ class _SubscriptionCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isPro ? 'Money Purse Pro' : 'Free Plan',
+                  isPro ? 'Money Pi Pro' : 'Free Plan',
                   style: AppFonts.sans(
                     color: isPro ? tc.surface : tc.onSurface,
                     fontSize: 15,

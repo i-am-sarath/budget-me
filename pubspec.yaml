@@ -1,5 +1,5 @@
-name: agent_money
-description: "Money Purse — track spending, income & investments."
+name: money_pi
+description: "Money Pi — track spending, income & investments."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.3+30
+version: 1.1.0+33
 
 environment:
   sdk: ^3.9.0
@@ -73,20 +73,37 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.1
 
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
-  image_path: "icon.png"
+  # Filled orange mark (cream pie on #EC5E27) — legacy PNGs + iOS full-bleed.
+  image_path: "assets/brand/orange_icon_1024.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#6C52DA"
-  adaptive_icon_foreground: "icon.png"
+  # Adaptive: flat orange background + cream pie foreground (safe-zone sized).
+  adaptive_icon_background: "#EC5E27"
+  adaptive_icon_foreground: "assets/brand/adaptive_foreground.png"
+  # Android 13+ themed icon: pie silhouette.
+  adaptive_icon_monochrome: "assets/brand/monochrome.png"
+  remove_alpha_ios: true
   web:
     generate: false
   windows:
     generate: false
   macos:
     generate: false
+
+# Launch screen — bold orange background with the cream pie, no text.
+flutter_native_splash:
+  color: "#EC5E27"
+  image: "assets/brand/splash_pie.png"
+  android_12:
+    color: "#EC5E27"
+    image: "assets/brand/splash_pie.png"
+  android: true
+  ios: true
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -97,6 +114,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/brand/logo_mark.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -6,14 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/openai_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/openai_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/features/accounts/models/account_model.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
 
 // ─────────────────────────────────────────────
 // ProcessingSheet — shows while Whisper + GPT runs,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/features/trips/models/trip_model.dart';
-import 'package:agent_money/features/trips/repositories/trip_repository.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/features/trips/models/trip_model.dart';
+import 'package:money_pi/features/trips/repositories/trip_repository.dart';
 import 'package:intl/intl.dart';
 
 Future<void> showCreateTripSheet(BuildContext context) => showModalBottomSheet(

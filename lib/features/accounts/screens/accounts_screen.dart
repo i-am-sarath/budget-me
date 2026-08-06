@@ -2,16 +2,16 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/accounts/widgets/add_account_sheet.dart';
-import 'package:agent_money/features/accounts/widgets/transfer_sheet.dart';
-import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:agent_money/features/recurring/screens/recurring_screen.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/features/accounts/models/account_model.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/accounts/widgets/add_account_sheet.dart';
+import 'package:money_pi/features/accounts/widgets/transfer_sheet.dart';
+import 'package:money_pi/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/features/recurring/screens/recurring_screen.dart';
 import 'package:intl/intl.dart';
 
 class AccountsScreen extends ConsumerStatefulWidget {
@@ -935,10 +935,10 @@ class _AddTransactionCta extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: tc.onPrimary.withOpacity(0.15),
+                color: tc.accent,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Icon(Icons.add_rounded, color: tc.onPrimary, size: 22),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(

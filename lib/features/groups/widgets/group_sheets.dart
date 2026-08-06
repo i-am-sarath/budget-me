@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/features/groups/models/group_models.dart';
-import 'package:agent_money/features/groups/providers/groups_providers.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/features/groups/models/group_models.dart';
+import 'package:money_pi/features/groups/providers/groups_providers.dart';
 
 const _emojis = ['👥', '🏠', '🍽️', '✈️', '🎉', '🏢', '🛒', '🏖️'];
 

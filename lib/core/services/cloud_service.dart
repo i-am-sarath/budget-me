@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:agent_money/core/config/api_config.dart';
+import 'package:money_pi/core/config/api_config.dart';
 
 /// Thin wrapper around Supabase init + Google auth for the cloud Groups feature.
 ///

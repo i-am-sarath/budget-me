@@ -1,11 +1,11 @@
 {
-    "name": "Money Purse - Budget Tracker",
-    "short_name": "Money Purse",
+    "name": "Money Pi - Budget Tracker",
+    "short_name": "Money Pi",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F7F6F3",
+    "theme_color": "#EC5E27",
+    "description": "Track spending, income & investments.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

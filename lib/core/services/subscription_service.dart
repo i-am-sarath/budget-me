@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:agent_money/core/config/api_config.dart';
+import 'package:money_pi/core/config/api_config.dart';
 
 // ─────────────────────────────────────────────
 // Subscription Tiers

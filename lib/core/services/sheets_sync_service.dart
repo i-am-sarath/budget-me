@@ -7,8 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:agent_money/core/services/cloud_service.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/core/services/cloud_service.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
 
 /// One-way Google Sheets sync (app → user's own sheet).
 ///
@@ -163,7 +163,7 @@ class SheetsSyncService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'properties': {'title': 'Money Purse — Transactions'},
+        'properties': {'title': 'Money Pi — Transactions'},
         'sheets': [
           {
             'properties': {'title': _sheetName},

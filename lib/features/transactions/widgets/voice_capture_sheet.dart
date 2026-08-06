@@ -9,13 +9,13 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
-import 'package:agent_money/main.dart' show rootNavigatorKey;
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/features/auth/widgets/account_sheet.dart';
-import 'package:agent_money/features/paywall/paywall_screen.dart';
-import 'package:agent_money/features/transactions/widgets/processing_sheet.dart';
+import 'package:money_pi/main.dart' show rootNavigatorKey;
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/features/auth/widgets/account_sheet.dart';
+import 'package:money_pi/features/paywall/paywall_screen.dart';
+import 'package:money_pi/features/transactions/widgets/processing_sheet.dart';
 
 /// Full-screen, tap-to-record voice capture.
 ///

@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:agent_money/main.dart' show rootScaffoldMessengerKey;
-import 'package:agent_money/core/services/openai_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
-import 'package:agent_money/features/transactions/models/transaction_model.dart';
-import 'package:agent_money/features/transactions/repositories/transaction_repository.dart';
-import 'package:agent_money/features/trips/repositories/trip_repository.dart';
+import 'package:money_pi/main.dart' show rootScaffoldMessengerKey;
+import 'package:money_pi/core/services/openai_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/features/transactions/models/transaction_model.dart';
+import 'package:money_pi/features/transactions/repositories/transaction_repository.dart';
+import 'package:money_pi/features/trips/repositories/trip_repository.dart';
 
 /// Drives the "hold → release → it just appears in the list" voice flow.
 ///

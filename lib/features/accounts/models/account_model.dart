@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'package:agent_money/core/theme.dart';
+import 'package:money_pi/core/theme.dart';
 
 /// Account types — designed for a global audience.
 /// `mobilePay` replaces the India-specific UPI concept with a

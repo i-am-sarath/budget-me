@@ -2,10 +2,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/services/budget_service.dart';
-import 'package:agent_money/core/services/currency_service.dart';
-import 'package:agent_money/features/dashboard/dashboard_screen.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/services/budget_service.dart';
+import 'package:money_pi/core/services/currency_service.dart';
+import 'package:money_pi/features/dashboard/dashboard_screen.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -105,7 +105,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     width: i == _page ? 24 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: i == _page ? tc.onSurface : tc.outlineVariant,
+                      color: i == _page ? tc.accent : tc.outlineVariant,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   );
@@ -148,6 +148,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 height: 54,
                 child: ElevatedButton(
                   onPressed: _next,
+                  // Final step is the most action-forward moment — accent it.
+                  style: _page == 2
+                      ? ElevatedButton.styleFrom(
+                          backgroundColor: tc.accent,
+                          foregroundColor: Colors.white,
+                        )
+                      : null,
                   child: Text(
                     _page == 2 ? "Let's go!" : 'Continue',
                     style: AppFonts.sans(
@@ -180,11 +187,11 @@ class _WelcomePage extends StatelessWidget {
             width: 88,
             height: 88,
             decoration: BoxDecoration(
-              color: tc.onSurface,
+              color: tc.accent.withOpacity(0.12),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(Icons.account_balance_wallet_rounded,
-                color: tc.surface, size: 44),
+                color: tc.accent, size: 44),
           ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
 
           const SizedBox(height: 32),
@@ -335,16 +342,16 @@ class _CountryPage extends StatelessWidget {
                         width: 22,
                         height: 22,
                         decoration: BoxDecoration(
-                          color: isSelected ? tc.onSurface : Colors.transparent,
+                          color: isSelected ? tc.accent : Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? tc.onSurface : tc.outlineVariant,
+                            color: isSelected ? tc.accent : tc.outlineVariant,
                             width: 1.5,
                           ),
                         ),
                         child: isSelected
-                            ? Icon(Icons.check_rounded,
-                                color: tc.surface, size: 14)
+                            ? const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 14)
                             : null,
                       ),
                     ],

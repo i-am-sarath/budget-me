@@ -3,14 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/core/config/api_config.dart';
-import 'package:agent_money/core/services/ad_service.dart';
-import 'package:agent_money/core/services/subscription_service.dart';
-import 'package:agent_money/features/auth/widgets/account_sheet.dart';
-import 'package:agent_money/features/paywall/paywall_screen.dart';
-import 'package:agent_money/features/transactions/providers/voice_log_provider.dart';
-import 'package:agent_money/features/transactions/widgets/manual_entry_sheet.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/core/config/api_config.dart';
+import 'package:money_pi/core/services/ad_service.dart';
+import 'package:money_pi/core/services/subscription_service.dart';
+import 'package:money_pi/features/auth/widgets/account_sheet.dart';
+import 'package:money_pi/features/paywall/paywall_screen.dart';
+import 'package:money_pi/features/transactions/providers/voice_log_provider.dart';
+import 'package:money_pi/features/transactions/widgets/manual_entry_sheet.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -430,7 +430,7 @@ class _MagicFabState extends ConsumerState<MagicFab>
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: tc.primary.withOpacity(0.16 * (1 - pulse)),
+                        color: tc.accent.withOpacity(0.20 * (1 - pulse)),
                       ),
                       child: Transform.scale(
                         scale: 1 + pulse * 0.06,
@@ -446,12 +446,12 @@ class _MagicFabState extends ConsumerState<MagicFab>
                     decoration: BoxDecoration(
                       color: _isRecording
                           ? (_isCancelling ? Colors.grey.shade600 : Colors.red)
-                          : tc.primary,
+                          : tc.accent,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (_isRecording ? Colors.red : tc.primary)
-                              .withOpacity(_isRecording ? 0.45 : 0.35),
+                          color: (_isRecording ? Colors.red : tc.accent)
+                              .withOpacity(_isRecording ? 0.45 : 0.38),
                           blurRadius: _isRecording ? 24 : 16,
                           spreadRadius: _isRecording ? 4 : 1,
                           offset: const Offset(0, 4),
@@ -460,7 +460,7 @@ class _MagicFabState extends ConsumerState<MagicFab>
                     ),
                     child: Icon(
                       Icons.mic_rounded,
-                      color: tc.onPrimary,
+                      color: Colors.white,
                       size: _isRecording ? 32 : 30,
                     ),
                   ),

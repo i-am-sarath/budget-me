@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/database/database_helper.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
+import 'package:money_pi/core/database/database_helper.dart';
+import 'package:money_pi/features/accounts/models/account_model.dart';
 
 // Accounts are intentionally NOT scoped to a space: your real bank/cash/wallet
 // balances are the same money no matter which space (Personal, Business, …) you

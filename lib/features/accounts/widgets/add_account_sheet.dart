@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:agent_money/core/theme.dart';
-import 'package:agent_money/features/accounts/models/account_model.dart';
-import 'package:agent_money/features/accounts/repositories/account_repository.dart';
+import 'package:money_pi/core/theme.dart';
+import 'package:money_pi/features/accounts/models/account_model.dart';
+import 'package:money_pi/features/accounts/repositories/account_repository.dart';
 
 class AddAccountSheet extends ConsumerStatefulWidget {
   /// Pass an existing account to enter edit mode.

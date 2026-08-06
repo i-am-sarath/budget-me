@@ -57,7 +57,7 @@ class OverlayService {
     try {
       await FlutterOverlayWindow.showOverlay(
         enableDrag: true,
-        overlayTitle: 'Money Purse',
+        overlayTitle: 'Money Pi',
         overlayContent: 'Hold to log',
         flag: OverlayFlag.defaultFlag,
         visibility: NotificationVisibility.visibilityPublic,
